@@ -1,4 +1,26 @@
-// Mostly copied from combo boxes
+/* Mostly copied from combo boxes. TreeComboBox currently depends on
+ * DataStoreBacking in multiple ways and requires a data store. I could
+ * fix that you need me to. nodes is a config parameter passed to the
+ * DataStoreBacking.
+ *
+ * Example:
+ *   items: [new TreeComboBox({
+ *           //Required, non-standard parameters
+ *             nodes: {
+ *               store: locations_ds,
+ *               textField: 'title'
+ *             },
+ *           //Parameters that function exactly like the ComboBox
+ *             fieldLabel: 'Location',
+ *             hiddenName: 'portion[location_id]',
+ *             dataIndex: 'location_id',
+ *             displayField: 'full_title',
+ *             valueField: 'id',
+ *             allowBlank: false,
+ *             width: 280,
+ *             resizable: true,
+ *           }), {
+ */
 var TreeComboBox = Ext.extend(Ext.form.TriggerField, {
   valueNotFoundText: "Item not found",
   defaultAutoCreate : {tag: "input", type: "text", size: "24", autocomplete: "off"},
@@ -33,7 +55,9 @@ var TreeComboBox = Ext.extend(Ext.form.TriggerField, {
         root['expanded'] = true;
       }
 
-      this.nodes.store = this.store;
+      if (this.store)
+        this.nodes.store = this.store;
+      
       this.tree = new Ext.tree.TreePanel({
         plugins: new Ext.ux.tree.DataStoreBacking(this.nodes),
         animate: false,
