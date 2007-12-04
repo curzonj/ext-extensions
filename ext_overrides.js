@@ -11,12 +11,9 @@ Ext.override(Ext.util.Observable, {
   }
 });
 
-// This operates on Observable, I'm not yet sure how to make
-// the changes directly. Observable is a nice root class
-// to add this feature to.
 Ext.data.Store.superclass.original_constructor = Ext.data.Store.superclass.constructor;
 Ext.data.Store.superclass.constructor = function() {
-  if(this.plugins) {
+  if(this.plugins && !this.doLayout) {
     if(this.plugins instanceof Array) {
       for(var i = 0, len = this.plugins.length; i < len; i++) {
         this.plugins[i].init(this);
