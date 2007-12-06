@@ -14,7 +14,7 @@ Ext.onReady(function(){
   Ext.QuickTips.init();
   // initialize state manager, we will use cookies
   // TODO disabled for UI development
-  Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
+  //Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
 
   // The main application layout
   new Ext.Viewport({

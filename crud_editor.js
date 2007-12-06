@@ -362,6 +362,9 @@ EditorTabs.prototype =  {
 */
   deleteRecord: function(record) {
   },
+  setParent: function(p) {
+    this.parent = p;
+  },
   loadRecord: function(record){
     var panel = this.panels[record.id];
     if(panel) {
@@ -376,7 +379,9 @@ EditorTabs.prototype =  {
     var panel =  this.createEditPanel(record);
     if(!panel.doLayout)
       panel = new TabbedCrudEditor(panel);
-    panel.setParent(this); //Cascades down to the subpanels
+
+    if(this.parent)
+      panel.setParent(this.parent); //Cascades down to the subpanels
 
     this.tabPanel.add(panel);
     this.tabPanel.setActiveTab(panel);
@@ -397,10 +402,4 @@ var TabbedCrudEditor = function(config) {
   TabbedCrudEditor.superclass.constructor.call(this, config);
 }
 Ext.extend(TabbedCrudEditor, CrudEditor, {
-  initComponent: function() {
-    TabbedCrudEditor.superclass.constructor.call(this);
-
-    if(this.subPanel)
-      this.subPanel.setParent(this);
-  }
 });
