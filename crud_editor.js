@@ -15,7 +15,26 @@ var CrudEditor = Ext.extend(Ext.Panel, {
         this.setParent(editorPanel);
     });
 
-    this.relayEvents(this.form, ['load', 'beforeaction', 'actionfailed', 'actioncomplete']);
+    this.store.on('update', this.onRecordUpdate, this);
+
+    this.relayEvents(this.form, ['beforeaction', 'actionfailed', 'actioncomplete']);
+    this.addEvents({
+      load: true
+    });
+  },
+  onDestroy: function() {
+    CrudEditor.superclass.onDestroy.call(this);
+
+    this.store.un('update', this.onRecordUpdate, this);
+  },
+  onRecordUpdate: function(store, record, type) {
+    var form = this.form;
+
+    if(form.record &&
+       form.record.id == record.id &&
+       type == Ext.data.Record.EDIT) {
+      form.setValues(record.getChanges());
+    }
   },
   setParent: function(p) {
     this.parent = p;
@@ -124,10 +143,22 @@ var CrudEditor = Ext.extend(Ext.Panel, {
     this.form.loadRecord(record);
     this.form.clearInvalid();
 
+    this.fireEvent('load', this.form, record);
+
     this.afterLoadRecord(record);
   },
   getRecord: function() {
-    return this.form.getRecord();
+    var record = this.form.record;
+
+    if(!record)
+      return;
+    
+    if(!record.newRecord) {
+      // Sometimes our store gets reloaded in between
+      // and we throw errors if we use old records
+     this.form.record = record = this.store.getById(record.id);
+    }
+    return record;
   },
   beforeLoadRecord: function(record) {},
   afterLoadRecord: function(record) {},
@@ -189,10 +220,6 @@ var CrudEditor = Ext.extend(Ext.Panel, {
       if(!record.newRecord) {
         record = form.record =
           this.store.getById(action.result.objectid);
-      } else if(!action.result.hidden) {
-        // ext_override extensions
-        form._onRecordUpdateLoaded = true;
-        this.store.on('update', form.onRecordUpdate, form);
       }
 
       this.updateRecordAfterTxn(record, action.result);
@@ -219,8 +246,7 @@ var CrudEditor = Ext.extend(Ext.Panel, {
     // We should however keep the styling consistant across all our modules
   },
   updateRecordAfterTxn: function(record, result) {
-    record.data = result.data;
-    record.id = record.data.id = result.objectid;
+    record.id = result.objectid;
 
     if( result.hidden ) {
       if ( !record.newRecord && this.store.getById(record.id) ) 
@@ -230,6 +256,13 @@ var CrudEditor = Ext.extend(Ext.Panel, {
         record.newRecord = false;
         this.store.add(record);
       }
+    
+      record.beginEdit();
+      for(a in result.data) {
+        record.set(a, result.data[a]);
+      }
+      record.endEdit();
+
       record.commit();
     }
   }
@@ -316,6 +349,23 @@ Ext.extend(DialogCrudEditor, CrudEditor, {
 var EditorTabs = function(config) {
   Ext.apply(this, config);
 
+  this.tabPanel.autoDestroy = true;
+  this.tabPanel.on('beforeremove', function(ct, panel) {
+    if(panel.form && panel.form.isDirty()) {
+      // Don't close it if it is dirty, pass in
+      // a call back to close it.
+      panel.form.on('actioncomplete', function() {
+        ct.remove(panel);  
+      }, null, {single:true});
+      // TODO give the the chance to cancel their changes
+      panel.saveRecord();
+
+      return false;
+    } else {
+      return true;
+    }
+  });
+
   this.panels = {};
 }
 EditorTabs.prototype =  {
@@ -329,37 +379,6 @@ EditorTabs.prototype =  {
    * afterLoadRecord(record)
    * editor.form.an('load' (or 'actioncomplete'))
    */
-
-    // TODO REMOVE YOUR LISTENERS WHEN YOU DIE
-/*    tabPanel.on('beforeremove', function(ct, panel) {
-      if(panel.form.isDirty()) {
-        // Don't close it if it is dirty, pass in
-        // a call back to close it.
-        panel.form.on('actioncomplete', function() {
-          ct.remove(panel);  
-        }, null, {single:true});
-        // TODO give the the chance to cancel their changes
-        jobsList.onSaveRecord(panel.form);
-
-        return false;
-      } else {
-        return true;
-      }
-
-      jobsFormPanel.jobSaveInterval = 3000
-      jobsFormPanel.saveTask = new Ext.util.DelayedTask(function() {
-        // Make sure we still exist and need to be saved
-        if(this.form && this.form.el && this.form.isDirty()) {
-          jobsList.onSaveRecord(this.form, { waitMsg: null});
-        }
-      }, jobsFormPanel);
-      jobsFormPanel.on('render', function() {
-        this.el.on('keydown', function() {
-          this.saveTask.delay(this.jobSaveInterval);
-        }, this);
-      }, jobsFormPanel);
-    });
-*/
   deleteRecord: function(record) {
   },
   setParent: function(p) {
@@ -377,15 +396,19 @@ EditorTabs.prototype =  {
     } 
 
     var panel =  this.createEditPanel(record);
+    panel.store = this.store;
+
     if(!panel.doLayout)
       panel = new TabbedCrudEditor(panel);
 
     if(this.parent)
-      panel.setParent(this.parent); //Cascades down to the subpanels
+      panel.setParent(this.parent);
 
     this.tabPanel.add(panel);
     this.tabPanel.setActiveTab(panel);
     panel.doLayout();
+
+    panel.loadRecord(record);
 
     this.panels[record.id] = panel;
   },
@@ -393,13 +416,37 @@ EditorTabs.prototype =  {
   }
 };
 
-var TabbedCrudEditor = function(config) {
-  Ext.applyIf(config, {
-    closable: true,
-    autoRender: true
-  })
+var TabbedCrudEditor = Ext.extend(CrudEditor, {
+  closable: true,
+  autoRender: true,
+  autoSaveInterval: 3000,
 
-  TabbedCrudEditor.superclass.constructor.call(this, config);
-}
-Ext.extend(TabbedCrudEditor, CrudEditor, {
+  initComponent: function() {
+    TabbedCrudEditor.superclass.initComponent.call(this);
+
+    this.autoSaveTask = new Ext.util.DelayedTask(function() {
+      // Make sure we still exist and need to be saved
+      if(this.form && this.form.el && this.form.isDirty()) {
+        this.saveRecord({ waitMsg: null });
+      }
+    }, this);
+
+    this.form.items.on('add', this.onFieldAdd, this);
+    this.form.items.on('remove', this.onFieldRemove, this);
+  },
+  onFieldAdd: function(container, component) {
+    component.on('change', this.startAutoSaveTimer, this);
+  },
+  onFieldRemove: function(container, component) {
+    component.un('change', this.startAutoSaveTimer, this);
+  },
+  startAutoSaveTimer: function() {
+    this.autoSaveTask.delay(this.autoSaveInterval);
+  },
+  onDestroy: function() {
+    TabbedCrudEditor.superclass.onDestroy.call(this);
+
+    if(this.autoSaveTask)
+      this.autoSaveTask.cancel();
+  }
 });

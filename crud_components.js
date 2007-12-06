@@ -104,7 +104,7 @@ Ext.extend(CRUDGridPanel, Ext.grid.GridPanel, {
   initComponent: function() {
     CRUDGridPanel.superclass.initComponent.call(this);
 
-    if(this.store.proxy)
+    if(this.store.proxy && !this.store.proxy.activeRequest)
       this.store.load();
 
     this.checkParentColumns(this.store, this.parentIdColumn);
@@ -130,7 +130,7 @@ Ext.extend(CRUDGridPanel, Ext.grid.GridPanel, {
     if(this.editor)  
       this.editor.setParent(p);
 
-    p.form.on('load', function(record) {
+    p.on('load', function(record) {
       this.store.addFilter(this.parentFilter, this);
     }, this);
   },
