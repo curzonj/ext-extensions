@@ -1,11 +1,4 @@
 var CrudStore = function(config) {
-  var myPlugins = [
-    new Ext.ux.data.LoadAttempts(),
-    new Ext.ux.data.ReloadingStore(),
-    new Ext.ux.data.PersistentFilters()
-  ]
-  config.plugins = (config.plugins || []).concat(myPlugins);
-
   // From JsonStore
   Ext.apply(config, {
      proxy: !config.data ? new Ext.data.HttpProxy({url: config.url}) : undefined,
@@ -13,26 +6,53 @@ var CrudStore = function(config) {
   })
 
   CrudStore.superclass.constructor.call(this, config);
+
+  // TODO change back to proper RW sometime
+  this.rwPerm = this.root+'.view';
+
+  Ext.ux.data.LoadAttempts(this),
+  Ext.ux.data.ReloadingStore(this),
+  Ext.ux.data.PersistentFilters(this)
 }
-Ext.extend(CrudStore, Ext.data.Store);
+Ext.extend(CrudStore, Ext.data.Store, {
+  linkToParent: function(p, idCol) {
+    this.parent = p;
+    this.parentIdColumn = idCol;
+    this.checkParentColumns(idCol)
+
+    p.on('load', function(record) {
+      this.addFilter(this.parentFilter, this);
+    }, this);
+  },
+  checkParentColumns: function(idCol) {
+    if(!idCol) {
+      this.hasParentType = function() { return false; };
+    } else {
+      var column = idCol.replace(/id/, "type");
+      var value = (this.recordType.prototype.fields.keys.indexOf(column) != -1);
+
+      this.hasParentType = function() { return value; }
+      if(value)
+        this.parentTypeColumn = idCol.replace(/id/, "type");
+    }
+  },
+  parentFilter: function(record){
+    var idMatch = (record.data[this.parentIdColumn] == this.parent.form.record.id)
+    var typeMatch = true;
+
+    //Provides automatic filtering on polymophic relations
+    if(this.hasParentType()) {
+      typeMatch = (record.data[this.parentTypeColumn] == this.parent.store.klass)
+    }
+
+    return (idMatch && typeMatch)
+  }
+});
 
 // To be included into classes and used there, not to be used
 // directly.
 var commonCrudPanelFunctions = {
   border: false,
-  checkParentColumns: function(store, idCol) {
-    if(!idCol) {
-      store.hasParentType = function() { return false; };
-    } else {
-      var column = idCol.replace(/id/, "type");
-      var value = (store.recordType.prototype.fields.keys.indexOf(column) != -1);
-
-      store.parentIdColumn = idCol;
-      store.hasParentType = function() { return value; }
-      if(value)
-        store.parentTypeColumn = idCol.replace(/id/, "type");
-    }
-  },
   checkToolbarButtons: function() {
     if(this.topToolbar && this.topToolbar.items)
       for(var i = 0; i < this.topToolbar.items.items.length; i++){
@@ -40,7 +60,7 @@ var commonCrudPanelFunctions = {
         if(b.type == "button") {
           // A button by default is !readOnly and !gridOperation
           // If this isn't a readonly button and we dont' have permission
-          if (!CurrentUser.has(this.rwPerm) && !b.readOnly) {
+          if (!CurrentUser.has(this.store.rwPerm) && !b.readOnly) {
             b.disable();
           // If this works on rows and none are selected
           } else if(this.getSelections().length < 1 && !b.gridOperation) {
@@ -55,25 +75,12 @@ var commonCrudPanelFunctions = {
     if(!this.editor)
       return;
 
-    Ext.applyIf(this.editor, {
-      store: this.store,
-      crudPanel: this
-    });
-
     // deleteRecord is the least commonly overloaded
-    if (!this.editor.deleteRecord)
+    if (!this.editor.addListener)
       this.editor = new DialogCrudEditor(this.editor);
-  },
-  parentFilter: function(record){
-    var idMatch = (record.data[this.store.parentIdColumn] == this.parent.form.record.id)
-    var typeMatch = true;
 
-    //Provides automatic filtering on polymophic relations
-    if(this.store.hasParentType()) {
-      typeMatch = (record.data[this.store.parentTypeColumn] == this.parent.store.klass)
-    }
-
-    return (idMatch && typeMatch)
+    this.editor.crudPanel = this;
+    this.store = this.editor.store;
   }
 }
 
@@ -81,9 +88,6 @@ var commonCrudPanelFunctions = {
  */
 var CRUDGridPanel = function(config) {
   Ext.applyIf(config, {
-    // The menu keeps them out if they don't have RO
-    // TODO change this back when permissions are done
-    rwPerm: (config.store.root + '.view'),
     viewConfig: {
       forceFit:true
     },
@@ -104,10 +108,6 @@ Ext.extend(CRUDGridPanel, Ext.grid.GridPanel, {
   initComponent: function() {
     CRUDGridPanel.superclass.initComponent.call(this);
 
-    if(this.store.proxy && !this.store.proxy.activeRequest)
-      this.store.load();
-
-    this.checkParentColumns(this.store, this.parentIdColumn);
     this.setupEditor();
 
     this.elements += ',tbar';
@@ -118,21 +118,9 @@ Ext.extend(CRUDGridPanel, Ext.grid.GridPanel, {
     this.on('cellclick', this.checkToolbarButtons, this);
     this.on('cellclick',this.saveSelections, this);
     this.store.on('load',this.restoreSelections, this);
-    CurrentUser.onPermission(this.rwPerm, this.checkToolbarButtons, this);
+    CurrentUser.onPermission(this.store.rwPerm, this.checkToolbarButtons, this);
 
     // TODO if there is a default custom view, load it
-  },
-  // Called by the parent
-  setParent: function(p) {
-    //Parent is a CrudEditor
-    this.parent = p;
-
-    if(this.editor)  
-      this.editor.setParent(p);
-
-    p.on('load', function(record) {
-      this.store.addFilter(this.parentFilter, this);
-    }, this);
   },
   afterRender: function() {
     CRUDGridPanel.superclass.afterRender.call(this);
@@ -305,7 +293,7 @@ Ext.extend(CRUDGridPanel, Ext.grid.GridPanel, {
   onGridCellClicked: function(grid, rowIndex, cellIndex, e) {
     var r = this.store.getAt(rowIndex);
     this.setRecordSelection(r);
-    if (this.editor && CurrentUser.has(this.rwPerm))
+    if (this.editor && CurrentUser.has(this.store.rwPerm))
       this.editor.loadRecord(r);
   },
   setRecordSelection: function(r) {
@@ -333,12 +321,9 @@ Ext.extend(CRUDGridPanel, Ext.grid.GridPanel, {
 Ext.override(CRUDGridPanel, commonCrudPanelFunctions);
 
 var CrudTreePanel = function(config) {
-  config.store.load();
+  config.nodes.store = config.editor.store;
 
-  config.nodes.store = config.store
   Ext.applyIf(config, {
-    // TODO change this back when permissions are done
-    rwPerm: (config.store.root + '.view'),
     plugins: new Ext.ux.tree.DataStoreBacking(config.nodes),
     root: new Ext.tree.TreeNode({expanded: true, id: 'root'})
   });
@@ -357,7 +342,6 @@ Ext.extend(CrudTreePanel, Ext.tree.TreePanel, {
   initComponent: function() {
     CrudTreePanel.superclass.initComponent.call(this);
 
-    this.checkParentColumns(this.store, this.parentIdColumn);
     this.setupEditor();
 
     new Ext.tree.TreeSorter(this, {folderSort: true});
@@ -366,7 +350,7 @@ Ext.extend(CrudTreePanel, Ext.tree.TreePanel, {
     this.topToolbar = this.createToolbar();
 
     this.on('dblclick', this.onDblClickNode, this);
-    CurrentUser.onPermission(this.rwPerm, this.checkToolbarButtons, this);
+    CurrentUser.onPermission(this.store.rwPerm, this.checkToolbarButtons, this);
   },
   afterRender: function() {
     CrudTreePanel.superclass.afterRender.call(this);

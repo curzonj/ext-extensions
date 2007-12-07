@@ -78,47 +78,35 @@ Ext.override(Ext.grid.GridPanel, {
   }
 });
 
-Ext.ux.data.LoadAttempts = function(config) {
-  Ext.apply(this, config);
-}
-Ext.ux.data.LoadAttempts.prototype = {
-  maxAttempts: 5,
+Ext.ux.data.LoadAttempts = function(store, maxAttempts) {
+  maxAttempts = maxAttempts || 5;
 
-  init: function(store) {
-    store.loadAttempts = 0;
-    store.maxAttempts = this.maxAttempts;
+  store.loadAttempts = 0;
+  store.maxAttempts = maxAttempts;
 
-    if(store.proxy) {
-      store.proxy.on('loadexception', function(proxy, data, transaction) {
-        store.loadAttempts = store.loadAttempts ? store.loadAttempts + 1 : 1
-        if (store.loadAttempts < this.maxAttempts)
-          store.load();
-      }, store);
-    }
-
-    store.on('load', function() {
-      store.loadAttempts = 0
+  if(store.proxy) {
+    store.proxy.on('loadexception', function(proxy, data, transaction) {
+      store.loadAttempts = store.loadAttempts ? store.loadAttempts + 1 : 1
+      if (store.loadAttempts < maxAttempts)
+        store.load();
     }, store);
   }
+
+  store.on('load', function() {
+    store.loadAttempts = 0
+  }, store);
 }
 
-Ext.ux.data.ReloadingStore = function(config) {
-  Ext.apply(this, config);
+Ext.ux.data.ReloadingStore = function(store) {
+  store.mirror_without_reloading = store.mirror;
+  Ext.apply(store, Ext.ux.data.ReloadingStore.overrides);
+
+  store.on('beforeload', function() {
+    this.createRefreshTask(this.refreshPeriod);
+  }, store, {single:true});
 }
-Ext.ux.data.ReloadingStore.prototype = {
+Ext.ux.data.ReloadingStore.overrides = {
   refreshPeriod: 120000,
-  init: function(store) {
-    var methods = Ext.apply({}, this);
-
-    methods.mirror_without_reloading = store.mirror;
-    delete methods.init;
-
-    Ext.apply(store, methods);
-
-    store.on('beforeload', function() {
-      store.createRefreshTask(this.refreshPeriod);
-    }, null, {single:true});
-  },
   mirror: function(source) {
     this.mirror_without_reloading(source);
     this.createRefreshTask = source.createRefreshTask.createDelegate(source);
@@ -159,15 +147,10 @@ Ext.ux.data.ReloadingStore.prototype = {
   }
 }
 
-Ext.ux.data.PersistentFilters = function(config) {
-  Ext.apply(this, config);
+Ext.ux.data.PersistentFilters = function(store) {
+  Ext.apply(store, Ext.ux.data.PersistentFilters.overrides);
 }
-Ext.ux.data.PersistentFilters.prototype = {
-  init: function(store) {
-    var methods = Ext.apply({}, this);
-    delete methods.init;
-    Ext.apply(store, methods);
-  },
+Ext.ux.data.PersistentFilters.overrides = {
   onDataChanged: function() {
     this.applySort();
     this.applyFilters();

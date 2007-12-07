@@ -1,67 +1,50 @@
-var CrudEditor = Ext.extend(Ext.Panel, {
-  layout: 'fit',
-  border: false,
-  bodyStyle: "padding:10px",
-  defaults: { border: false },
+var CrudEditor = function(config) {
+  /* Defined Interface:
+   * createRecord() - create and load a new record
+   * loadRecord(record) - load it in something to edit
+   * deleteRecord(record) - delete the record
+   */
+  this.initialConfig = config;
+  Ext.apply(this, config);
 
-  initComponent: function() {
-    CrudEditor.superclass.initComponent.call(this);
-    var editorPanel = this;
+  this.addEvents({
+    beforeaction: true,
+    actionfailed: true,
+    actioncomplete: true,
 
-    this.formPanel = this.findByType('form')[0];
-    this.form = this.formPanel.form;
-    this.cascade(function() {
-      if(this != editorPanel && this.setParent)
-        this.setParent(editorPanel);
-    });
+    beforeload: true,
+    load: true,
+  });
 
-    this.store.on('update', this.onRecordUpdate, this);
+  if(this.store.proxy && !this.store.proxy.activeRequest)
+    this.store.load();
 
-    this.relayEvents(this.form, ['beforeaction', 'actionfailed', 'actioncomplete']);
-    this.addEvents({
-      load: true
-    });
-  },
-  onDestroy: function() {
-    CrudEditor.superclass.onDestroy.call(this);
-
-    this.store.un('update', this.onRecordUpdate, this);
-  },
-  onRecordUpdate: function(store, record, type) {
-    var form = this.form;
-
-    if(form.record &&
-       form.record.id == record.id &&
-       type == Ext.data.Record.EDIT) {
-      form.setValues(record.getChanges());
+  CrudEditor.superclass.constructor.call(this, config);
+}
+Ext.extend(CrudEditor, Ext.util.Observable, {
+  findChildren: function(panel, form) {
+    var editor = this;
+    var saveParent = function() {
+      editor.saveForm(this.form);
     }
+    var listenerDelegate = this.on.createDelegate(this);
+
+    panel.cascade(function() {
+      if(this != panel && this.editor && this.editor.setParent)
+        this.editor.setParent({
+          form: form,
+          store: editor.store,
+          save: saveParent,
+          on: listenerDelegate
+        });
+    });
   },
   setParent: function(p) {
     this.parent = p;
-  },
-  createRecord: function(){
-    //This doesn't load it into the dataStore because that should
-    //reflect saved objects, this only exists in the form. The
-    //record will be added into the dataStore if it is saved.
-    var record = new this.store.reader.recordType();
-    this.initializeRecord(record);
 
-    if(this.parent && this.parent.newRecord()) {
-      this.parent.form.on('actioncomplete', function() {
-        //All we need is for parent.record.id to be valid
-        //when we save. The only reason we wait to load the
-        //record until the parent is saved is that will show
-        //the window and we don't want that unless the parent
-        //was successfull
-        this.loadRecord(record);
-      }, this, {single:true});
-      this.parent.saveRecord();
-    } else {
-      this.loadRecord(record);
+    if(this.parentIdColumn) {
+      this.store.linkToParent(p, this.parentIdColumn);
     }
-  },
-  newRecord: function() {
-    return this.form.record.newRecord;
   },
   //Append arguments via createDelegate
   sendEvent: function(record, eventName, failedMsg){
@@ -94,6 +77,36 @@ var CrudEditor = Ext.extend(Ext.Panel, {
       scope: this
     });
   },
+  createRecord: function(){
+    //This doesn't load it into the dataStore because that should
+    //reflect saved objects, this only exists in the form. The
+    //record will be added into the dataStore if it is saved.
+    var record = new this.store.reader.recordType();
+    this.initializeRecord(record);
+
+    if(this.parent && this.parent.form.record.newRecord) {
+      this.parent.form.on('actioncomplete', function() {
+        //All we need is for parent.record.id to be valid
+        //when we save. The only reason we wait to load the
+        //record until the parent is saved is that will show
+        //the window and we don't want that unless the parent
+        //was successfull
+        this.loadRecord(record);
+      }, this, {single:true});
+      this.parent.save();
+    } else {
+      this.loadRecord(record);
+    }
+  },
+  initializeRecord: function(record){
+    var keys = record.fields.keys;
+    record.data = {};
+    for(var i = 0, len = keys.length; i < len; i++){
+      record.data[keys[i]] = "";
+    }
+    record.id = 'new';
+    record.newRecord = true;
+  },
   deleteRecord: function(record){
     // We only allow deletions from the data store and new records
     // are only ever in the form, so we don't have to worry about
@@ -124,44 +137,31 @@ var CrudEditor = Ext.extend(Ext.Panel, {
       scope: this
     });
   },
-  initializeRecord: function(record){
-    var keys = record.fields.keys;
-    record.data = {};
-    for(var i = 0, len = keys.length; i < len; i++){
-      record.data[keys[i]] = "";
+  onRecordUpdate: function(store, record, type, form) {
+    if(form.record &&
+       form.record.id == record.id &&
+       type == Ext.data.Record.EDIT) {
+      form.setValues(record.getChanges());
     }
-    record.id = 'new';
-    record.newRecord = true;
   },
-  // TODO needs handle record locking
-  loadRecord: function(record){
-    this.form.record = record;
+  loadRecord: function(record) {},
+  loadForm: function(form, record){
+    // TODO needs handle record locking
+    form.record = record;
 
-    this.beforeLoadRecord(record);
+    if(this.fireEvent('beforeload', form, record) !== false) {
 
-    this.form.trackResetOnLoad = true;
-    this.form.loadRecord(record);
-    this.form.clearInvalid();
+      form.trackResetOnLoad = true;
+      form.loadRecord(record);
+      form.clearInvalid();
 
-    this.fireEvent('load', this.form, record);
+      this.fireEvent('load', form, record);
 
-    this.afterLoadRecord(record);
-  },
-  getRecord: function() {
-    var record = this.form.record;
-
-    if(!record)
-      return;
-    
-    if(!record.newRecord) {
-      // Sometimes our store gets reloaded in between
-      // and we throw errors if we use old records
-     this.form.record = record = this.store.getById(record.id);
+      return true;
+    } else {
+      return false;
     }
-    return record;
   },
-  beforeLoadRecord: function(record) {},
-  afterLoadRecord: function(record) {},
   getParentRelAttrs: function(record) {
     var values = {}
     
@@ -176,14 +176,14 @@ var CrudEditor = Ext.extend(Ext.Panel, {
     return values
   },
   // the o is optional and is only for REALLY custom work
-  saveRecord: function(o){
-    var record = this.form.record;
+  saveForm: function(form, o){
+    var record = form.record;
 
     // Prevents errors from holding the enter key
     // down too long or bouncing it
-    if (this.form.submitLock)
+    if (form.submitLock)
       return;
-    this.form.submitLock = true;
+    form.submitLock = true;
 
     // see ext-all-debug line 23816. It calls isValid for us
     
@@ -203,7 +203,7 @@ var CrudEditor = Ext.extend(Ext.Panel, {
       Ext.applyIf(o.params, this.getParentRelAttrs());
     }
 
-    this.form.submit(Ext.applyIf(o ,{
+    form.submit(Ext.applyIf(o ,{
       url: requestURL,
       waitMsg: "Saving record...",
       success: this.formSuccess,
@@ -271,12 +271,46 @@ var CrudEditor = Ext.extend(Ext.Panel, {
 var DialogCrudEditor = function(config) {
   DialogCrudEditor.superclass.constructor.call(this, config);
 
-  if(!this.dialog || !this.dialog.doLayout)
+  if(!this.dialog || !this.dialog.doLayout) {
     this.createWindow();
+  }
+
+  this.form = this.formPanel.form;
+
+  this.recordUpdateDelegate = this.onRecordUpdate.createDelegate(this, [this.form], true);
+  this.store.on('update', this.recordUpdateDelegate);
+
+  this.relayEvents(this.form, ['beforeaction', 'actionfailed', 'actioncomplete']);
+
+  this.findChildren(this.dialog, this.form);
 }
 Ext.extend(DialogCrudEditor, CrudEditor, {
+  loadRecord: function(record) {
+    if(!this.dialog.rendered) {
+      this.dialog.render(Ext.getBody());
+    }
+
+    if(this.loadForm(this.form, record)) {
+      this.dialog.show();
+    }
+  },
+  // TODO Should this be more generic?
+  getRecord: function() {
+    var record = this.form.record;
+
+    if(!record)
+      return;
+    
+    if(!record.newRecord) {
+      // Sometimes our store gets reloaded in between
+      // and we throw errors if we use old records
+     this.form.record = record = this.store.getById(record.id);
+    }
+    return record;
+  },
   createWindow: function(config) {
-    config = this.dialog || {};
+
+    config = this.initialConfig;
     Ext.applyIf(config, {
       width: 500,
       height: 300,
@@ -286,9 +320,9 @@ Ext.extend(DialogCrudEditor, CrudEditor, {
       resizable: true,
       draggable: true,
       collapsible: false,
+      defaults: { border: false },
       title: 'Edit',
       layout: 'fit',
-      items: this,
       buttons: [{
         text: "Save",
         handler: this.onClickSave,
@@ -305,6 +339,10 @@ Ext.extend(DialogCrudEditor, CrudEditor, {
     });
 
     this.dialog = new Ext.Window(config);
+
+    this.formPanel = this.dialog.findByType('form')[0];
+    this.formPanel.border = false;
+    this.formPanel.bodyStyle = "padding:10px";
 
     this.dialog.on('show', function(){ this.dialog.keyMap.enable(); }, this);
     // TODO focus is broken all over
@@ -325,7 +363,7 @@ Ext.extend(DialogCrudEditor, CrudEditor, {
         this.form.on('actionfailed', function() {
           this.dialog.keyMap.enable();
         }, this, {single: true});
-        this.saveRecord();
+        this.saveForm(this.form);
       }
   },
   onClickClose: function(trigger, e) {
@@ -333,21 +371,12 @@ Ext.extend(DialogCrudEditor, CrudEditor, {
     //sure ENTER still works on other buttons
     if(typeof trigger == 'object' || e.target.type != 'button')
       this.dialog.hide();
-  },
-  loadRecord: function(record) {
-    if(!this.dialog.rendered) {
-      this.dialog.render(Ext.getBody());
-    }
-
-    DialogCrudEditor.superclass.loadRecord.call(this, record);
-
-    this.dialog.show();
   }
 });
 
 
-var EditorTabs = function(config) {
-  Ext.apply(this, config);
+var TabbedCrudEditor = function(config) {
+  TabbedCrudEditor.superclass.constructor.call(this, config);
 
   this.tabPanel.autoDestroy = true;
   this.tabPanel.on('beforeremove', function(ct, panel) {
@@ -358,32 +387,19 @@ var EditorTabs = function(config) {
         ct.remove(panel);  
       }, null, {single:true});
       // TODO give the the chance to cancel their changes
-      panel.saveRecord();
+      this.saveForm(panel.form);
 
       return false;
     } else {
       return true;
     }
-  });
+  }, this);
 
   this.panels = {};
 }
-EditorTabs.prototype =  {
-  /* Defined Interface:
-   * createRecord() - create and load a new record
-   * loadRecord(record) - load it in something to edit
-   * deleteRecord(record) - delete the record
-   *
-   * Common Access Methods:
-   * beforeLoadRecord(record)
-   * afterLoadRecord(record)
-   * editor.form.an('load' (or 'actioncomplete'))
-   */
-  deleteRecord: function(record) {
-  },
-  setParent: function(p) {
-    this.parent = p;
-  },
+Ext.extend(TabbedCrudEditor, CrudEditor, {
+  autoSaveInterval: 3000,
+
   loadRecord: function(record){
     var panel = this.panels[record.id];
     if(panel) {
@@ -396,57 +412,65 @@ EditorTabs.prototype =  {
     } 
 
     var panel =  this.createEditPanel(record);
-    panel.store = this.store;
-
-    if(!panel.doLayout)
-      panel = new TabbedCrudEditor(panel);
-
-    if(this.parent)
-      panel.setParent(this.parent);
 
     this.tabPanel.add(panel);
     this.tabPanel.setActiveTab(panel);
     panel.doLayout();
 
-    panel.loadRecord(record);
+    this.loadForm(panel.form, record);
 
     this.panels[record.id] = panel;
   },
+
+  getPanel: function(record) { },
   createEditPanel: function(record) {
-  }
-};
+    var panel = this.getPanel(record);
+    Ext.apply(panel, {
+      closable: true,
+      autoRender: true,
+    });
 
-var TabbedCrudEditor = Ext.extend(CrudEditor, {
-  closable: true,
-  autoRender: true,
-  autoSaveInterval: 3000,
+    if(!panel.doLayout) {
+      panel = new Ext.Panel(panel);
+    }
 
-  initComponent: function() {
-    TabbedCrudEditor.superclass.initComponent.call(this);
+    var formPanel = panel.findByType('form')[0];
+    if (panel != formPanel) {
+      panel.form = formPanel.form;
+    }
 
-    this.autoSaveTask = new Ext.util.DelayedTask(function() {
+    this.relayEvents(panel.form, ['beforeaction', 'actionfailed', 'actioncomplete']);
+    this.findChildren(panel, panel.form);
+
+    var recordUpdateDelegate = this.onRecordUpdate.createDelegate(this, [panel.form], true);
+    this.store.on('update', recordUpdateDelegate);
+
+    panel.autoSaveTask = new Ext.util.DelayedTask(function() {
       // Make sure we still exist and need to be saved
-      if(this.form && this.form.el && this.form.isDirty()) {
-        this.saveRecord({ waitMsg: null });
+      if( panel.form &&
+          panel.form.el &&
+          panel.form.isDirty()) {
+        this.saveForm(panel.form, { waitMsg: null });
       }
     }, this);
+    panel.on('destroy', function() {
+      this.store.un('update', recordUpdateDelegate);
 
-    this.form.items.on('add', this.onFieldAdd, this);
-    this.form.items.on('remove', this.onFieldRemove, this);
-  },
-  onFieldAdd: function(container, component) {
-    component.on('change', this.startAutoSaveTimer, this);
-  },
-  onFieldRemove: function(container, component) {
-    component.un('change', this.startAutoSaveTimer, this);
-  },
-  startAutoSaveTimer: function() {
-    this.autoSaveTask.delay(this.autoSaveInterval);
-  },
-  onDestroy: function() {
-    TabbedCrudEditor.superclass.onDestroy.call(this);
+      if(panel.autoSaveTask)
+        panel.autoSaveTask.cancel();
+    }, this);
 
-    if(this.autoSaveTask)
-      this.autoSaveTask.cancel();
+    var startTimer = function() {
+      panel.autoSaveTask.delay(this.autoSaveInterval);
+    }
+
+    panel.form.items.on('add', function(ct, cp) {
+      cp.on('change', startTimer, this);
+    }, this);
+    panel.form.items.on('remove', function(ct, cp) {
+      cp.un('change', startTimer, this);
+    }, this);
+
+    return panel;
   }
 });

@@ -11,20 +11,6 @@ Ext.override(Ext.util.Observable, {
   }
 });
 
-Ext.data.Store.superclass.original_constructor = Ext.data.Store.superclass.constructor;
-Ext.data.Store.superclass.constructor = function() {
-  if(this.plugins && !this.doLayout) {
-    if(this.plugins instanceof Array) {
-      for(var i = 0, len = this.plugins.length; i < len; i++) {
-        this.plugins[i].init(this);
-      }
-    } else {
-      this.plugins.init(this);
-    }
-  }
-
-  Ext.data.Store.superclass.original_constructor.call(this);
-}
 Ext.override(Ext.data.Store, {
   // Their load records function isn't very extensible,
   // so I had to copy it in here
