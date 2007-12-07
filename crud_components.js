@@ -16,11 +16,14 @@ var CrudStore = function(config) {
 }
 Ext.extend(CrudStore, Ext.data.Store, {
   linkToParent: function(p, idCol) {
-    this.parent = p;
     this.parentIdColumn = idCol;
     this.checkParentColumns(idCol)
 
-    p.on('load', function(record) {
+    p.on('load', function(form, record) {
+      //This deals with polymorphic relations
+      this.relation_id = record.id;
+      this.relation_type = record.store.klass;
+
       this.addFilter(this.parentFilter, this);
     }, this);
   },
@@ -37,12 +40,12 @@ Ext.extend(CrudStore, Ext.data.Store, {
     }
   },
   parentFilter: function(record){
-    var idMatch = (record.data[this.parentIdColumn] == this.parent.form.record.id)
+    var idMatch = (record.data[this.parentIdColumn] == this.relation_id)
     var typeMatch = true;
 
     //Provides automatic filtering on polymophic relations
     if(this.hasParentType()) {
-      typeMatch = (record.data[this.parentTypeColumn] == this.parent.store.klass)
+      typeMatch = (record.data[this.parentTypeColumn] == this.relation_type)
     }
 
     return (idMatch && typeMatch)

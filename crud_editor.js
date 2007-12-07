@@ -28,15 +28,21 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
       editor.saveForm(this.form);
     }
     var listenerDelegate = this.on.createDelegate(this);
+    var pVal = {
+      form: form,
+      store: editor.store,
+      save: saveParent,
+      on: listenerDelegate
+    };
 
     panel.cascade(function() {
-      if(this != panel && this.editor && this.editor.setParent)
-        this.editor.setParent({
-          form: form,
-          store: editor.store,
-          save: saveParent,
-          on: listenerDelegate
-        });
+      if(this != panel) {
+        if(this.setParent) {
+          this.setParent(pVal);
+        } else if(this.editor && this.editor.setParent) {
+          this.editor.setParent(pVal);
+        }
+      }
     });
   },
   setParent: function(p) {
@@ -46,7 +52,10 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
       this.store.linkToParent(p, this.parentIdColumn);
     }
   },
-  //Append arguments via createDelegate
+  //callback: editor.eventHandler('disable', "Sorry, failed");
+  eventHandler: function(evt, msg) {
+    return this.sendEvent.createDelegate(this, [evt, msg], true);
+  },
   sendEvent: function(record, eventName, failedMsg){
     // we don't have to worry about receiving unsaved records here
 
@@ -200,7 +209,7 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
     }
 
     if(this.parent) {
-      Ext.applyIf(o.params, this.getParentRelAttrs());
+      Ext.applyIf(o.params, this.getParentRelAttrs(record));
     }
 
     form.submit(Ext.applyIf(o ,{
@@ -259,7 +268,14 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
     
       record.beginEdit();
       for(a in result.data) {
-        record.set(a, result.data[a]);
+        value = result.data[a];
+
+        if(typeof value == 'object') {
+          //record.set only takes non-objects
+          record.data[a] = value;
+        } else {
+          record.set(a, value);
+        }
       }
       record.endEdit();
 
@@ -294,7 +310,7 @@ Ext.extend(DialogCrudEditor, CrudEditor, {
       this.dialog.show();
     }
   },
-  // TODO Should this be more generic?
+  /* This is good functionality, what do we do with it?
   getRecord: function() {
     var record = this.form.record;
 
@@ -307,7 +323,7 @@ Ext.extend(DialogCrudEditor, CrudEditor, {
      this.form.record = record = this.store.getById(record.id);
     }
     return record;
-  },
+  },*/
   createWindow: function(config) {
 
     config = this.initialConfig;
