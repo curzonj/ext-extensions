@@ -111,6 +111,18 @@ Ext.override(Ext.form.ComboBox, {
   }
 });
 
+Ext.override(Ext.DataView, {
+  updateIndexes: function(startIndex, endIndex) {
+    var ns = this.all.elements;
+    startIndex = startIndex || 0;
+    //The endIndex === 0 condition was broken
+    endIndex = (endIndex || endIndex === 0 ? endIndex : (ns.length - 1));
+    for(var i = startIndex; i <= endIndex; i++) {
+      ns[i].viewIndex = i;
+    }
+  }
+});
+
 Ext.override(Ext.tree.TreeNodeUI, {
   collapse: function() {
     this.updateExpandIcon();
