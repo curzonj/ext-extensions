@@ -22,7 +22,7 @@ Ext.extend(CrudStore, Ext.data.Store, {
     p.on('load', function(form, record) {
       //This deals with polymorphic relations
       this.relation_id = record.id;
-      this.relation_type = record.store.klass;
+      this.relation_type = p.store.klass;
 
       this.addFilter(this.parentFilter, this);
     }, this);
@@ -484,6 +484,9 @@ var zipCodeRegex = /\d{5}(?:-\d{4})?/g;
 
 var renderBoolean = function(value){   
   return value ? "Yes" :  "No";
+};
+var renderDate = function(value) {
+  return Date.parseDate(value, 'Y/m/d H:i:s').format("M j Y");
 };
 
 var createFilterField = function(store) {
