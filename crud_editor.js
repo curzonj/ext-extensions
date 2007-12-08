@@ -267,8 +267,8 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
       }
     
       record.beginEdit();
-      for(a in result.data) {
-        value = result.data[a];
+      for(var a in result.data) {
+        var value = result.data[a];
 
         if(typeof value == 'object') {
           //record.set only takes non-objects
@@ -396,14 +396,22 @@ var TabbedCrudEditor = function(config) {
 
   this.tabPanel.autoDestroy = true;
   this.tabPanel.on('beforeremove', function(ct, panel) {
-    if(panel.form && panel.form.isDirty()) {
-      // Don't close it if it is dirty, pass in
-      // a call back to close it.
-      panel.form.on('actioncomplete', function() {
-        ct.remove(panel);  
-      }, null, {single:true});
-      // TODO give the the chance to cancel their changes
-      this.saveForm(panel.form);
+    if(panel.form && !panel.form.bypassSaveOnClose && panel.form.isDirty()) {
+      panel.form.bypassSaveOnClose = true;
+
+      Ext.MessageBox.confirm("Save changes", "Do you want to save your changes?", function(btn) {
+        if(btn == "yes") {
+          // Don't close it if it is dirty, pass in
+          // a call back to close it.
+          panel.form.on('actioncomplete', function(form, action) {
+            ct.remove(panel);  
+          }, null, {single:true});
+
+          this.saveForm(panel.form);
+        } else {
+          ct.remove(panel);  
+        }
+      }, this);
 
       return false;
     } else {
@@ -488,5 +496,31 @@ Ext.extend(TabbedCrudEditor, CrudEditor, {
     }, this);
 
     return panel;
+  },
+  formFailure: function(form, action) {
+    form.submitLock = false;
+
+    if (action.failureType == 'client' && action.options.waitMsg) {
+      Ext.MessageBox.alert('Save failed',
+        'Please fill in all the required boxes highlighted in red.');
+    } else if (action.failureType != 'client' &&
+        (!action.result || !action.result.errors)) {
+
+      form.autoSaveAttempts = form.autoSaveAttempts || 1
+      if(form.autoSaveAttempts < this.maxAttempts) {
+        form.autoSaveAttempts = form.autoSaveAttempts + 1;
+        this.saveForm(form);
+      } else {
+        Ext.MessageBox.alert('Save failed',
+        'Failed to save the record. Please try again.');
+      }
+    } else if (action.result && action.result.errors &&
+        action.result.errors.base) {
+      Ext.MessageBox.alert('Save failed', action.result.errors.base);
+    }
+    // else, Ext will display our validation errors from JsonController.
+    // Read http://extjs.com/deploy/ext/docs/output/Ext.form.TextField.html#config-msgTarget
+    // for more information about your options for styling error messages.
+    // We should however keep the styling consistant across all our modules
   }
 });

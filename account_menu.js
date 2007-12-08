@@ -15,6 +15,9 @@ Ext.extend(CurrentUser, Ext.util.Observable, {
   isLoggedIn: function() {
     return this.loggedIn;
   },
+  username: function() {
+    return this.permissions['username'];  
+  },
   setPermissions: function(newdata) {
     if(newdata) {
       this.loggedIn = true;
@@ -159,7 +162,7 @@ var AccountMenu = Ext.extend(Ext.Panel, {
           panel.form.submit({
             url: url,
             waitMsg: 'Please wait...',
-            success: function() {
+            success: function(form, action) {
               win.submitLock = false;
               win.hide();
               CurrentUser.fireEvent("loggedIn");
