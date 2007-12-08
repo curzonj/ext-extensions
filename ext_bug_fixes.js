@@ -91,26 +91,6 @@ Ext.override(Ext.form.Radio, {
     }
 });
 
-Ext.override(Ext.form.ComboBox, {
-  //They don't clear the store when you load the form,
-  //so if the combo was filtered, you can't get the right
-  //value in there. If you have the exact correct property,
-  //you should get the row.
-  findRecord: function(prop, value) {
-    var record = null,
-        data = this.store.snapshot ||
-               this.store.data;
-
-    data.each(function(r){
-      if(r.data[prop] == value){
-        record = r;
-        return false;
-      }
-    });
-    return record;
-  }
-});
-
 Ext.override(Ext.DataView, {
   updateIndexes: function(startIndex, endIndex) {
     var ns = this.all.elements;

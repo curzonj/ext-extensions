@@ -22,19 +22,21 @@ var CrudEditor = function(config) {
   CrudEditor.superclass.constructor.call(this, config);
 }
 Ext.extend(CrudEditor, Ext.util.Observable, {
-  findChildren: function(panel, form) {
-    var editor = this;
+  createParentRef: function(form) {
     var saveParent = function() {
-      editor.saveForm(this.form);
+      editor.saveForm(form);
     }
     var listenerDelegate = this.on.createDelegate(this);
-    var pVal = {
+
+    return {
       form: form,
-      store: editor.store,
+      store: this.store,
       save: saveParent,
       on: listenerDelegate
     };
-
+  },
+  findChildren: function(panel, form) {
+    var pVal = this.createParentRef(form);
     panel.cascade(function() {
       if(this != panel) {
         if(this.setParent) {
