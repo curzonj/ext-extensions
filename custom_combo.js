@@ -61,12 +61,12 @@ var CustomCombo = Ext.extend(Ext.form.ComboBox, {
     }
   },
   bindStore: function(store, initial) {
-    CustomCombo.superclass.bindStore.call(this, store, initial);
-
     if(this.store && !initial) {
       this.store.un('update', this.onStoreUpdate, this);
       this.store.un('datachanged', this.onStoreDataChanged, this);
     }
+
+    CustomCombo.superclass.bindStore.call(this, store, initial);
 
     if(store) {
       this.store.on('update', this.onStoreUpdate, this);

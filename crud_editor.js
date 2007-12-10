@@ -400,18 +400,18 @@ var TabbedCrudEditor = function(config) {
   this.tabPanel.autoDestroy = true;
   this.tabPanel.on('beforeremove', function(ct, panel) {
     if(panel.form && !panel.form.bypassSaveOnClose && panel.form.isDirty()) {
-      panel.form.bypassSaveOnClose = true;
-
       Ext.MessageBox.confirm("Save changes", "Do you want to save your changes?", function(btn) {
         if(btn == "yes") {
           // Don't close it if it is dirty, pass in
           // a call back to close it.
           panel.form.on('actioncomplete', function(form, action) {
+            form.bypassSaveOnClose = true;
             ct.remove(panel);  
           }, null, {single:true});
 
           this.saveForm(panel.form);
         } else {
+          panel.form.bypassSaveOnClose = true;
           ct.remove(panel);  
         }
       }, this);
@@ -426,6 +426,7 @@ var TabbedCrudEditor = function(config) {
 }
 Ext.extend(TabbedCrudEditor, CrudEditor, {
   autoSaveInterval: 3000,
+  maxAttempts: 3,
 
   loadRecord: function(record){
     var panel = this.panels[record.id];
@@ -497,6 +498,9 @@ Ext.extend(TabbedCrudEditor, CrudEditor, {
     panel.form.items.on('remove', function(ct, cp) {
       cp.un('change', startTimer, this);
     }, this);
+    panel.form.on('actioncomplete', function() {
+      this.autoSaveAttempts = 0;
+    }, panel.form);
 
     return panel;
   },
@@ -512,7 +516,7 @@ Ext.extend(TabbedCrudEditor, CrudEditor, {
       form.autoSaveAttempts = form.autoSaveAttempts || 1
       if(form.autoSaveAttempts < this.maxAttempts) {
         form.autoSaveAttempts = form.autoSaveAttempts + 1;
-        this.saveForm(form);
+        this.saveForm(form, action.options);
       } else {
         Ext.MessageBox.alert('Save failed',
         'Failed to save the record. Please try again.');
