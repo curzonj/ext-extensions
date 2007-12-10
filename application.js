@@ -106,7 +106,7 @@ Menu.loadPanel = function(panel) {
   }
 
   //non-standard, but helpful
-  previous = l.activeItem;
+  var previous = l.activeItem;
   panel.fireEvent('activate'); 
 
   t.add(panel);

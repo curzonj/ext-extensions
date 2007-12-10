@@ -257,6 +257,7 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
     // We should however keep the styling consistant across all our modules
   },
   updateRecordAfterTxn: function(record, result) {
+    // You need to pass in your own upto date record, (formSuccess does)
     record.id = result.objectid;
 
     if( result.hidden ) {

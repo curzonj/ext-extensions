@@ -6,6 +6,7 @@ var CustomCombo = Ext.extend(Ext.form.ComboBox, {
   selectOnFocus:true,
   forceSelection: true,
   triggerAction: 'all',
+  lazyInit: false,
 
 /*  findRecord: function(prop, value) {
     var record = null,
@@ -26,7 +27,7 @@ var CustomCombo = Ext.extend(Ext.form.ComboBox, {
   //value in there.
   setValue: function(v) {
     this.store.clearFilter();
-    CustomCombo.superclass.setValue.call(this);
+    CustomCombo.superclass.setValue.call(this, v);
   },
   beforeBlur: function() {
     CustomCombo.superclass.beforeBlur.call(this);
@@ -57,6 +58,30 @@ var CustomCombo = Ext.extend(Ext.form.ComboBox, {
           }
         }
       }
+    }
+  },
+  bindStore: function(store, initial) {
+    CustomCombo.superclass.bindStore.call(this, store, initial);
+
+    if(this.store && !initial) {
+      this.store.un('update', this.onStoreUpdate, this);
+      this.store.un('datachanged', this.onStoreDataChanged, this);
+    }
+
+    if(store) {
+      this.store.on('update', this.onStoreUpdate, this);
+      this.store.on('datachanged', this.onStoreDataChanged, this);
+    }
+  },
+  //This keeps everything kosher if the data changes
+  onStoreDataChanged: function(store) {
+    this.setValue(this.value);
+  },
+  onStoreUpdate: function(store, record, type) {
+    if(type ==  Ext.data.Record.COMMIT &&
+        record[(this.valueField || this.displayField)] == this.value) {
+
+      this.setValue(this.value);
     }
   }
 });

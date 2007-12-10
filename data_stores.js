@@ -153,7 +153,7 @@ Ext.ux.data.PersistentFilters = function(store) {
 Ext.ux.data.PersistentFilters.overrides = {
   onDataChanged: function() {
     this.applySort();
-    this.applyFilters();
+    this.applyFilters(false);
   },
   clearFilter: function(suppressEvent) {
     // Just removes the effects of filterBy
@@ -240,7 +240,7 @@ Ext.ux.data.PersistentFilters.overrides = {
 
     this.filteredCache = this.data
 
-    if(fire_event) {
+    if(fire_event !== false) {
       this.fireEvent("datachanged", this);
     }
   }

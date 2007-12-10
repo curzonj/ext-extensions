@@ -124,6 +124,20 @@ Ext.override(Ext.LoadMask, {
   }
 });
 
+Ext.override(Ext.form.ComboBox, {
+  clearValue : function(){
+    if(this.hiddenField){
+        this.hiddenField.value = '';
+    }
+    //By default if you call clearValue, then getValue, it
+    //will return the previous value
+    this.value = null;
+    this.setRawValue('');
+    this.lastSelectionText = '';
+    this.applyEmptyText();
+  }
+});
+
 Ext.override(Ext.data.Store, {
   insert: function(index, records) {
     records = [].concat(records);
