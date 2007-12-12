@@ -222,6 +222,56 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
       scope: this
     }));
   },
+  updateAnyAttribute: function(options) {
+    /* options:
+     *   store: store of the model you want to update
+     *   id: id of the record you want to update
+     *   field: the model attribute to update
+     *   value: the new value
+     *   success: the callback if it succeeds
+     *   failure: callbark on failure
+     *   scope: obvious
+     */
+     Ext.MessageBox.wait(options.waitMsg || "Updating ...");
+
+     Ext.applyIf(options, {
+        url: (options.store.url + '/' + options.id),
+        params: {},
+        callback: function(options, success, response) {
+          Ext.MessageBox.updateProgress(1);
+          Ext.MessageBox.hide();
+
+          if(success) {
+            var result =  Ext.decode(response.responseText);
+            if (result.success) {
+              var record = options.store.getById(options.id);
+              this.updateRecordAfterTxn(record, result);
+              if(options.successFn)
+                options.successFn.call(options.scope);
+            } else {
+              if(options.failureFn)
+                options.failureFn.call(options.scope);
+            }
+          } else {
+            if(options.failureFn)
+              options.failureFn.call(options.scope);
+          }
+        },
+        scope: this 
+     });
+    
+     options.successFn = options.success
+     options.failureFn = options.failure
+     delete options.success
+     delete options.failure
+
+     options.params['_method'] = 'put';
+     
+     if(options.field && options.value)
+       options.params[options.store.model+'['+options.field+']'] =  options.value;
+
+     Ext.Ajax.request(options); 
+  },
   formSuccess: function(form, action) {
     form.submitLock = false;
 

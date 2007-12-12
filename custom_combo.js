@@ -8,9 +8,13 @@ var CustomCombo = Ext.extend(Ext.form.ComboBox, {
   triggerAction: 'all',
   lazyInit: false,
 
-/*  findRecord: function(prop, value) {
+  //They don't clear the store when you load the form,
+  //so if the combo got left filtered, you can't get the right
+  //value in there.
+  findRecord: function(prop, value) {
     var record = null,
         data = this.store.filteredCache ||
+               this.store.snapshot ||
                this.store.data;
 
     data.each(function(r){
@@ -20,15 +24,7 @@ var CustomCombo = Ext.extend(Ext.form.ComboBox, {
       }
     });
     return record;
-  }, */
-
-  //They don't clear the store when you load the form,
-  //so if the combo got left filtered, you can't get the right
-  //value in there.
-  setValue: function(v) {
-    this.store.clearFilter();
-    CustomCombo.superclass.setValue.call(this, v);
-  },
+  }, 
   beforeBlur: function() {
     CustomCombo.superclass.beforeBlur.call(this);
     var text = this.getRawValue();
@@ -63,24 +59,34 @@ var CustomCombo = Ext.extend(Ext.form.ComboBox, {
   bindStore: function(store, initial) {
     if(this.store && !initial) {
       this.store.un('update', this.onStoreUpdate, this);
-      this.store.un('datachanged', this.onStoreDataChanged, this);
+      this.store.un('load', this.onStoreLoad, this);
     }
 
     CustomCombo.superclass.bindStore.call(this, store, initial);
 
     if(store) {
       this.store.on('update', this.onStoreUpdate, this);
-      this.store.on('datachanged', this.onStoreDataChanged, this);
+      this.store.on('load', this.onStoreLoad, this);
     }
   },
-  //This keeps everything kosher if the data changes
-  onStoreDataChanged: function(store) {
-    this.setValue(this.value);
+  //This keeps everything kosher if the data changes.
+  //don't change anything if they are in the middle of selecting something
+  onStoreLoad: function() {
+    this.syncValue();
   },
   onStoreUpdate: function(store, record, type) {
-    if(type ==  Ext.data.Record.COMMIT &&
+    if(!this.hasFocus && type ==  Ext.data.Record.COMMIT &&
         record[(this.valueField || this.displayField)] == this.value) {
 
+      this.syncValue();
+    }
+  },
+  syncValue: function() {
+    if(this.hasFocus) {
+      this.on('blur', function() {
+        this.setValue(this.value);
+      }, this, {single: true});
+    } else {
       this.setValue(this.value);
     }
   }

@@ -263,6 +263,9 @@ Ext.extend(CRUDGridPanel, Ext.grid.GridPanel, {
     var r = sel[0]; 
     this.setRecordSelection(r)
 
+    this.editRecord(r);
+  },
+  editRecord: function(r) {
     this.editor.loadRecord(r);
   },
   onClickDeleteBtn: function() {
@@ -297,7 +300,7 @@ Ext.extend(CRUDGridPanel, Ext.grid.GridPanel, {
     var r = this.store.getAt(rowIndex);
     this.setRecordSelection(r);
     if (this.editor && CurrentUser.has(this.store.rwPerm))
-      this.editor.loadRecord(r);
+      this.editRecord(r);
   },
   setRecordSelection: function(r) {
     // select the right record if it exists
