@@ -492,6 +492,19 @@ var renderDate = function(value) {
   return Date.parseDate(value, 'Y/m/d H:i:s').format("M j Y");
 };
 
+//Renderer
+var join = function(fk, fstore, attr) {
+  return function(value, meta, record, rowIndex, colIndex, store) {
+    return fstore.data.map[record.data[fk]][attr]
+  }
+}
+//For use in code
+var joinFn = function(fk, fstore, attr) {
+  return function(record) {
+    return fstore.data.map[record.data[fk]][attr]
+  }
+}
+
 var createFilterField = function(store) {
   var filterRegexArray = null;
 
