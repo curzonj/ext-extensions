@@ -23,9 +23,7 @@ var CrudEditor = function(config) {
 }
 Ext.extend(CrudEditor, Ext.util.Observable, {
   createParentRef: function(form) {
-    var saveParent = function() {
-      editor.saveForm(form);
-    }
+    var saveParent = this.saveForm.createDelegate(this, [form]);
     var listenerDelegate = this.on.createDelegate(this);
 
     return {
@@ -75,7 +73,7 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
       success: function(response) {
         var result =  Ext.decode(response.responseText);
         if (result.success) {
-          this.updateRecordAfterTxn(record, result);
+          this.updateRecord(record, result);
         } else {
           msg = result.msg || failedMsg;
           Ext.MessageBox.alert('Operation failed', msg);
@@ -96,14 +94,19 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
     this.initializeRecord(record);
 
     if(this.parent && this.parent.form.record.newRecord) {
-      this.parent.form.on('actioncomplete', function() {
-        //All we need is for parent.record.id to be valid
-        //when we save. The only reason we wait to load the
-        //record until the parent is saved is that will show
-        //the window and we don't want that unless the parent
-        //was successfull
+      var form = this.parent.form;
+
+      var failFn, loadFn = function() {
+        form.un('actionfailed', failFn, this);
         this.loadRecord(record);
-      }, this, {single:true});
+      }
+      failFn = function() {
+        form.un('actioncomplete', loadFn, this);
+      }
+
+      form.on('actioncomplete', loadFn, this, {single: true});
+      form.on('actionfailed', failFn, this, {single: true});
+
       this.parent.save();
     } else {
       this.loadRecord(record);
@@ -245,7 +248,7 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
             var result =  Ext.decode(response.responseText);
             if (result.success) {
               var record = options.store.getById(options.id);
-              this.updateRecordAfterTxn(record, result);
+              this.updateRecord(record, result);
               if(options.successFn)
                 options.successFn.call(options.scope);
             } else {
@@ -283,7 +286,8 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
           this.store.getById(action.result.objectid);
       }
 
-      this.updateRecordAfterTxn(record, action.result);
+      this.processRecords(action.result);
+      this.updateRecord(record, action.result);
     }
   },
   formFailure: function(form, action) {
@@ -306,7 +310,7 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
     // for more information about your options for styling error messages.
     // We should however keep the styling consistant across all our modules
   },
-  updateRecordAfterTxn: function(record, result) {
+  updateRecord: function(record, result) {
     // You need to pass in your own upto date record, (formSuccess does)
     record.id = result.objectid;
 
@@ -316,9 +320,14 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
     } else {
       if(record.newRecord) {
         record.newRecord = false;
+
         this.store.add(record);
       }
-    
+   
+      // We use the edit mechnism on new records to deal with
+      // forms that may save a new record without closing; they
+      // need to get updates about any fields the server changed
+      // on them.
       record.beginEdit();
       for(var a in result.data) {
         var value = result.data[a];
@@ -333,6 +342,22 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
       record.endEdit();
 
       record.commit();
+    }
+  },
+  processRecords: function(data) {
+    if(data.records) {
+      for(var i=0;i<data.records.length;i++) {
+        var r = data.records[i], record = null;
+        var store = Ext.StoreMgr.get(r.klass || r.model);
+        if(store && r.id) {
+          record = store.getById(r.id);
+          if(!record) {
+            record = new store.reader.recordType();
+            record.newRecord = true;
+          }
+          this.updateRecord(record, r);
+        }
+      }
     }
   }
 });

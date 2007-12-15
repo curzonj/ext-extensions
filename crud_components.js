@@ -20,11 +20,13 @@ Ext.extend(CrudStore, Ext.data.Store, {
     this.checkParentColumns(idCol)
 
     p.on('load', function(form, record) {
-      //This deals with polymorphic relations
-      this.relation_id = record.id;
-      this.relation_type = p.store.klass;
+      if(form == p.form) {
+        //This deals with polymorphic relations
+        this.relation_id = record.id;
+        this.relation_type = p.store.klass;
 
-      this.addFilter(this.parentFilter, this);
+        this.addFilter(this.parentFilter, this);
+      }
     }, this);
   },
   checkParentColumns: function(idCol) {
@@ -492,16 +494,10 @@ var renderDate = function(value) {
   return Date.parseDate(value, 'Y/m/d H:i:s').format("M j Y");
 };
 
-//Renderer
-var join = function(fk, fstore, attr) {
-  return function(value, meta, record, rowIndex, colIndex, store) {
-    return fstore.data.map[record.data[fk]][attr]
-  }
-}
-//For use in code
-var joinFn = function(fk, fstore, attr) {
-  return function(record) {
-    return fstore.data.map[record.data[fk]][attr]
+//Grid Renderer
+var s = function(str) {
+  return function(value) {
+    return eval("value."+str);
   }
 }
 

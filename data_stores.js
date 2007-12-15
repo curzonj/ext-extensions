@@ -20,12 +20,18 @@ Ext.override(Ext.data.Store, {
     return newObj;
   },
   mirror: function(source) {
-    this.mirrorSource = source;
+    if(source.mirrorSource) {
+      this.mirrorSource = source.mirrorSource;
+    } else {
+      this.mirrorSource = source;
+    }
+
+    source.clones = source.clones || [];
+    source.clones.push(this);
 
     var update = function() {
       this.snapshot = source.snapshot;
       this.applyFilters();
-      this.fireEvent('datachanged', this);
     }
 
     source.on('add', update, this);
@@ -197,7 +203,7 @@ Ext.ux.data.PersistentFilters.overrides = {
     }
 
     if(!suppress_filtering)
-      this.applyFilters(true);
+      this.applyFilters();
   },
   removeFilter: function(fn, scope, suppress_filtering) {
     var index;
@@ -205,7 +211,7 @@ Ext.ux.data.PersistentFilters.overrides = {
       this.filterChain.splice(index, 1);
 
       if(!suppress_filtering)
-        this.applyFilters(true);
+        this.applyFilters();
     }
   },
   findFilter: function(fn, scope) {
