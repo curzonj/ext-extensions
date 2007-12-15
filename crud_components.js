@@ -296,7 +296,7 @@ Ext.extend(CRUDGridPanel, Ext.grid.GridPanel, {
   onClickRefresh: function(){
     //TODO
     //v = StatusBar.showStatusSpinner("Loading...");
-    this.store.load(/*{callback:function(){StatusBar.finishStatusSpinner(v)}}*/);
+    this.store.reload(/*{callback:function(){StatusBar.finishStatusSpinner(v)}}*/);
   },
   onGridCellClicked: function(grid, rowIndex, cellIndex, e) {
     var r = this.store.getAt(rowIndex);

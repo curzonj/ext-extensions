@@ -113,6 +113,15 @@ Ext.ux.data.ReloadingStore = function(store) {
 }
 Ext.ux.data.ReloadingStore.overrides = {
   refreshPeriod: 120000,
+  loadIfNeeded: function() {
+    if(!this.proxy)
+      return;
+
+    var data = this.snapshot || this.filteredCache || this.data;
+    if(!this.refreshTask || (data.length == 0 && !this.proxy.activeRequest)) {
+      this.load();
+    }
+  },
   mirror: function(source) {
     this.mirror_without_reloading(source);
     this.createRefreshTask = source.createRefreshTask.createDelegate(source);

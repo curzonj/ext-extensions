@@ -16,8 +16,8 @@ var CrudEditor = function(config) {
     load: true,
   });
 
-  if(this.store.proxy && !this.store.proxy.activeRequest)
-    this.store.load();
+  if(this.store.loadIfNeeded)
+    this.store.loadIfNeeded();
 
   CrudEditor.superclass.constructor.call(this, config);
 }
@@ -77,7 +77,7 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
         } else {
           msg = result.msg || failedMsg;
           Ext.MessageBox.alert('Operation failed', msg);
-          this.store.load();                      
+          this.store.reload();                      
         }
       },
       failure: function() {
@@ -141,7 +141,7 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
         } else {
           msg = result.msg || "Failed to delete the record. Please try again."
           Ext.MessageBox.alert('Delete failed', msg);
-          this.store.load();                      
+          this.store.reload();                      
         }
       },
       failure: function() {
@@ -473,10 +473,19 @@ var TabbedCrudEditor = function(config) {
   TabbedCrudEditor.superclass.constructor.call(this, config);
 
   this.tabPanel.autoDestroy = true;
-  this.tabPanel.on('beforeremove', function(ct, panel) {
+  this.tabPanel.on('beforeremove', this.onBeforeRemove, this);
+
+  this.panels = {};
+}
+Ext.extend(TabbedCrudEditor, CrudEditor, {
+  autoSaveInterval: 2000,
+  maxAttempts: 3,
+
+  onBeforeRemove: function(ct, panel) {
     if(panel.form && !panel.form.bypassSaveOnClose && panel.form.isDirty()) {
       Ext.MessageBox.confirm("Save changes", "Do you want to save your changes?", function(btn) {
-        if(btn == "yes") {
+        // Often the data gets saved while the person choses
+        if(btn == "yes" && panel.form.isDirty()) {
           // Don't close it if it is dirty, pass in
           // a call back to close it.
           panel.form.on('actioncomplete', function(form, action) {
@@ -495,14 +504,7 @@ var TabbedCrudEditor = function(config) {
     } else {
       return true;
     }
-  }, this);
-
-  this.panels = {};
-}
-Ext.extend(TabbedCrudEditor, CrudEditor, {
-  autoSaveInterval: 3000,
-  maxAttempts: 3,
-
+  },
   loadRecord: function(record){
     var panel = this.panels[record.id];
     if(panel) {
@@ -516,13 +518,16 @@ Ext.extend(TabbedCrudEditor, CrudEditor, {
 
     var panel =  this.createEditPanel(record);
 
+    panel.hidden = true;
+    panel.render(Ext.getBody());
+    panel.doLayout();
+
+    this.panels[record.id] = panel;
+    this.loadForm(panel.form, record);
+
     this.tabPanel.add(panel);
     this.tabPanel.setActiveTab(panel);
     panel.doLayout();
-
-    this.loadForm(panel.form, record);
-
-    this.panels[record.id] = panel;
   },
 
   getPanel: function(record) { },
