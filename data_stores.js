@@ -112,7 +112,7 @@ Ext.ux.data.ReloadingStore = function(store) {
   }, store, {single:true});
 }
 Ext.ux.data.ReloadingStore.overrides = {
-  refreshPeriod: 120000,
+  refreshPeriod: 360000,
   loadIfNeeded: function() {
     if(!this.proxy)
       return;
@@ -128,10 +128,12 @@ Ext.ux.data.ReloadingStore.overrides = {
     this.cancelRefreshTask = source.cancelRefreshTask.createDelegate(source);
   },
   cancelRefreshTask: function() {
-    this.refreshTask.cancel();
+    if(this.refreshTask) {
+      this.refreshTask.cancel();
+    }
   },
   createRefreshTask: function(refreshRate) {
-    if(!this.proxy)
+    if(!this.proxy || refreshRate <= 0)
       return;
 
     if(this.refreshTask)

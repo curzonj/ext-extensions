@@ -169,13 +169,13 @@ Ext.extend(CRUDGridPanel, Ext.grid.GridPanel, {
      *
      * To create event buttons, pass in something like:
      * btnConfigs: [{
-     *   text: 'Fire',
-     *   handler: function() {
-     *     this.confirmMultipleRows(
-     *       "Do you really want to fire <b>all {0} selected employees</b>?",
-     *       "Please select at least on employee to fire.",
-     *       this.onSendEvent.createDelegate(this, ['fire', 'Failed to fire employee(s). Please try again.'], true));
-     *   },
+         text: "Cancel",
+         handler: function() {
+           this.confirmMultipleRows(
+             "Do you really want to cancel <b>all {0} selected materials</b>?",
+             "Please select at least one material to cancel.",
+             this.editor.eventHandler('cancel', 'Failed to cancel material request. Please try again.')
+         }
      * }]
      */
     if(this.btnConfigs) {
@@ -274,7 +274,8 @@ Ext.extend(CRUDGridPanel, Ext.grid.GridPanel, {
     this.confirmMultipleRows(
       "Do you really want to delete <b>all {0} selected items</b>?",
       "Please select at least on item to delete.",
-      this.editor.deleteRecord, this.editor);
+      this.editor.hideRecord,
+      this.editor);
   },
   // Default scope is the crudgrid
   confirmMultipleRows: function(msg, alt, fn, scope){
@@ -398,13 +399,13 @@ Ext.extend(CrudTreePanel, Ext.tree.TreePanel, {
      *
      * To create event buttons, pass in something like:
      * btnConfigs: [{
-     *   text: 'Fire',
-     *   handler: function() {
-     *     this.confirmMultipleRows(
-     *       "Do you really want to fire <b>all {0} selected employees</b>?",
-     *       "Please select at least on employee to fire.",
-     *       this.onSendEvent.createDelegate(this, ['fire', 'Failed to fire employee(s). Please try again.'], true));
-     *   },
+         text: "Cancel",
+         handler: function() {
+           this.confirmMultipleRows(
+             "Do you really want to cancel <b>all {0} selected materials</b>?",
+             "Please select at least one material to cancel.",
+             this.editor.eventHandler('cancel', 'Failed to cancel material request. Please try again.')
+         }
      * }]
      */
     if(this.btnConfigs) {

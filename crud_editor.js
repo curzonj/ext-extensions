@@ -225,6 +225,13 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
       scope: this
     }));
   },
+  hideRecord: function(record) {
+    this.updateAnyAttribute({
+      record: record,
+      field: 'hidden',
+      value: true,
+    });
+  },
   updateAnyAttribute: function(options) {
     /* options:
      *   store: store of the model you want to update
@@ -235,6 +242,12 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
      *   failure: callbark on failure
      *   scope: obvious
      */
+     options.applyIf({
+       id: ( options.record ? options.record.id : null ),
+       store: this.store,
+       scope: this
+     });
+
      Ext.MessageBox.wait(options.waitMsg || "Updating ...");
 
      Ext.applyIf(options, {
@@ -448,8 +461,9 @@ Ext.extend(DialogCrudEditor, CrudEditor, {
   // TODO onRender, resize to component's size
   onClickSave: function(trigger, e) {
       //Only function as a button handler on buttons, this makes
-      //sure ENTER still works on other buttons
-      if(typeof trigger == 'object' || e.target.type != 'button') {
+      //sure ENTER still works on other buttons and textareas
+      var list = [ 'button', 'textarea' ];
+      if(typeof trigger == 'object' || list.indexOf(e.target.type) == -1) {
         this.dialog.keyMap.disable();
         this.form.on('actioncomplete', function() {
           this.dialog.hide();
@@ -519,13 +533,13 @@ Ext.extend(TabbedCrudEditor, CrudEditor, {
     var panel =  this.createEditPanel(record);
 
     panel.hidden = true;
-    panel.render(Ext.getBody());
+    this.tabPanel.add(panel);
+    panel.render(this.tabPanel.getLayoutTarget());
     panel.doLayout();
 
     this.panels[record.id] = panel;
     this.loadForm(panel.form, record);
 
-    this.tabPanel.add(panel);
     this.tabPanel.setActiveTab(panel);
     panel.doLayout();
   },
