@@ -56,6 +56,21 @@ Ext.override(Ext.form.BasicForm, {
     }
 });
 
+Ext.override(Ext.Component, {
+    cascade : function(fn, scope, args){
+        if(fn.call(scope || this, args || this) !== false){
+            if(this.items){
+                var cs = this.items.items;
+                for(var i = 0, len = cs.length; i < len; i++){
+                    if(cs[i].cascade){
+                        cs[i].cascade(fn, scope, args);
+                    }
+                }
+            }
+        }
+    }
+});
+
 Ext.override(Ext.form.Radio, {
     onRender : function(ct, position) {
         Ext.form.Radio.superclass.onRender.call(this, ct, position);
