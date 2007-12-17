@@ -428,7 +428,7 @@ Ext.extend(DialogCrudEditor, CrudEditor, {
       draggable: true,
       collapsible: false,
       defaults: { border: false },
-      title: 'Edit',
+      title: ('Edit: '+config.store.klass),
       layout: 'fit',
       buttons: [{
         text: "Save",
