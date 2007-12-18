@@ -29,10 +29,9 @@ Ext.extend(CrudStore, Ext.data.Store, {
       }
     }, this);
   },
+  hasParentType: Ext.emptyFn,
   checkParentColumns: function(idCol) {
-    if(!idCol) {
-      this.hasParentType = function() { return false; };
-    } else {
+    if(idCol) {
       var column = idCol.replace(/id/, "type");
       var value = (this.recordType.prototype.fields.keys.indexOf(column) != -1);
 

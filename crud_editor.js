@@ -159,17 +159,19 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
     }
   },
   loadRecord: function(record) {},
-  loadForm: function(form, record){
+  //the panel parameter is optional, it is up to the
+  //implementation to pass it or not
+  loadForm: function(form, record, panel){
     // TODO needs handle record locking
     form.record = record;
 
-    if(this.fireEvent('beforeload', form, record) !== false) {
+    if(this.fireEvent('beforeload', form, record, panel) !== false) {
 
       form.trackResetOnLoad = true;
       form.loadRecord(record);
       form.clearInvalid();
 
-      this.fireEvent('load', form, record);
+      this.fireEvent('load', form, record, panel);
 
       return true;
     } else {
@@ -199,8 +201,13 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
       return;
     form.submitLock = true;
 
-    // see ext-all-debug line 23816. It calls isValid for us
-    
+    if (!form.isValid()) {
+      Ext.MessageBox.alert('Save failed',
+        'Please fill in all the required boxes highlighted in red.');
+      form.submitLock = false;
+      return;
+    }
+
     o = o || {};
     o.params = o.params || {};
     
@@ -217,6 +224,8 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
       Ext.applyIf(o.params, this.getParentRelAttrs(record));
     }
 
+    this.dealWithEmptyCombos(form);
+
     form.submit(Ext.applyIf(o ,{
       url: requestURL,
       waitMsg: "Saving record...",
@@ -224,6 +233,15 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
       failure: this.formFailure,
       scope: this
     }));
+  },
+  dealWithEmptyCombos: function(form) {
+    var el = form.el.dom.elements;
+    for(var i=0;i<el.length;i++) {
+      var value = el[i].value;
+      if(el[i].value == "Select one...") {
+        el[i].value = "";
+      }
+    }
   },
   hideRecord: function(record) {
     this.updateAnyAttribute({
@@ -490,6 +508,7 @@ var TabbedCrudEditor = function(config) {
   this.tabPanel.on('beforeremove', this.onBeforeRemove, this);
 
   this.panels = {};
+  this.cachedEditPanel = this.createEditPanel();
 }
 Ext.extend(TabbedCrudEditor, CrudEditor, {
   autoSaveInterval: 2000,
@@ -530,23 +549,24 @@ Ext.extend(TabbedCrudEditor, CrudEditor, {
       }
     } 
 
-    var panel =  this.createEditPanel(record);
+    var panel = this.cachedEditPanel || this.createEditPanel();
+    this.cachedEditPanel = null;
 
-    panel.hidden = true;
-    this.tabPanel.add(panel);
-    panel.render(this.tabPanel.getLayoutTarget());
-    panel.doLayout();
-
+    this.loadForm(panel.form, record, panel);
     this.panels[record.id] = panel;
-    this.loadForm(panel.form, record);
 
+    this.tabPanel.add(panel);
     this.tabPanel.setActiveTab(panel);
     panel.doLayout();
-  },
 
-  getPanel: function(record) { },
-  createEditPanel: function(record) {
-    var panel = this.getPanel(record);
+    var editor = this;
+    setTimeout(function(){
+      editor.cachedEditPanel = editor.createEditPanel()
+    }, 2);
+  },
+  getPanel: Ext.emptyFn,
+  createEditPanel: function() {
+    var panel = this.getPanel();
     Ext.apply(panel, {
       closable: true,
       autoRender: true,
@@ -595,6 +615,11 @@ Ext.extend(TabbedCrudEditor, CrudEditor, {
     panel.form.on('actioncomplete', function() {
       this.autoSaveAttempts = 0;
     }, panel.form);
+
+    panel.hidden = true;
+//    panel.render(this.tabPanel.getLayoutTarget());
+    panel.render(Ext.getBody());
+    panel.doLayout();
 
     return panel;
   },
