@@ -14,6 +14,8 @@ var CrudStore = function(config) {
   Ext.ux.data.ReloadingStore(this),
   Ext.ux.data.PersistentFilters(this)
 }
+ds = Ext.StoreMgr
+
 Ext.extend(CrudStore, Ext.data.Store, {
   linkToParent: function(p, idCol) {
     this.parentIdColumn = idCol;
