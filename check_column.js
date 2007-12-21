@@ -1,4 +1,12 @@
-// from: http://extjs.com/deploy/dev/examples/grid/edit-grid.js
+/*
+ * Ext JS Library 2.0
+ * Copyright(c) 2006-2007, Ext JS, LLC.
+ * licensing@extjs.com
+ * 
+ * http://extjs.com/license
+ */
+// Taken from: http://extjs.com/deploy/dev/examples/grid/edit-grid.js
+
 Ext.grid.CheckColumn = function(config){
     Ext.apply(this, config);
     if(!this.id){

@@ -71,6 +71,18 @@ Ext.override(Ext.Component, {
     }
 });
 
+Ext.override(Ext.data.GroupingStore, {
+   applySort : function(){
+        Ext.data.GroupingStore.superclass.applySort.call(this);
+        if(!this.groupOnSort && !this.remoteGroup){
+            var gs = this.getGroupState();
+            if(gs && (!this.sortInfo || gs != this.sortInfo.field)){
+                this.sortData(this.groupField);
+            }
+        }
+    }
+});
+
 Ext.override(Ext.form.Radio, {
     onRender : function(ct, position) {
         Ext.form.Radio.superclass.onRender.call(this, ct, position);

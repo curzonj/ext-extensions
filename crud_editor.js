@@ -201,12 +201,14 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
       return;
     form.submitLock = true;
 
-    if (!form.isValid()) {
-      Ext.MessageBox.alert('Save failed',
-        'Please fill in all the required boxes highlighted in red.');
+/*    if (!form.isValid()) {
+      if(o.waitMsg !== null) {
+        Ext.MessageBox.alert('Save failed',
+          'Please fill in all the required boxes highlighted in red.');
+      }
       form.submitLock = false;
       return;
-    }
+    } */
 
     o = o || {};
     o.params = o.params || {};
@@ -238,7 +240,7 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
     var el = form.el.dom.elements;
     for(var i=0;i<el.length;i++) {
       var value = el[i].value;
-      if(el[i].value == "Select one...") {
+      if(el[i].value == "Select one..." && el[i].name) {
         el[i].value = "";
       }
     }
