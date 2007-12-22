@@ -66,7 +66,7 @@ var CustomCombo = Ext.extend(Ext.form.ComboBox, {
 
     if(store) {
       this.store.on('update', this.onStoreUpdate, this);
-      this.store.on('load', this.onStoreLoad, this);
+      this.store.on('datachanged', this.onStoreLoad, this);
     }
   },
   //This keeps everything kosher if the data changes.

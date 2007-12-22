@@ -272,7 +272,7 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
      *   failure: callbark on failure
      *   scope: obvious
      */
-     options.applyIf({
+     Ext.applyIf(options, {
        id: ( options.record ? options.record.id : null ),
        store: this.store,
        scope: this

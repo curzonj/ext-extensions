@@ -29,23 +29,23 @@ Ext.override(Ext.data.Store, {
     source.clones = source.clones || [];
     source.clones.push(this);
 
-    source.on('add', function(store, records, index) {
-      this.add(records);
-      this.applyFilters();
-    }, this);
-    source.on('remove', function(store, record, index) {
-      this.remove(record);
-    }, this);
-    source.on('load', function() {
+    var update = function() {
       this.snapshot = source.snapshot;
       this.applyFilters();
-    }, this);
-    source.on('update', function(store, record, type) {
-      this.fireEvent("update", this, record, type);
-    }, this);
-    source.on('load', function(store, records, options) {
-      this.fireEvent("load", this, records, options);
-    }, this);
+    }
+
+    //The index from add/remove won't match with ours and
+    //we may not want their records anyways, so we have to
+    //call applyFilters and we have to fire datachanged
+    //If you try and call this.add(record) with source.on('add'
+    //you'll get a loop because of the delegates below. The
+    //delegates are essential to make sure updated data gets
+    //updated in all the mirrored trees
+    source.on('add', update, this);
+    source.on('remove', update, this);
+    source.on('datachanged', update, this);
+
+    this.relayEvents(source, ['load', 'update']);
 
     // By creating a delegate based on the source's method,
     // if the source is also a clone, the delegate call
