@@ -93,23 +93,33 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
     var record = new this.store.reader.recordType();
     this.initializeRecord(record);
 
-    if(this.parent && this.parent.form.record.newRecord) {
-      var form = this.parent.form;
-
-      var failFn, loadFn = function() {
-        form.un('actionfailed', failFn, this);
-        this.loadRecord(record);
-      }
-      failFn = function() {
-        form.un('actioncomplete', loadFn, this);
-      }
-
-      form.on('actioncomplete', loadFn, this, {single: true});
-      form.on('actionfailed', failFn, this, {single: true});
-
-      this.parent.save();
+    if(this.parent) {
+      this.executeOnFormSaved(
+        this.parent.form,
+        function() { this.parent.save(); },
+        function() { this.loadRecord(record); }
+      );
     } else {
       this.loadRecord(record);
+    }
+  },
+  executeOnFormSaved: function(form, saveFn, fn, scope) {
+    scope = scope || this;
+    if(form.record.newRecord || form.isDirty()) {
+      var failFn, loadFn = function() {
+        form.un('actionfailed', failFn, null);
+        fn.call(scope);
+      }
+      failFn = function() {
+        form.un('actioncomplete', loadFn, null);
+      }
+
+      form.on('actioncomplete', loadFn, null, {single: true});
+      form.on('actionfailed', failFn, null, {single: true});
+
+      saveFn.call(scope);
+    } else {
+      fn.call(scope);
     }
   },
   initializeRecord: function(record){
@@ -309,7 +319,6 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
      Ext.Ajax.request(options); 
   },
   formSuccess: function(form, action) {
-    form.submitLock = false;
 
     if(action.result) { //should never be false, but who knows
       // Reload our record because it might be too old
@@ -322,9 +331,10 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
       this.processRecords(action.result);
       this.updateRecord(record, action.result);
     }
+
+    form.submitLock = false;
   },
   formFailure: function(form, action) {
-    form.submitLock = false;
 
     if (action.failureType == 'client' && action.options.waitMsg) {
       Ext.MessageBox.alert('Save failed',
@@ -342,6 +352,8 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
     // Read http://extjs.com/deploy/ext/docs/output/Ext.form.TextField.html#config-msgTarget
     // for more information about your options for styling error messages.
     // We should however keep the styling consistant across all our modules
+    
+    form.submitLock = false;
   },
   updateRecord: function(record, result) {
     // You need to pass in your own upto date record, (formSuccess does)
@@ -518,22 +530,24 @@ Ext.extend(TabbedCrudEditor, CrudEditor, {
 
   onBeforeRemove: function(ct, panel) {
     if(panel.form && !panel.form.bypassSaveOnClose && panel.form.isDirty()) {
+      var closePanelFn = function() {
+        panel.form.bypassSaveOnClose = true;
+        ct.remove(panel);  
+      }
+
       Ext.MessageBox.confirm("Save changes", "Do you want to save your changes?", function(btn) {
         // Often the data gets saved while the person choses
-        if(btn == "yes" && panel.form.isDirty()) {
-          // Don't close it if it is dirty, pass in
-          // a call back to close it.
-          panel.form.on('actioncomplete', function(form, action) {
-            form.bypassSaveOnClose = true;
-            ct.remove(panel);  
-          }, null, {single:true});
-
-          this.saveForm(panel.form);
+        if(btn == "yes") {
+          this.executeOnFormSaved(
+            panel.form,
+            function() { this.saveForm(panel.form); },
+            closePanelFn
+          );
         } else {
-          panel.form.bypassSaveOnClose = true;
-          ct.remove(panel);  
+          closePanelFn.call();
         }
       }, this);
+
 
       return false;
     } else {

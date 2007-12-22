@@ -29,17 +29,22 @@ Ext.override(Ext.data.Store, {
     source.clones = source.clones || [];
     source.clones.push(this);
 
-    var update = function() {
+    source.on('add', function(store, records, index) {
+      this.add(records);
+      this.applyFilters();
+    }, this);
+    source.on('remove', function(store, record, index) {
+      this.remove(record);
+    }, this);
+    source.on('load', function() {
       this.snapshot = source.snapshot;
       this.applyFilters();
-    }
-
-    source.on('add', update, this);
-    source.on('remove', update, this);
-    source.on('datachanged', update, this);
+    }, this);
     source.on('update', function(store, record, type) {
-      if(type == Ext.data.Record.COMMIT)
-        update.call(this);
+      this.fireEvent("update", this, record, type);
+    }, this);
+    source.on('load', function(store, records, options) {
+      this.fireEvent("load", this, records, options);
     }, this);
 
     // By creating a delegate based on the source's method,
@@ -52,9 +57,6 @@ Ext.override(Ext.data.Store, {
     this.remove = source.remove.createDelegate(source);
     this.load = source.load.createDelegate(source);
     this.reload = source.reload.createDelegate(source);
-    this.add = source.add.createDelegate(source);
-
-    this.relayEvents(source, ['load']);
 
     this.onMirror(source);
   },

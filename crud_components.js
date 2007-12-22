@@ -1,8 +1,9 @@
 var CrudStore = function(config) {
   // From JsonStore
   Ext.apply(config, {
-     proxy: !config.data ? new Ext.data.HttpProxy({url: config.url}) : undefined,
-     reader: new Ext.data.JsonReader(config, config.fields)
+    sortInfo: { field: 'id', direction: 'ASC' },
+    proxy: !config.data ? new Ext.data.HttpProxy({url: config.url}) : undefined,
+    reader: new Ext.data.JsonReader(config, config.fields)
   })
 
   CrudStore.superclass.constructor.call(this, config);
@@ -16,7 +17,7 @@ var CrudStore = function(config) {
 }
 ds = Ext.StoreMgr
 
-Ext.extend(CrudStore, Ext.data.Store, {
+Ext.extend(CrudStore, Ext.data.GroupingStore, {
   linkToParent: function(p, idCol) {
     this.parentIdColumn = idCol;
     this.checkParentColumns(idCol)
@@ -94,9 +95,6 @@ var commonCrudPanelFunctions = {
  */
 var CRUDGridPanel = function(config) {
   Ext.applyIf(config, {
-    viewConfig: {
-      forceFit:true
-    },
     loadMask: {
       // Just mask the grid the first time,
       // after that we have data to show until
@@ -115,6 +113,13 @@ Ext.extend(CRUDGridPanel, Ext.grid.GridPanel, {
     CRUDGridPanel.superclass.initComponent.call(this);
 
     this.setupEditor();
+
+    this.view = new Ext.grid.GroupingView(Ext.apply({
+      forceFit:true,
+      enableNoGroups: true,
+      hideGroupedColumn: true,
+      groupTextTpl: '{text} ({[values.rs.length]} {[values.rs.length > 1 ? "Items" : "Item"]})'
+    }, this.viewConfig));
 
     this.elements += ',tbar';
     this.topToolbar = this.createToolbar();
@@ -219,30 +224,11 @@ Ext.extend(CRUDGridPanel, Ext.grid.GridPanel, {
       }
     }
 
-    if(this.disableGrouping !== true) {
-      var cm = this.initialConfig.columns || this.colModel.config;
-      if(cm)
-        for(var i=0;i<cm.length;i++){
-          var c = cm[i];
-          var options = {
-            group: 'groupby',
-            checked: false,
-            text: c.header
-            // TODO Add the handler to do the grouping
-          }
-          groupByMenuOptions.push(options);
-        }
-    }
-
     return {
       text: "Options",
       iconCls: 'boptions',
       menu: {
         items: [{
-          text: "Group by",
-          menu:{items:groupByMenuOptions},
-          disabled: (groupByMenuOptions.length < 1)
-        }, {
           text: "Custom View",
           menu:{items: viewMenuOptions},
           disabled: (viewMenuOptions.length < 1)
