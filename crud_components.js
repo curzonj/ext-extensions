@@ -1,6 +1,6 @@
 var CrudStore = function(config) {
   // From JsonStore
-  Ext.apply(config, {
+  Ext.applyIf(config, {
     sortInfo: { field: 'id', direction: 'ASC' },
     proxy: !config.data ? new Ext.data.HttpProxy({url: config.url}) : undefined,
     reader: new Ext.data.JsonReader(config, config.fields)
@@ -108,6 +108,7 @@ var CRUDGridPanel = function(config) {
 // The crudgrid is not currently compatable with inline editing
 Ext.extend(CRUDGridPanel, Ext.grid.GridPanel, {
   lifeCycleDelay: 300000, //5min
+  autoSizeColumns: true,
 
   initComponent: function() {
     CRUDGridPanel.superclass.initComponent.call(this);
