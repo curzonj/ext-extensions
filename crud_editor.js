@@ -90,18 +90,24 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
     //This doesn't load it into the dataStore because that should
     //reflect saved objects, this only exists in the form. The
     //record will be added into the dataStore if it is saved.
-    var record = new this.store.reader.recordType();
-    this.initializeRecord(record);
+    var record = this.newRecord.apply(this, arguments);
 
     if(this.parent) {
       this.executeOnFormSaved(
-        this.parent.form,
-        function() { this.parent.save(); },
+        this.parent.form, this.parent.save,
         function() { this.loadRecord(record); }
       );
     } else {
       this.loadRecord(record);
     }
+  },
+  newRecord: function() {
+    var record = new this.store.reader.recordType();
+
+    list = [record].concat(arguments);
+    this.initializeRecord.apply(this, list);
+
+    return record;
   },
   executeOnFormSaved: function(form, saveFn, fn, scope) {
     scope = scope || this;

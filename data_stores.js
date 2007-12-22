@@ -20,6 +20,8 @@ Ext.override(Ext.data.Store, {
     return newObj;
   },
   mirror: function(source) {
+    // Mirrored data stores only work for a limited subset of the total
+    // uses of datastores. Consider them carefully before using them.
     if(source.mirrorSource) {
       this.mirrorSource = source.mirrorSource;
     } else {
@@ -44,8 +46,19 @@ Ext.override(Ext.data.Store, {
     source.on('add', update, this);
     source.on('remove', update, this);
     source.on('datachanged', update, this);
+    source.on('update', function(store, record, type) {
+      // If it's attributes have changed, it's filter conditions
+      // might have changed
+      this.applyFilters();
+      // Our listeners only care if this record is in our dataset
+      // right now. Unlike other events, people will be listening
+      // for changes to this specific record
+      if(this.indexOf(record) != -1) {
+        this.fireEvent('update', store, record, type);
+      }
+    }, this);
 
-    this.relayEvents(source, ['load', 'update']);
+    this.relayEvents(source, ['load']);
 
     // By creating a delegate based on the source's method,
     // if the source is also a clone, the delegate call
