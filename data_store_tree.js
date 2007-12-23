@@ -139,5 +139,5 @@ Ext.ux.tree.DataStoreBacking.prototype = {
          attr.uiProvider = this.uiProviders[attr.uiProvider] || eval(attr.uiProvider);
       }
       return new Ext.tree.TreeNode(attr);
-  },
+  }
 }

@@ -44,7 +44,7 @@ var TreeComboBox = Ext.extend(Ext.form.TriggerField, {
       'expand' : true,
       'collapse' : true,
       'beforeselect' : true,
-      'select' : true,
+      'select' : true
     });
     this.selectedNode = -1;
 
