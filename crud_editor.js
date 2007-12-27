@@ -95,8 +95,8 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
     if(this.parent) {
       this.executeOnFormSaved(
         this.parent.form, this.parent.save,
-        function() { this.loadRecord(record); }
-      );
+        function() { this.loadRecord(record); },
+        this, true);
     } else {
       this.loadRecord(record);
     }
@@ -109,9 +109,10 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
 
     return record;
   },
-  executeOnFormSaved: function(form, saveFn, fn, scope) {
+  executeOnFormSaved: function(form, saveFn, fn, scope, allowDirty) {
+    // allowDirty and scope are optional
     scope = scope || this;
-    if(form.record.newRecord || form.isDirty()) {
+    if(form.record.newRecord || (!allowDirty && form.isDirty())) {
       var failFn, loadFn = function() {
         form.un('actionfailed', failFn, null);
         fn.call(scope);
