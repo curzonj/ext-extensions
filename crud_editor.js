@@ -451,9 +451,8 @@ Ext.extend(DialogCrudEditor, CrudEditor, {
     }
     return record;
   },*/
-  createWindow: function(config) {
-
-    config = this.initialConfig;
+  createWindow: function() {
+    var config = this.initialConfig;
     Ext.applyIf(config, {
       width: 500,
       height: 300,

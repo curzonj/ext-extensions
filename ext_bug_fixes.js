@@ -71,6 +71,19 @@ Ext.override(Ext.Component, {
     }
 });
 
+Ext.override(Ext.Element, {
+  matchNode : function(dir, start, selector, returnDom){
+    var n = this.dom[start];
+    while(n){
+      if(n.nodeType == 1 && (!selector || Ext.DomQuery.is(n, selector))){
+        break;
+      }
+      n = n[dir];
+    }
+    return (n && !returnDom) ? Ext.get(n) : n;
+  }
+});
+
 Ext.override(Ext.data.GroupingStore, {
    applySort : function(){
         Ext.data.GroupingStore.superclass.applySort.call(this);

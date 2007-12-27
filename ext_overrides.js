@@ -11,6 +11,14 @@ Ext.override(Ext.util.Observable, {
   }
 });
 
+Ext.override(Ext.form.Field, {
+  setFieldLabel: function(text) {
+    var ct = this.el.findParent('div.x-form-item', 3, true);
+    var label = ct.first('label.x-form-item-label');
+    label.update(text);
+  }
+});
+
 Ext.override(Ext.data.Store, {
   // Their load records function isn't very extensible,
   // so I had to copy it in here
