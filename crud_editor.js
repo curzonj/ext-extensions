@@ -188,10 +188,6 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
       form.clearInvalid();
 
       this.fireEvent('load', form, record, panel);
-
-      return true;
-    } else {
-      return false;
     }
   },
   getParentRelAttrs: function(record) {
@@ -435,9 +431,10 @@ Ext.extend(DialogCrudEditor, CrudEditor, {
       this.dialog.render(Ext.getBody());
     }
 
-    if(this.loadForm(this.form, record)) {
+    this.on('load', function() {
       this.dialog.show();
-    }
+    }, this, {single:true});
+    this.loadForm(this.form, record);
   },
   /* This is good functionality, what do we do with it?
   getRecord: function() {

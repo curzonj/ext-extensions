@@ -3,7 +3,7 @@ Ext.namespace("Ext.ux", "Ext.ux.data", "Ext.ux.tree"); //Used by extensions
 // Required by data mirroring
 Ext.override(Ext.util.Observable, {
   resetEvents: function() {
-    var es = this.events
+    var e, es = this.events
     this.events = {}
     for(e in es) {
       this.events.e = true;

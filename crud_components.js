@@ -249,11 +249,16 @@ Ext.extend(CRUDGridPanel, Ext.grid.GridPanel, {
   },
   onClickEditBtn: function(){
     //Will be disabled unless it has at least one selected
+    var r = this.grabCurrentRecordRow();
+    this.editRecord(r);
+  },
+  grabCurrentRecordRow: function() {
+    //This makes changes, so it isn't just a getter
     var sel = this.getSelections()
     var r = sel[0]; 
     this.setRecordSelection(r)
 
-    this.editRecord(r);
+    return r;
   },
   editRecord: function(r) {
     this.editor.loadRecord(r);
@@ -474,7 +479,7 @@ var validatePhoneNumber = function(value) {
   }
 };
 var zipCodeKeys = /[1234567890\-]/;
-var zipCodeRegex = /\d{5}(?:-\d{4})?/g;
+var zipCodeRegex = /^\d{5}(?:-\d{4})?$/;
 
 var renderBoolean = function(value){   
   return value ? "Yes" :  "No";
