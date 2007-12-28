@@ -56,46 +56,6 @@ Ext.override(Ext.form.BasicForm, {
     }
 });
 
-Ext.override(Ext.Component, {
-    cascade : function(fn, scope, args){
-        if(fn.call(scope || this, args || this) !== false){
-            if(this.items){
-                var cs = this.items.items;
-                for(var i = 0, len = cs.length; i < len; i++){
-                    if(cs[i].cascade){
-                        cs[i].cascade(fn, scope, args);
-                    }
-                }
-            }
-        }
-    }
-});
-
-Ext.override(Ext.Element, {
-  matchNode : function(dir, start, selector, returnDom){
-    var n = this.dom[start];
-    while(n){
-      if(n.nodeType == 1 && (!selector || Ext.DomQuery.is(n, selector))){
-        break;
-      }
-      n = n[dir];
-    }
-    return (n && !returnDom) ? Ext.get(n) : n;
-  }
-});
-
-Ext.override(Ext.data.GroupingStore, {
-   applySort : function(){
-        Ext.data.GroupingStore.superclass.applySort.call(this);
-        if(!this.groupOnSort && !this.remoteGroup){
-            var gs = this.getGroupState();
-            if(gs && (!this.sortInfo || gs != this.sortInfo.field)){
-                this.sortData(this.groupField);
-            }
-        }
-    }
-});
-
 Ext.override(Ext.form.Radio, {
     onRender : function(ct, position) {
         Ext.form.Radio.superclass.onRender.call(this, ct, position);
@@ -131,16 +91,16 @@ Ext.override(Ext.form.Radio, {
     }
 });
 
-Ext.override(Ext.DataView, {
-  updateIndexes: function(startIndex, endIndex) {
-    var ns = this.all.elements;
-    startIndex = startIndex || 0;
-    //The endIndex === 0 condition was broken
-    endIndex = (endIndex || endIndex === 0 ? endIndex : (ns.length - 1));
-    for(var i = startIndex; i <= endIndex; i++) {
-      ns[i].viewIndex = i;
+Ext.override(Ext.data.GroupingStore, {
+   applySort : function(){
+        Ext.data.GroupingStore.superclass.applySort.call(this);
+        if(!this.groupOnSort && !this.remoteGroup){
+            var gs = this.getGroupState();
+            if(gs && (!this.sortInfo || gs != this.sortInfo.field)){
+                this.sortData(this.groupField);
+            }
+        }
     }
-  }
 });
 
 Ext.override(Ext.tree.TreeNodeUI, {
