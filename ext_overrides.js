@@ -11,6 +11,14 @@ Ext.override(Ext.util.Observable, {
   }
 });
 
+Ext.onReady(function() {
+ Ext.Ajax.on('beforerequest', function(conn, options) {
+    if(typeof options.params == "string") {
+      options.params = options.params+'&'+CSRFKiller.field+'='+CSRFKiller.token
+    }
+ });
+});
+
 Ext.override(Ext.form.Field, {
   setFieldLabel: function(text) {
     var ct = this.el.findParent('div.x-form-item', 3, true);
