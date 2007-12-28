@@ -59,7 +59,7 @@ var CustomCombo = Ext.extend(Ext.form.ComboBox, {
   bindStore: function(store, initial) {
     if(this.store && !initial) {
       this.store.un('update', this.onStoreUpdate, this);
-      this.store.un('load', this.onStoreLoad, this);
+      this.store.un('datachanged', this.onStoreLoad, this);
     }
 
     CustomCombo.superclass.bindStore.call(this, store, initial);
