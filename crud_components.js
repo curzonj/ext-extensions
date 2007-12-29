@@ -24,13 +24,16 @@ Ext.extend(CrudStore, Ext.data.GroupingStore, {
 
     p.on('load', function(form, record) {
       if(form == p.form) {
-        //This deals with polymorphic relations
-        this.relation_id = record.id;
-        this.relation_type = p.store.klass;
-
-        this.addFilter(this.parentFilter, this);
+        this.filterOnRelation(record);
       }
     }, this);
+  },
+  filterOnRelation: function(record) {
+    //This deals with polymorphic relations
+    this.relation_id = record.id;
+    this.relation_type = record.store.klass;
+
+    this.addFilter(this.parentFilter, this);
   },
   hasParentType: Ext.emptyFn,
   checkParentColumns: function(idCol) {
@@ -87,7 +90,9 @@ var commonCrudPanelFunctions = {
       this.editor = new DialogCrudEditor(this.editor);
 
     this.editor.crudPanel = this;
-    this.store = this.editor.store;
+    if(!this.store) {
+      this.store = this.editor.store;
+    }
   }
 }
 
@@ -295,8 +300,9 @@ Ext.extend(CrudGridPanel, Ext.grid.GridPanel, {
   onGridCellClicked: function(grid, rowIndex, cellIndex, e) {
     var r = this.store.getAt(rowIndex);
     this.setRecordSelection(r);
-    if (this.editor && CurrentUser.has(this.store.rwPerm))
+    if (this.editor && CurrentUser.has(this.store.rwPerm)) {
       this.editRecord(r);
+    }
   },
   setRecordSelection: function(r) {
     // select the right record if it exists
@@ -321,6 +327,53 @@ Ext.extend(CrudGridPanel, Ext.grid.GridPanel, {
   },
 });
 Ext.override(CrudGridPanel, commonCrudPanelFunctions);
+
+var CrudGridDialog = Ext.extend(CrudGridPanel, {
+  initComponent: function() {
+    CrudGridDialog.superclass.initComponent.call(this);
+
+   this.addEvents('load', 'beforeload');
+
+    if(!this.dialog) {
+      this.createWindow();
+    }
+
+    var rel_id = this.parentIdColumn || this.editor.parentIdColumn;
+    if(rel_id) {
+      this.store.parentIdColumn = rel_id;
+      this.store.checkParentColumns(rel_id);
+    }
+  },
+  loadRecord: function(record) {
+    if(this.fireEvent('beforeload', this, record, this.dialog) !== false) {
+      this.store.filterOnRelation(record);
+      this.fireEvent('load', this, record, this.dialog);
+
+      this.dialog.show();
+    }
+  },
+  createWindow: function() {
+    var config = this.dialogConfig || {};
+
+    Ext.applyIf(config, {
+      width: 500,
+      height: 300,
+      autoCreate: true,
+      modal: true,
+      closable: true,
+      closeAction: 'hide',
+      resizeable: true,
+      draggable: true,
+      collapsible: false,
+      defaults: { border: false },
+      layout: 'fit',
+      items: this
+    });
+
+    this.dialog = new Ext.Window(config);
+  }
+});
+
 
 var CrudTreePanel = function(config) {
   config.nodes.store = config.editor.store;
