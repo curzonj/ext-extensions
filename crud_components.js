@@ -91,9 +91,9 @@ var commonCrudPanelFunctions = {
   }
 }
 
-/* CRUDGridPanel
+/* CrudGridPanel
  */
-var CRUDGridPanel = function(config) {
+var CrudGridPanel = function(config) {
   Ext.applyIf(config, {
     loadMask: {
       // Just mask the grid the first time,
@@ -103,15 +103,15 @@ var CRUDGridPanel = function(config) {
     }
   });
 
-  CRUDGridPanel.superclass.constructor.call(this, config);
+  CrudGridPanel.superclass.constructor.call(this, config);
 }
 // The crudgrid is not currently compatable with inline editing
-Ext.extend(CRUDGridPanel, Ext.grid.GridPanel, {
+Ext.extend(CrudGridPanel, Ext.grid.GridPanel, {
   lifeCycleDelay: 300000, //5min
   autoSizeColumns: true,
 
   initComponent: function() {
-    CRUDGridPanel.superclass.initComponent.call(this);
+    CrudGridPanel.superclass.initComponent.call(this);
 
     this.setupEditor();
 
@@ -135,7 +135,7 @@ Ext.extend(CRUDGridPanel, Ext.grid.GridPanel, {
     // TODO if there is a default custom view, load it
   },
   afterRender: function() {
-    CRUDGridPanel.superclass.afterRender.call(this);
+    CrudGridPanel.superclass.afterRender.call(this);
 
     //The buttons don't exist until they are rendered, so
     //we catch them right here
@@ -171,7 +171,7 @@ Ext.extend(CRUDGridPanel, Ext.grid.GridPanel, {
     /* If you want a delete button, in btnConfigs pass in:
      * btnConfigs: [{
      *   text: 'Delete',
-     *   handler: CRUDGridPanel.prototype.onClickDeleteBtn
+     *   handler: CrudGridPanel.prototype.onClickDeleteBtn
      * }]
      *
      * To create event buttons, pass in something like:
@@ -320,7 +320,7 @@ Ext.extend(CRUDGridPanel, Ext.grid.GridPanel, {
     }
   },
 });
-Ext.override(CRUDGridPanel, commonCrudPanelFunctions);
+Ext.override(CrudGridPanel, commonCrudPanelFunctions);
 
 var CrudTreePanel = function(config) {
   config.nodes.store = config.editor.store;
@@ -387,7 +387,7 @@ Ext.extend(CrudTreePanel, Ext.tree.TreePanel, {
     /* If you want a delete button, in btnConfigs pass in:
      * btnConfigs: [{
      *   text: 'Delete',
-     *   handler: CRUDGridPanel.prototype.onClickDeleteBtn
+     *   handler: CrudGridPanel.prototype.onClickDeleteBtn
      * }]
      *
      * To create event buttons, pass in something like:
