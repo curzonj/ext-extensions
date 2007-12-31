@@ -24,7 +24,11 @@ Ext.extend(CrudStore, Ext.data.GroupingStore, {
 
     p.on('load', function(form, record) {
       if(form == p.form) {
-        this.filterOnRelation(record);
+        //This deals with polymorphic relations
+        this.relation_id = record.id;
+        this.relation_type = p.store.klass; // New records do have a store
+
+        this.addFilter(this.parentFilter, this);
       }
     }, this);
   },
@@ -133,8 +137,8 @@ Ext.extend(CrudGridPanel, Ext.grid.GridPanel, {
     this.colModel.defaultSortable = true;
     this.on('celldblclick', this.onGridCellClicked, this);
     this.on('cellclick', this.checkToolbarButtons, this);
-    this.on('cellclick',this.saveSelections, this);
     this.store.on('load',this.restoreSelections, this);
+    this.getSelectionModel().on('selectionchange',this.saveSelections, this);
     CurrentUser.onPermission(this.store.rwPerm, this.checkToolbarButtons, this);
 
     // TODO if there is a default custom view, load it
@@ -309,9 +313,9 @@ Ext.extend(CrudGridPanel, Ext.grid.GridPanel, {
     if(this.store.indexOf(r) != -1)
       this.getSelectionModel().selectRecords([r],false)
   },
-  saveSelections: function() {
+  saveSelections: function(sm) {
     this.savedSelections = [];
-    var selectedRows = this.getSelectionModel().getSelections();
+    var selectedRows = sm.getSelections();
     for (var i=0; i<selectedRows.length; i++) {
       this.savedSelections.push(selectedRows[i].id);
     };

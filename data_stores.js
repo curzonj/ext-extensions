@@ -11,6 +11,11 @@ Ext.override(Ext.data.Store, {
 
     if(mirror_data !== false) {
       newObj.mirror(this);
+    } else {
+      // The current records point to the other store
+      // as `their` store. We need our own records if
+      // we arn't going to mirror our source
+      newObj.reload();
     }
 
     if(!keep_filters) {

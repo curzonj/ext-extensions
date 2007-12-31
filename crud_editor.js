@@ -259,13 +259,13 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
     }
   },
   hideRecord: function(record) {
-    this.updateAnyAttribute({
+    this.updateAttribute({
       record: record,
       field: 'hidden',
       value: true,
     });
   },
-  updateAnyAttribute: function(options) {
+  updateAttribute: function(options) {
     /* options:
      *   store: store of the model you want to update
      *   id: id of the record you want to update
@@ -280,6 +280,10 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
        store: this.store,
        scope: this
      });
+
+     if(options.record && typeof options.value == 'undefined') {
+       options.value = options.record.get(options.field);
+     }
 
      Ext.MessageBox.wait(options.waitMsg || "Updating ...");
 
@@ -316,7 +320,7 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
 
      options.params['_method'] = 'put';
      
-     if(options.field && options.value)
+     if(options.field)
        options.params[options.store.model+'['+options.field+']'] =  options.value;
 
      Ext.Ajax.request(options); 

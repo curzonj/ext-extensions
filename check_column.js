@@ -29,8 +29,12 @@ Ext.grid.CheckColumn.prototype ={
             e.stopEvent();
             var index = this.grid.getView().findRowIndex(t);
             var record = this.grid.store.getAt(index);
-            record.set(this.dataIndex, !record.data[this.dataIndex]);
+            this.onCheckRecord(record);
         }
+    },
+
+    onCheckRecord: function(record) {
+      record.set(this.dataIndex, !record.data[this.dataIndex]);
     },
 
     renderer : function(v, p, record){
