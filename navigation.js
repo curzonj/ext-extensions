@@ -1,12 +1,12 @@
 // TODO Reorganize this file with application.js
-var NavigationTree = Ext.extend(DynamicTree, {
+SWorks.NavigationTree = Ext.extend(SWorks.DynamicTree, {
   url: URLs['navigation'],
 
   initComponent: function() {
-    NavigationTree.superclass.initComponent.call(this);
+    SWorks.NavigationTree.superclass.initComponent.call(this);
 
-    CurrentUser.on('loggedIn', this.load, this);
-    CurrentUser.on('loggedOut', this.load, this);
+    SWorks.CurrentUser.on('loggedIn', this.load, this);
+    SWorks.CurrentUser.on('loggedOut', this.load, this);
   }
 });
 

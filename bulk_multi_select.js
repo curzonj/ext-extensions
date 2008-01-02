@@ -1,4 +1,31 @@
-var DDBulkMultiselect = function(config) {
+Ext.ux.JsonTreeNode = function(config) {
+  config = config || {}
+  Ext.applyIf(config, {leaf: (config.children == null)});
+  Ext.ux.JsonTreeNode.superclass.constructor.call(this, config);
+  if (config.children)
+    this.createChildren(config.children);
+};
+Ext.extend(Ext.ux.JsonTreeNode, Ext.tree.TreeNode, {
+  createChildren: function(children) {
+    this.on('click', function() {
+      this.toggle();
+    }, this);
+    for (var i=0; i<children.length; i++) {
+      this.appendChild(new Ext.ux.JsonTreeNode(children[i]));
+    }
+  },
+  //Only called on root, destroy() does the rest
+  destroyChildren: function() {
+    while(this.firstChild) {
+      var node = this.firstChild
+      this.removeChild(node);
+      if (node.destroy)
+        node.destroy();
+    }
+  }
+});
+
+Ext.ux.DDBulkMultiselect = function(config) {
   config.treeConfig = config.treeConfig || {}
   Ext.applyIf(config.treeConfig, {
     animate: true,
@@ -59,11 +86,11 @@ var DDBulkMultiselect = function(config) {
   });
   delete config.height;
 
-  DDBulkMultiselect.superclass.constructor.call(this, config);
+  Ext.ux.DDBulkMultiselect.superclass.constructor.call(this, config);
 }
-Ext.extend(DDBulkMultiselect, Ext.Panel, {
+Ext.extend(Ext.ux.DDBulkMultiselect, Ext.Panel, {
   initComponent: function() {
-    DDBulkMultiselect.superclass.initComponent.call(this);
+    Ext.ux.DDBulkMultiselect.superclass.initComponent.call(this);
 
     this.setupTrees();
 
@@ -84,12 +111,12 @@ Ext.extend(DDBulkMultiselect, Ext.Panel, {
     new Ext.tree.TreeSorter(this.srcTree);
     new Ext.tree.TreeSorter(this.dstTree);
 
-    this.srcTree.setRootNode(new JsonTreeNode({
+    this.srcTree.setRootNode(new Ext.ux.JsonTreeNode({
       text: this.srcText,
       expanded: true,
       leaf: false
     }));
-    this.dstTree.setRootNode(new JsonTreeNode({
+    this.dstTree.setRootNode(new Ext.ux.JsonTreeNode({
       text: this.dstText,
       expanded: true,
       leaf: false

@@ -1,4 +1,4 @@
-var CustomCombo = Ext.extend(Ext.form.ComboBox, {
+SWorks.CustomCombo = Ext.extend(Ext.form.ComboBox, {
   allowBlank: 'true',
   mode: 'local',
   typeAhead: true,
@@ -26,7 +26,7 @@ var CustomCombo = Ext.extend(Ext.form.ComboBox, {
     return record;
   }, 
   beforeBlur: function() {
-    CustomCombo.superclass.beforeBlur.call(this);
+    SWorks.CustomCombo.superclass.beforeBlur.call(this);
     var text = this.getRawValue();
     
     if(this.rendered) {
@@ -62,7 +62,7 @@ var CustomCombo = Ext.extend(Ext.form.ComboBox, {
       this.store.un('datachanged', this.onStoreLoad, this);
     }
 
-    CustomCombo.superclass.bindStore.call(this, store, initial);
+    SWorks.CustomCombo.superclass.bindStore.call(this, store, initial);
 
     if(store) {
       this.store.on('update', this.onStoreUpdate, this);
@@ -91,4 +91,4 @@ var CustomCombo = Ext.extend(Ext.form.ComboBox, {
     }
   }
 });
-Ext.reg('customcombo', CustomCombo);
+Ext.reg('customcombo', SWorks.CustomCombo);

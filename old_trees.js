@@ -1,15 +1,15 @@
 // Currently only used on nav tree, to be replaced by DataStoreBacking
-var DynamicTree = Ext.extend(Ext.tree.TreePanel, {
+SWorks.DynamicTree = Ext.extend(Ext.tree.TreePanel, {
   rootVisible: false,
   animate: false,
 
   initComponent: function(){
-    DynamicTree.superclass.initComponent.call(this);
+    SWorks.DynamicTree.superclass.initComponent.call(this);
     this.addEvents({
       load: true
     });
 
-    var root = new JsonTreeNode({
+    var root = new Ext.ux.JsonTreeNode({
       id: 'root',
       text: 'Root Node (invisible)'
     })
@@ -41,29 +41,3 @@ var DynamicTree = Ext.extend(Ext.tree.TreePanel, {
   }
 });
 
-var JsonTreeNode = function(config) {
-  config = config || {}
-  Ext.applyIf(config, {leaf: (config.children == null)});
-  JsonTreeNode.superclass.constructor.call(this, config);
-  if (config.children)
-    this.createChildren(config.children);
-};
-Ext.extend(JsonTreeNode, Ext.tree.TreeNode, {
-  createChildren: function(children) {
-    this.on('click', function() {
-      this.toggle();
-    }, this);
-    for (var i=0; i<children.length; i++) {
-      this.appendChild(new JsonTreeNode(children[i]));
-    }
-  },
-  //Only called on root, destroy() does the rest
-  destroyChildren: function() {
-    while(this.firstChild) {
-      var node = this.firstChild
-      this.removeChild(node);
-      if (node.destroy)
-        node.destroy();
-    }
-  }
-});

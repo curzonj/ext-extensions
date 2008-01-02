@@ -1,10 +1,10 @@
-/* Mostly copied from combo boxes. TreeComboBox currently depends on
+/* Mostly copied from combo boxes. Ext.ux.TreeComboBox currently depends on
  * DataStoreBacking in multiple ways and requires a data store. I could
  * fix that you need me to. nodes is a config parameter passed to the
  * DataStoreBacking.
  *
  * Example:
- *   items: [new TreeComboBox({
+ *   items: [new Ext.ux.TreeComboBox({
  *           //Required, non-standard parameters
  *             nodes: {
  *               store: locations_ds,
@@ -21,7 +21,7 @@
  *             resizable: true,
  *           }), {
  */
-var TreeComboBox = Ext.extend(Ext.form.TriggerField, {
+Ext.ux.TreeComboBox = Ext.extend(Ext.form.TriggerField, {
   valueNotFoundText: "Item not found",
   defaultAutoCreate : {tag: "input", type: "text", size: "24", autocomplete: "off"},
   listClass: '',
@@ -39,7 +39,7 @@ var TreeComboBox = Ext.extend(Ext.form.TriggerField, {
   lazyInit : false,
 
   initComponent : function(){
-    TreeComboBox.superclass.initComponent.call(this);
+    Ext.ux.TreeComboBox.superclass.initComponent.call(this);
     this.addEvents({
       'expand' : true,
       'collapse' : true,
@@ -70,7 +70,7 @@ var TreeComboBox = Ext.extend(Ext.form.TriggerField, {
   },
 
   onRender : function(ct, position){
-    TreeComboBox.superclass.onRender.call(this, ct, position);
+    Ext.ux.TreeComboBox.superclass.onRender.call(this, ct, position);
     if(this.hiddenName){
       this.hiddenField = this.el.insertSibling({tag:'input', type:'hidden', name: this.hiddenName, id: (this.hiddenId||this.hiddenName)},
               'before', true);
@@ -134,7 +134,7 @@ var TreeComboBox = Ext.extend(Ext.form.TriggerField, {
   },
 
   initEvents : function(){
-    TreeComboBox.superclass.initEvents.call(this);
+    Ext.ux.TreeComboBox.superclass.initEvents.call(this);
 
     this.keyNav = new Ext.KeyNav(this.el, {
       "esc" : function(e){
@@ -163,11 +163,11 @@ var TreeComboBox = Ext.extend(Ext.form.TriggerField, {
     if(this.list){
       this.list.destroy();
     }
-    TreeComboBox.superclass.onDestroy.call(this);
+    Ext.ux.TreeComboBox.superclass.onDestroy.call(this);
   },
 
   onResize: function(w, h){
-    TreeComboBox.superclass.onResize.apply(this, arguments);
+    Ext.ux.TreeComboBox.superclass.onResize.apply(this, arguments);
     if(this.list && this.listWidth === undefined){
       var lw = Math.max(w, this.minListWidth);
       this.list.setWidth(lw);
@@ -176,7 +176,7 @@ var TreeComboBox = Ext.extend(Ext.form.TriggerField, {
   },
 
   onDisable: function(){
-    TreeComboBox.superclass.onDisable.apply(this, arguments);
+    Ext.ux.TreeComboBox.superclass.onDisable.apply(this, arguments);
     if(this.hiddenField){
       this.hiddenField.disabled = this.disabled;
     }
@@ -194,7 +194,7 @@ var TreeComboBox = Ext.extend(Ext.form.TriggerField, {
     if(this.valueField){
       return typeof this.value != 'undefined' ? this.value : '';
     }else{
-      return TreeComboBox.superclass.getValue.call(this);
+      return Ext.ux.TreeComboBox.superclass.getValue.call(this);
     }
   },
 
@@ -242,7 +242,7 @@ var TreeComboBox = Ext.extend(Ext.form.TriggerField, {
     if(this.hiddenField){
       this.hiddenField.value = v;
     }
-    TreeComboBox.superclass.setValue.call(this, text);
+    Ext.ux.TreeComboBox.superclass.setValue.call(this, text);
     this.value = v;
   },
 
@@ -316,4 +316,4 @@ var TreeComboBox = Ext.extend(Ext.form.TriggerField, {
     }
   }
 });
-Ext.reg('treecombo', TreeComboBox);
+Ext.reg('treecombo', Ext.ux.TreeComboBox);

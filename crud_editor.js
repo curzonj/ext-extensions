@@ -1,4 +1,4 @@
-var CrudEditor = function(config) {
+SWorks.CrudEditor = function(config) {
   /* Defined Interface:
    * createRecord() - create and load a new record
    * loadRecord(record) - load it in something to edit
@@ -19,9 +19,9 @@ var CrudEditor = function(config) {
   if(this.store.loadIfNeeded)
     this.store.loadIfNeeded();
 
-  CrudEditor.superclass.constructor.call(this, config);
+  SWorks.CrudEditor.superclass.constructor.call(this, config);
 }
-Ext.extend(CrudEditor, Ext.util.Observable, {
+Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
   createParentRef: function(form) {
     var saveParent = this.saveForm.createDelegate(this, [form]);
     var listenerDelegate = this.on.createDelegate(this);
@@ -329,7 +329,7 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
 
     if(action.result) { //should never be false, but who knows
       // Reload our record because it might be too old
-      var record = form.record
+      var record = form.record;
       if(!record.newRecord) {
         record = form.record =
           this.store.getById(action.result.objectid);
@@ -414,8 +414,8 @@ Ext.extend(CrudEditor, Ext.util.Observable, {
   }
 });
 
-var DialogCrudEditor = function(config) {
-  DialogCrudEditor.superclass.constructor.call(this, config);
+SWorks.DialogCrudEditor = function(config) {
+  SWorks.DialogCrudEditor.superclass.constructor.call(this, config);
 
   if(!this.dialog || !this.dialog.doLayout) {
     this.createWindow();
@@ -430,7 +430,7 @@ var DialogCrudEditor = function(config) {
 
   this.findChildren(this.dialog, this.form);
 }
-Ext.extend(DialogCrudEditor, CrudEditor, {
+Ext.extend(SWorks.DialogCrudEditor, SWorks.CrudEditor, {
   loadRecord: function(record) {
     if(!this.dialog.rendered) {
       this.dialog.render(Ext.getBody());
@@ -522,8 +522,8 @@ Ext.extend(DialogCrudEditor, CrudEditor, {
 });
 
 
-var TabbedCrudEditor = function(config) {
-  TabbedCrudEditor.superclass.constructor.call(this, config);
+SWorks.TabbedCrudEditor = function(config) {
+  SWorks.TabbedCrudEditor.superclass.constructor.call(this, config);
 
   this.tabPanel.autoDestroy = true;
   this.tabPanel.on('beforeremove', this.onBeforeRemove, this);
@@ -531,7 +531,7 @@ var TabbedCrudEditor = function(config) {
   this.panels = {};
   this.cachedEditPanel = this.createEditPanel();
 }
-Ext.extend(TabbedCrudEditor, CrudEditor, {
+Ext.extend(SWorks.TabbedCrudEditor, SWorks.CrudEditor, {
   autoSaveInterval: 2000,
   maxAttempts: 3,
 

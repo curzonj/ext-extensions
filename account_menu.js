@@ -1,4 +1,4 @@
-var CurrentUser = function() {
+SWorks.CurrentUser = function() {
   this.url = URLs['current_permissions'];
   this.permissions = {};
   this.loggedIn = false;
@@ -11,7 +11,7 @@ var CurrentUser = function() {
   this.on('loggedIn', this.load, this);
   this.on('loggedOut', function() { this.setPermissions(null) }, this);
 }
-Ext.extend(CurrentUser, Ext.util.Observable, {
+Ext.extend(SWorks.CurrentUser, Ext.util.Observable, {
   isLoggedIn: function() {
     return this.loggedIn;
   },
@@ -57,26 +57,26 @@ Ext.extend(CurrentUser, Ext.util.Observable, {
     permCheck(this.permissions);
   }
 });
-CurrentUser = new CurrentUser();
-CurrentUser.setPermissions(permissionsData);
+SWorks.CurrentUser = new SWorks.CurrentUser();
+SWorks.CurrentUser.setPermissions(permissionsData);
 
-var AccountMenu = Ext.extend(Ext.Panel, {
+SWorks.AccountMenu = Ext.extend(Ext.Panel, {
   loginUrl: URLs['session'],
   menuUrl: URLs['account_menu'],
 
   initComponent: function() {
-    AccountMenu.superclass.initComponent.call(this);
+    SWorks.AccountMenu.superclass.initComponent.call(this);
     //This doesn't render yet, so it should be pretty quick
     this.loginWindow = this.createLoginWindow();
   },
   afterRender : function(ct, position){
-    AccountMenu.superclass.afterRender.call(this, ct, position)
+    SWorks.AccountMenu.superclass.afterRender.call(this, ct, position)
 
     //Set the panel to reload it's conent on login or logout
     var mgr = this.getUpdater();
     mgr.setDefaultUrl(this.menuUrl);
-    CurrentUser.on('loggedIn', mgr.refresh, mgr)
-    CurrentUser.on('loggedOut', mgr.refresh, mgr)
+    SWorks.CurrentUser.on('loggedIn', mgr.refresh, mgr)
+    SWorks.CurrentUser.on('loggedOut', mgr.refresh, mgr)
 
     // Rewire the content when it gets updated
     mgr.on('update', this.hookContent, this)
@@ -106,7 +106,7 @@ var AccountMenu = Ext.extend(Ext.Panel, {
           Ext.Ajax.request({
             url: URLs['logout'],
             success: function(){
-              CurrentUser.fireEvent('loggedOut')
+              SWorks.CurrentUser.fireEvent('loggedOut')
               this.loginWindow.show();
             },
             failure: function(){
@@ -165,7 +165,7 @@ var AccountMenu = Ext.extend(Ext.Panel, {
             success: function(form, action) {
               win.submitLock = false;
               win.hide();
-              CurrentUser.fireEvent("loggedIn");
+              SWorks.CurrentUser.fireEvent("loggedIn");
             },
             failure: function() {
               Ext.MessageBox.alert('Login failed', "The username or password is not correct. Please try again.");

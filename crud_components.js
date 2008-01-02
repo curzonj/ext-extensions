@@ -1,4 +1,4 @@
-var CrudStore = function(config) {
+SWorks.CrudStore = function(config) {
   // From JsonStore
   Ext.applyIf(config, {
     sortInfo: { field: 'id', direction: 'ASC' },
@@ -6,7 +6,7 @@ var CrudStore = function(config) {
     reader: new Ext.data.JsonReader(config, config.fields)
   })
 
-  CrudStore.superclass.constructor.call(this, config);
+  SWorks.CrudStore.superclass.constructor.call(this, config);
 
   // TODO change back to proper RW sometime
   this.rwPerm = this.root+'.view';
@@ -17,7 +17,7 @@ var CrudStore = function(config) {
 }
 ds = Ext.StoreMgr
 
-Ext.extend(CrudStore, Ext.data.GroupingStore, {
+Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
   linkToParent: function(p, idCol) {
     this.parentIdColumn = idCol;
     this.checkParentColumns(idCol)
@@ -65,7 +65,7 @@ Ext.extend(CrudStore, Ext.data.GroupingStore, {
 
 // To be included into classes and used there, not to be used
 // directly.
-var commonCrudPanelFunctions = {
+SWorks.commonCrudPanelFunctions = {
   border: false,
   checkToolbarButtons: function() {
     if(this.topToolbar && this.topToolbar.items)
@@ -74,7 +74,7 @@ var commonCrudPanelFunctions = {
         if(b.type == "button") {
           // A button by default is !readOnly and !gridOperation
           // If this isn't a readonly button and we dont' have permission
-          if (!CurrentUser.has(this.store.rwPerm) && !b.readOnly) {
+          if (!SWorks.CurrentUser.has(this.store.rwPerm) && !b.readOnly) {
             b.disable();
           // If this works on rows and none are selected
           } else if(this.getSelections().length < 1 && !b.gridOperation) {
@@ -91,7 +91,7 @@ var commonCrudPanelFunctions = {
 
     // deleteRecord is the least commonly overloaded
     if (!this.editor.addListener)
-      this.editor = new DialogCrudEditor(this.editor);
+      this.editor = new SWorks.DialogCrudEditor(this.editor);
 
     this.editor.crudPanel = this;
     if(!this.store) {
@@ -100,9 +100,9 @@ var commonCrudPanelFunctions = {
   }
 }
 
-/* CrudGridPanel
+/* SWorks.CrudGridPanel
  */
-var CrudGridPanel = function(config) {
+SWorks.CrudGridPanel = function(config) {
   Ext.applyIf(config, {
     loadMask: {
       // Just mask the grid the first time,
@@ -112,15 +112,15 @@ var CrudGridPanel = function(config) {
     }
   });
 
-  CrudGridPanel.superclass.constructor.call(this, config);
+  SWorks.CrudGridPanel.superclass.constructor.call(this, config);
 }
 // The crudgrid is not currently compatable with inline editing
-Ext.extend(CrudGridPanel, Ext.grid.GridPanel, {
+Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
   lifeCycleDelay: 300000, //5min
   autoSizeColumns: true,
 
   initComponent: function() {
-    CrudGridPanel.superclass.initComponent.call(this);
+    SWorks.CrudGridPanel.superclass.initComponent.call(this);
 
     this.setupEditor();
 
@@ -139,12 +139,12 @@ Ext.extend(CrudGridPanel, Ext.grid.GridPanel, {
     this.on('cellclick', this.checkToolbarButtons, this);
     this.store.on('load',this.restoreSelections, this);
     this.getSelectionModel().on('selectionchange',this.saveSelections, this);
-    CurrentUser.onPermission(this.store.rwPerm, this.checkToolbarButtons, this);
+    SWorks.CurrentUser.onPermission(this.store.rwPerm, this.checkToolbarButtons, this);
 
     // TODO if there is a default custom view, load it
   },
   afterRender: function() {
-    CrudGridPanel.superclass.afterRender.call(this);
+    SWorks.CrudGridPanel.superclass.afterRender.call(this);
 
     //The buttons don't exist until they are rendered, so
     //we catch them right here
@@ -157,7 +157,7 @@ Ext.extend(CrudGridPanel, Ext.grid.GridPanel, {
       tb.push(this.createOptionsMenu());
       tb.push('-');
       tb.push(new Ext.Toolbar.TextItem("Quicksearch"));
-      tb.push(createFilterField(this.store));
+      tb.push(SWorks.createFilterField(this.store));
       if(this.editor)
         tb.push('-');
     }
@@ -180,7 +180,7 @@ Ext.extend(CrudGridPanel, Ext.grid.GridPanel, {
     /* If you want a delete button, in btnConfigs pass in:
      * btnConfigs: [{
      *   text: 'Delete',
-     *   handler: CrudGridPanel.prototype.onClickDeleteBtn
+     *   handler: SWorks.CrudGridPanel.prototype.onClickDeleteBtn
      * }]
      *
      * To create event buttons, pass in something like:
@@ -304,7 +304,7 @@ Ext.extend(CrudGridPanel, Ext.grid.GridPanel, {
   onGridCellClicked: function(grid, rowIndex, cellIndex, e) {
     var r = this.store.getAt(rowIndex);
     this.setRecordSelection(r);
-    if (this.editor && CurrentUser.has(this.store.rwPerm)) {
+    if (this.editor && SWorks.CurrentUser.has(this.store.rwPerm)) {
       this.editRecord(r);
     }
   },
@@ -330,11 +330,11 @@ Ext.extend(CrudGridPanel, Ext.grid.GridPanel, {
     }
   },
 });
-Ext.override(CrudGridPanel, commonCrudPanelFunctions);
+Ext.override(SWorks.CrudGridPanel, SWorks.commonCrudPanelFunctions);
 
-var CrudGridDialog = Ext.extend(CrudGridPanel, {
+SWorks.CrudGridDialog = Ext.extend(SWorks.CrudGridPanel, {
   initComponent: function() {
-    CrudGridDialog.superclass.initComponent.call(this);
+    SWorks.CrudGridDialog.superclass.initComponent.call(this);
 
    this.addEvents('load', 'beforeload');
 
@@ -379,7 +379,7 @@ var CrudGridDialog = Ext.extend(CrudGridPanel, {
 });
 
 
-var CrudTreePanel = function(config) {
+SWorks.CrudTreePanel = function(config) {
   config.nodes.store = config.editor.store;
 
   Ext.applyIf(config, {
@@ -389,17 +389,17 @@ var CrudTreePanel = function(config) {
 
   //TODO implement drag-n-drop
 
-  //TODO use a loader mask, combine some of this stuff with TreeComboBox
-  CrudTreePanel.superclass.constructor.call(this, config);
+  //TODO use a loader mask, combine some of this stuff with Ext.ux.TreeComboBox
+  SWorks.CrudTreePanel.superclass.constructor.call(this, config);
 }
-Ext.extend(CrudTreePanel, Ext.tree.TreePanel, {
+Ext.extend(SWorks.CrudTreePanel, Ext.tree.TreePanel, {
   animate: false,
   rootVisible: false,
   autoScroll: true,
   border: false,
 
   initComponent: function() {
-    CrudTreePanel.superclass.initComponent.call(this);
+    SWorks.CrudTreePanel.superclass.initComponent.call(this);
 
     this.setupEditor();
 
@@ -409,10 +409,10 @@ Ext.extend(CrudTreePanel, Ext.tree.TreePanel, {
     this.topToolbar = this.createToolbar();
 
     this.on('dblclick', this.onDblClickNode, this);
-    CurrentUser.onPermission(this.store.rwPerm, this.checkToolbarButtons, this);
+    SWorks.CurrentUser.onPermission(this.store.rwPerm, this.checkToolbarButtons, this);
   },
   afterRender: function() {
-    CrudTreePanel.superclass.afterRender.call(this);
+    SWorks.CrudTreePanel.superclass.afterRender.call(this);
 
     this.checkToolbarButtons();
   },
@@ -444,7 +444,7 @@ Ext.extend(CrudTreePanel, Ext.tree.TreePanel, {
     /* If you want a delete button, in btnConfigs pass in:
      * btnConfigs: [{
      *   text: 'Delete',
-     *   handler: CrudGridPanel.prototype.onClickDeleteBtn
+     *   handler: SWorks.CrudGridPanel.prototype.onClickDeleteBtn
      * }]
      *
      * To create event buttons, pass in something like:
@@ -517,7 +517,7 @@ Ext.extend(CrudTreePanel, Ext.tree.TreePanel, {
     this.editor.loadRecord(node.attributes.record);
   }
 });
-Ext.override(CrudTreePanel, commonCrudPanelFunctions);
+Ext.override(SWorks.CrudTreePanel, SWorks.commonCrudPanelFunctions);
 
 /* **********************
  * Utility/helper methods and minor related Ext extensions
@@ -526,8 +526,8 @@ Ext.override(CrudTreePanel, commonCrudPanelFunctions);
  */
 
 // TODO put this validation and rendering stuff in a namespace
-var phoneNumberKeys = /[1234567890\-\ ]/;
-var validatePhoneNumber = function(value) {
+Ext.form.VTypes.phoneNumberMask = /[1234567890\-\ ]/;
+Ext.form.VTypes.phoneNumber = function(value) {
   var ph = value.replace(/\D/g, "")
   if(ph.length < 10) {
     return "Area code is required.";
@@ -535,24 +535,17 @@ var validatePhoneNumber = function(value) {
     return true;
   }
 };
-var zipCodeKeys = /[1234567890\-]/;
-var zipCodeRegex = /^\d{5}(?:-\d{4})?$/;
+Ext.form.VTypes.zipCodeMask = /[1234567890\-]/;
+Ext.form.VTypes.zipCodeRe = /^\d{5}(?:-\d{4})?$/;
 
-var renderBoolean = function(value){   
+Ext.util.Format.yesNo = function(value){  
   return value ? "Yes" :  "No";
 };
-var renderDate = function(value) {
+Ext.util.Format.dateMjy = function(value) {
   return Date.parseDate(value, 'Y/m/d H:i:s').format("M j Y");
 };
 
-//Grid Renderer
-var s = function(str) {
-  return function(value) {
-    return eval("value."+str);
-  }
-}
-
-var createFilterField = function(store) {
+SWorks.createFilterField = function(store) {
   var filterRegexArray = null;
 
   var regexFilter = function(r) {
