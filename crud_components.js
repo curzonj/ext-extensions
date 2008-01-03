@@ -546,7 +546,13 @@ Ext.override(SWorks.CrudTreePanel, SWorks.commonCrudPanelFunctions);
  * **********************
  */
 
-// TODO put this validation and rendering stuff in a namespace
+SWorks.getVtypeRegexFn = function(mask) {
+  return function(value) {
+    return mask.test(value);
+  };
+};
+
+Ext.form.VTypes.phoneNumberText = "Phone number is invalid";
 Ext.form.VTypes.phoneNumberMask = /[1234567890\-\ ]/;
 Ext.form.VTypes.phoneNumber = function(value) {
   var ph = value.replace(/\D/g, "");
@@ -556,8 +562,10 @@ Ext.form.VTypes.phoneNumber = function(value) {
     return true;
   }
 };
+
+Ext.form.VTypes.zipCodeText = "Zip code is invalid";
 Ext.form.VTypes.zipCodeMask = /[1234567890\-]/;
-Ext.form.VTypes.zipCodeRe = /^\d{5}(?:-\d{4})?$/;
+Ext.form.VTypes.zipCode = SWorks.getVtypeRegexFn(/^\d{5}(?:-\d{4})?$/);
 
 Ext.util.Format.yesNo = function(value){  
   return value ? "Yes" :  "No";
