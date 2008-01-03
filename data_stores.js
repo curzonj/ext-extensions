@@ -40,7 +40,7 @@ Ext.override(Ext.data.Store, {
     source.clones.push(this);
 
     var update = function() {
-      this.snapshot = source.snapshot;
+      this.snapshot = source.snapshot || source.data;
       this.applyFilters();
     }
 
