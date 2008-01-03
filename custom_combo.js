@@ -86,7 +86,7 @@ SWorks.CustomCombo = Ext.extend(Ext.form.ComboBox, {
   syncValue: function() {
     if(this.hasFocus) {
       this.on('blur', function() {
-        this.setValue(this.value);
+        this.setValue(this.getValue());
       }, this, {single: true});
     } else {
       this.setValue(this.value);

@@ -92,6 +92,26 @@ Ext.override(Ext.form.Radio, {
     }
 });
 
+//Ext.form.Field.onBlur calls beforeBlur too
+Ext.override(Ext.form.TriggerField, {
+  triggerBlur : function(){
+    this.mimicing = false;
+    Ext.get(Ext.isIE ? document.body : document).un("mousedown", this.mimicBlur);
+    if(this.monitorTab){
+      this.el.un("keydown", this.checkTab, this);
+    }
+    Ext.form.TriggerField.superclass.onBlur.call(this);
+  },
+
+  beforeBlur : function() {
+    Ext.form.TriggerField.superclass.beforeBlur.call(this);
+
+    this.wrap.removeClass('x-trigger-wrap-focus');
+  }
+});
+
+
+
 Ext.override(Ext.data.GroupingStore, {
    applySort : function(){
         Ext.data.GroupingStore.superclass.applySort.call(this);

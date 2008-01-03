@@ -23,7 +23,7 @@ SWorks.CrudEditor = function(config) {
   }
 
   SWorks.CrudEditor.superclass.constructor.call(this, config);
-}
+};
 Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
   createParentRef: function(form) {
     var saveParent = this.saveForm.createDelegate(this, [form]);
@@ -107,7 +107,8 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
   newRecord: function() {
     var record = new this.store.reader.recordType();
 
-    var list = [record].concat(arguments);
+    var args = Array.prototype.slice.call(arguments, 0),
+        list = [record].concat(args);
     this.initializeRecord.apply(this, list);
 
     return record;
@@ -119,10 +120,10 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
       var failFn, loadFn = function() {
         form.un('actionfailed', failFn, null);
         fn.call(scope);
-      }
+      };
       failFn = function() {
         form.un('actioncomplete', loadFn, null);
-      }
+      };
 
       form.on('actioncomplete', loadFn, null, {single: true});
       form.on('actionfailed', failFn, null, {single: true});
@@ -438,7 +439,7 @@ SWorks.DialogCrudEditor = function(config) {
   this.relayEvents(this.form, ['beforeaction', 'actionfailed', 'actioncomplete']);
 
   this.findChildren(this.dialog, this.form);
-}
+};
 Ext.extend(SWorks.DialogCrudEditor, SWorks.CrudEditor, {
   loadRecord: function(record) {
     if(!this.dialog.rendered) {
@@ -540,7 +541,7 @@ SWorks.TabbedCrudEditor = function(config) {
 
   this.panels = {};
   this.cachedEditPanel = this.createEditPanel();
-}
+};
 Ext.extend(SWorks.TabbedCrudEditor, SWorks.CrudEditor, {
   autoSaveInterval: 2000,
   maxAttempts: 3,
@@ -550,7 +551,7 @@ Ext.extend(SWorks.TabbedCrudEditor, SWorks.CrudEditor, {
       var closePanelFn = function() {
         panel.form.bypassSaveOnClose = true;
         ct.remove(panel);  
-      }
+      };
 
       Ext.MessageBox.confirm("Save changes", "Do you want to save your changes?", function(btn) {
         // Often the data gets saved while the person choses
@@ -579,7 +580,7 @@ Ext.extend(SWorks.TabbedCrudEditor, SWorks.CrudEditor, {
       }
     } 
 
-    var panel = this.cachedEditPanel || this.createEditPanel();
+    panel = this.cachedEditPanel || this.createEditPanel();
     this.cachedEditPanel = null;
 
     this.loadForm(panel.form, record, panel);
@@ -591,7 +592,7 @@ Ext.extend(SWorks.TabbedCrudEditor, SWorks.CrudEditor, {
 
     var editor = this;
     setTimeout(function(){
-      editor.cachedEditPanel = editor.createEditPanel()
+      editor.cachedEditPanel = editor.createEditPanel();
     }, 2);
   },
   getPanel: Ext.emptyFn,
@@ -599,7 +600,7 @@ Ext.extend(SWorks.TabbedCrudEditor, SWorks.CrudEditor, {
     var panel = this.getPanel();
     Ext.apply(panel, {
       closable: true,
-      autoRender: true,
+      autoRender: true
     });
 
     if(!panel.doLayout) {
@@ -628,13 +629,14 @@ Ext.extend(SWorks.TabbedCrudEditor, SWorks.CrudEditor, {
     panel.on('destroy', function() {
       this.store.un('update', recordUpdateDelegate);
 
-      if(panel.autoSaveTask)
+      if(panel.autoSaveTask) {
         panel.autoSaveTask.cancel();
+      }
     }, this);
 
     var startTimer = function() {
       panel.autoSaveTask.delay(this.autoSaveInterval);
-    }
+    };
 
     panel.form.items.on('add', function(ct, cp) {
       cp.on('change', startTimer, this);
@@ -662,7 +664,7 @@ Ext.extend(SWorks.TabbedCrudEditor, SWorks.CrudEditor, {
     } else if (action.failureType != 'client' &&
         (!action.result || !action.result.errors)) {
 
-      form.autoSaveAttempts = form.autoSaveAttempts || 1
+      form.autoSaveAttempts = form.autoSaveAttempts || 1;
       if(form.autoSaveAttempts < this.maxAttempts) {
         form.autoSaveAttempts = form.autoSaveAttempts + 1;
         this.saveForm(form, action.options);

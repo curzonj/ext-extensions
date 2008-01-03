@@ -18,7 +18,7 @@ SWorks.CrudStore = function(config) {
   Ext.ux.data.LoadAttempts(this);
   Ext.ux.data.ReloadingStore(this);
   Ext.ux.data.PersistentFilters(this);
-}
+};
 Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
   linkToParent: function(p, idCol) {
     this.parentIdColumn = idCol;
@@ -104,7 +104,7 @@ SWorks.commonCrudPanelFunctions = {
       this.store = this.editor.store;
     }
   }
-}
+};
 
 /* SWorks.CrudGridPanel
  */
@@ -119,7 +119,7 @@ SWorks.CrudGridPanel = function(config) {
   });
 
   SWorks.CrudGridPanel.superclass.constructor.call(this, config);
-}
+};
 // The crudgrid is not currently compatable with inline editing
 Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
   lifeCycleDelay: 300000, //5min
@@ -130,12 +130,18 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
 
     this.setupEditor();
 
-    this.view = new Ext.grid.GroupingView(Ext.apply({
-      forceFit:true,
-      enableNoGroups: true,
-      hideGroupedColumn: true,
-      groupTextTpl: '{text} ({[values.rs.length]} {[values.rs.length > 1 ? "Items" : "Item"]})'
-    }, this.viewConfig));
+    if(this.store.groupBy) {
+      this.view = new Ext.grid.GroupingView(Ext.apply({
+        forceFit:true,
+        enableNoGroups: true,
+        hideGroupedColumn: true,
+        groupTextTpl: '{text} ({[values.rs.length]} {[values.rs.length > 1 ? "Items" : "Item"]})'
+      }, this.viewConfig));
+    } else {
+      this.view = new Ext.grid.GridView(Ext.apply({
+        forceFit:true
+      }));
+    }
 
     this.elements += ',tbar';
     this.topToolbar = this.createToolbar();
@@ -238,7 +244,7 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
 
             // TODO Modify the title according to v.text
           }
-        }
+        };
         viewMenuOptions.push(options);
       }
     }
@@ -260,7 +266,7 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
       },
       readOnly: true,
       gridOperation: true
-    }
+    };
   },
   onClickAddBtn: function(){
     this.editor.createRecord();
@@ -401,7 +407,7 @@ SWorks.CrudTreePanel = function(config) {
 
   //TODO use a loader mask, combine some of this stuff with Ext.ux.TreeComboBox
   SWorks.CrudTreePanel.superclass.constructor.call(this, config);
-}
+};
 Ext.extend(SWorks.CrudTreePanel, Ext.tree.TreePanel, {
   animate: false,
   rootVisible: false,
@@ -559,6 +565,9 @@ Ext.util.Format.yesNo = function(value){
 Ext.util.Format.dateMjy = function(value) {
   return Date.parseDate(value, 'Y/m/d H:i:s').format("M j Y");
 };
+Ext.util.Format.hourlyRate = function(v){
+  return Ext.util.Format.usMoney(v) + " / hour";
+};
 
 SWorks.createFilterField = function(store) {
   var filterRegexArray = null;
@@ -588,7 +597,7 @@ SWorks.createFilterField = function(store) {
     }
     //All of the keywords matched somthing
     return true;
-  }
+  };
 
   var applyGridFilter = function(filter) {
     if (filter.length===0) {
@@ -608,7 +617,7 @@ SWorks.createFilterField = function(store) {
         store.addFilter(regexFilter);
       }
     }
-  }
+  };
 
   var searchField = new Ext.form.TextField({
     tag: 'input',
@@ -628,4 +637,4 @@ SWorks.createFilterField = function(store) {
   });
 
   return searchField;
-}
+};
