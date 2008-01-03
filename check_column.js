@@ -7,6 +7,8 @@
  */
 // Taken from: http://extjs.com/deploy/dev/examples/grid/edit-grid.js
 
+/*globals Ext */
+
 Ext.grid.CheckColumn = function(config){
     Ext.apply(this, config);
     if(!this.id){

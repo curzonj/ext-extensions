@@ -1,10 +1,12 @@
+/*globals Ext, CSRFKiller */
+
 Ext.namespace("Ext.ux", "Ext.ux.data", "Ext.ux.tree"); //Used by extensions
 
 // Required by data mirroring
 Ext.override(Ext.util.Observable, {
   resetEvents: function() {
-    var e, es = this.events
-    this.events = {}
+    var e, es = this.events;
+    this.events = {};
     for(e in es) {
       this.events.e = true;
     }
@@ -15,11 +17,11 @@ Ext.onReady(function() {
  Ext.Ajax.on('beforerequest', function(conn, options) {
     if(typeof options.params == 'object') {
       //Make the two possibilities easier
-      options.params = Ext.urlEncode(options.params)
+      options.params = Ext.urlEncode(options.params);
     } else if(options.params && typeof options.params == "string") {
-      options.params = options.params+'&'+CSRFKiller.field+'='+CSRFKiller.token
+      options.params = options.params+'&'+CSRFKiller.field+'='+CSRFKiller.token;
     } else if(typeof options.params == 'undefined' && options.form) {
-      options.params = CSRFKiller.field+'='+CSRFKiller.token
+      options.params = CSRFKiller.field+'='+CSRFKiller.token;
     }
  });
 });
@@ -123,8 +125,9 @@ Ext.override(Ext.tree.TreePanel, {
   
       // It's up to the user to specify unique
       // constraints
-      if(fn.call((scope || this),  node))
+      if(fn.call((scope || this),  node)) {
         return node;
+      }
     }
   }
 });

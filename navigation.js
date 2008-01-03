@@ -1,6 +1,8 @@
+/*globals SWorks, Ext, URLs */
+
 // TODO Reorganize this file with application.js
 SWorks.NavigationTree = Ext.extend(SWorks.DynamicTree, {
-  url: URLs['navigation'],
+  url: URLs.navigation,
 
   initComponent: function() {
     SWorks.NavigationTree.superclass.initComponent.call(this);

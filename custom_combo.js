@@ -1,3 +1,5 @@
+/*globals SWorks, Ext */
+
 SWorks.CustomCombo = Ext.extend(Ext.form.ComboBox, {
   allowBlank: 'true',
   mode: 'local',
@@ -43,7 +45,7 @@ SWorks.CustomCombo = Ext.extend(Ext.form.ComboBox, {
         if(!r) {
           //if we can't find the value they entered, don't
           //change the value, just restore the text
-          this.setRawValue(this.lastSelectionText)
+          this.setRawValue(this.lastSelectionText);
         } else {
           if(this.valueField) {
             //if setvalue wants the valueField

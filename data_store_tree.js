@@ -1,3 +1,5 @@
+/*globals Ext */
+
 //required: store, textField; optional: idField, parentIdField, qtipField
 Ext.ux.tree.DataStoreBacking = function(config) {
   Ext.apply(this, config);
@@ -21,8 +23,9 @@ Ext.ux.tree.DataStoreBacking.prototype = {
   },
   // TODO make these more efficient
   onBeforeExpandNode: function(node, deep, anim) {
-    if(!node.childNodes || node.childNodes.length == 0)
+    if(!node.childNodes || node.childNodes.length === 0) {
       this.reloadChildren(node);
+    }
   },
   onDataStoreChanged: function() {
     var root = this.tree.getRootNode();
@@ -40,10 +43,10 @@ Ext.ux.tree.DataStoreBacking.prototype = {
     var root = this.tree.getRootNode();
     this.reloadChildren(root);
   },
-
   reloadChildren: function(node) {
-    if(node.loading)
+    if(node.loading) {
       return;
+    }
 
     node.loading = true;
     node.beginUpdate();
@@ -60,18 +63,20 @@ Ext.ux.tree.DataStoreBacking.prototype = {
       } else {
         child = this.createNode(r);
 
-        if(child)
+        if(child) {
           node.appendChild(child);
+        }
       }
       updated[child.attributes.id] = true;
 
       // either preload or reload
-      if(this.preloadChildren !== false || node.childNodes.length > 0)
+      if(this.preloadChildren !== false || node.childNodes.length > 0) {
         this.reloadChildren(child);
+      }
     }
 
     // Collect old children 
-    var remove = [] 
+    var remove = [] ;
     node.eachChild(function(child) {
       if (!updated[child.attributes.id]) {
         remove.push(child);
@@ -79,15 +84,15 @@ Ext.ux.tree.DataStoreBacking.prototype = {
     });
 
     // Remove old children
-    for(var i=0;i<remove.length;i++) {
+    for(var i2=0;i<remove.length;i++) {
       // Normally remove would remove the rendering
       // too, but the method thinks it doesn't exist
       // because beginUpdate set childrenRendered = false
-      remove[i].remove();
+      remove[i2].remove();
 
       //Here is our cleanup
-      remove[i].ui.remove();
-      remove[i].destroy();
+      remove[i2].ui.remove();
+      remove[i2].destroy();
     }
 
     // endUpdate renders the children, we can't
@@ -95,8 +100,9 @@ Ext.ux.tree.DataStoreBacking.prototype = {
     // only thing beginUpdate does is sets
     // childrenRendered = false, so we can leave
     // that hanging
-    if(node.rendered)
+    if(node.rendered) {
       node.endUpdate();
+    }
 
     node.loading = false;
   },
@@ -108,11 +114,13 @@ Ext.ux.tree.DataStoreBacking.prototype = {
   },
   getParentId: function(node) {
     var parentId = null;
-    if(node.attributes.record && node.attributes.record.data)
+    if(node.attributes.record && node.attributes.record.data) {
       parentId = node.attributes.record.data[this.idField];
+    }
 
-    if(node.isRoot && !parentId)
+    if(node.isRoot && !parentId) {
       parentId = null;
+    }
 
     return parentId;
   },
@@ -129,8 +137,9 @@ Ext.ux.tree.DataStoreBacking.prototype = {
         record: record
       };
 
-      if(this.qtipField && record.data[this.qtipField])
+      if(this.qtipField && record.data[this.qtipField]) {
         attr.qtip = record.data[this.qtipField];
+      }
     
       if(this.baseAttrs){
           Ext.applyIf(attr, this.baseAttrs);

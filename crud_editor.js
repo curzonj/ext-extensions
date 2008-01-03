@@ -1,3 +1,5 @@
+/*globals Ext, SWorks */
+
 SWorks.CrudEditor = function(config) {
   /* Defined Interface:
    * createRecord() - create and load a new record
@@ -13,11 +15,12 @@ SWorks.CrudEditor = function(config) {
     actioncomplete: true,
 
     beforeload: true,
-    load: true,
+    load: true
   });
 
-  if(this.store.loadIfNeeded)
+  if(this.store.loadIfNeeded) {
     this.store.loadIfNeeded();
+  }
 
   SWorks.CrudEditor.superclass.constructor.call(this, config);
 }
@@ -75,7 +78,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
         if (result.success) {
           this.updateRecord(record, result);
         } else {
-          msg = result.msg || failedMsg;
+          var msg = result.msg || failedMsg;
           Ext.MessageBox.alert('Operation failed', msg);
           this.store.reload();                      
         }
@@ -104,7 +107,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
   newRecord: function() {
     var record = new this.store.reader.recordType();
 
-    list = [record].concat(arguments);
+    var list = [record].concat(arguments);
     this.initializeRecord.apply(this, list);
 
     return record;
@@ -156,7 +159,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
         if (result.success) {
           this.store.remove(record);
         } else {
-          msg = result.msg || "Failed to delete the record. Please try again."
+          var msg = result.msg || "Failed to delete the record. Please try again.";
           Ext.MessageBox.alert('Delete failed', msg);
           this.store.reload();                      
         }
@@ -192,17 +195,17 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     }
   },
   getParentRelAttrs: function(record) {
-    var values = {}
+    var values = {};
     
     var idField = this.store.model + '[' + this.store.parentIdColumn + ']';
-    values[idField] = this.parent.form.record.id
+    values[idField] = this.parent.form.record.id;
 
     if(this.store.hasParentType()) {
       var typeField = this.store.model + '[' + this.store.parentTypeColumn + ']';
-      values[typeField] = this.parent.store.klass
+      values[typeField] = this.parent.store.klass;
     }
 
-    return values
+    return values;
   },
   // the o is optional and is only for REALLY custom work
   saveForm: function(form, o){
@@ -210,8 +213,9 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
 
     // Prevents errors from holding the enter key
     // down too long or bouncing it
-    if (form.submitLock)
+    if (form.submitLock) {
       return;
+    }
     form.submitLock = true;
 
 /*    if (!form.isValid()) {
@@ -262,7 +266,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     this.updateAttribute({
       record: record,
       field: 'hidden',
-      value: true,
+      value: true
     });
   },
   updateAttribute: function(options) {
@@ -299,29 +303,33 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
             if (result.success) {
               var record = options.store.getById(options.id);
               this.updateRecord(record, result);
-              if(options.successFn)
+              if(options.successFn) {
                 options.successFn.call(options.scope);
+              }
             } else {
-              if(options.failureFn)
+              if(options.failureFn) {
                 options.failureFn.call(options.scope);
+              }
             }
           } else {
-            if(options.failureFn)
+            if(options.failureFn) {
               options.failureFn.call(options.scope);
+            }
           }
         },
         scope: this 
      });
     
-     options.successFn = options.success
-     options.failureFn = options.failure
-     delete options.success
-     delete options.failure
+     options.successFn = options.success;
+     options.failureFn = options.failure;
+     delete options.success;
+     delete options.failure;
 
      options.params['_method'] = 'put';
      
-     if(options.field)
+     if(options.field) {
        options.params[options.store.model+'['+options.field+']'] =  options.value;
+     }
 
      Ext.Ajax.request(options); 
   },
@@ -367,8 +375,9 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     record.id = result.objectid;
 
     if( result.hidden ) {
-      if ( !record.newRecord && this.store.getById(record.id) ) 
+      if ( !record.newRecord && this.store.getById(record.id) )  {
         this.store.remove(record);
+      }
     } else {
       if(record.newRecord) {
         record.newRecord = false;
@@ -516,8 +525,9 @@ Ext.extend(SWorks.DialogCrudEditor, SWorks.CrudEditor, {
   onClickClose: function(trigger, e) {
     //Only function as a button handler on buttons, this makes
     //sure ENTER still works on other buttons
-    if(typeof trigger == 'object' || e.target.type != 'button')
+    if(typeof trigger == 'object' || e.target.type != 'button') {
       this.dialog.hide();
+    }
   }
 });
 
@@ -545,11 +555,8 @@ Ext.extend(SWorks.TabbedCrudEditor, SWorks.CrudEditor, {
       Ext.MessageBox.confirm("Save changes", "Do you want to save your changes?", function(btn) {
         // Often the data gets saved while the person choses
         if(btn == "yes") {
-          this.executeOnFormSaved(
-            panel.form,
-            function() { this.saveForm(panel.form); },
-            closePanelFn
-          );
+          this.executeOnFormSaved( panel.form,
+            function() { this.saveForm(panel.form); }, closePanelFn);
         } else {
           closePanelFn.call();
         }

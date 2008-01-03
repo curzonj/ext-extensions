@@ -21,6 +21,8 @@
  *             resizable: true,
  *           }), {
  */
+
+/*globals Ext */
 Ext.ux.TreeComboBox = Ext.extend(Ext.form.TriggerField, {
   valueNotFoundText: "Item not found",
   defaultAutoCreate : {tag: "input", type: "text", size: "24", autocomplete: "off"},
@@ -51,12 +53,13 @@ Ext.ux.TreeComboBox = Ext.extend(Ext.form.TriggerField, {
     if(!this.tree) {
       var root = { id: 'root' };
       if(this.allowBlank) {
-        root['text'] = 'Root level';
-        root['expanded'] = true;
+        root.text = 'Root level';
+        root.expanded = true;
       }
 
-      if (this.store)
+      if (this.store) {
         this.nodes.store = this.store;
+      }
       
       this.tree = new Ext.tree.TreePanel({
         plugins: new Ext.ux.tree.DataStoreBacking(this.nodes),
@@ -110,11 +113,11 @@ Ext.ux.TreeComboBox = Ext.extend(Ext.form.TriggerField, {
       }
 
       this.innerList = this.list.createChild({cls:cls+'-inner'});
-      this.innerList.setWidth(lw - this.list.getFrameWidth('lr'))
+      this.innerList.setWidth(lw - this.list.getFrameWidth('lr'));
 
       this.tree.render(this.innerList);
       this.tree.on('dblclick', this.onSelect, this);
-      new Ext.tree.TreeSorter(this.tree, {folderSort: true});
+      var mySorter = new Ext.tree.TreeSorter(this.tree, {folderSort: true});
       
       this.restrictHeight();
 
@@ -128,7 +131,7 @@ Ext.ux.TreeComboBox = Ext.extend(Ext.form.TriggerField, {
           this.innerList.setWidth(w - this.list.getFrameWidth('lr'));
           this.restrictHeight();
         }, this);
-        this['innerList'].setStyle('margin-bottom', this.handleHeight+'px');
+        this.innerList.setStyle('margin-bottom', this.handleHeight+'px');
       }
     }
   },
@@ -222,8 +225,9 @@ Ext.ux.TreeComboBox = Ext.extend(Ext.form.TriggerField, {
     // Everything is build to have a value field, it should mostly work
     // without one
     if(this.valueField && v){
-      if(!node)
+      if(!node) {
         node = this.tree.findNodeBy(this.nodeMatch.createDelegate(this, [v], true));
+      }
 
       if(node) {
         this.node = node;

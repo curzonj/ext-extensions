@@ -6,6 +6,7 @@
  * http://extjs.com/license
  */
 
+/*globals Ext */
 //Taken from http://extjs.com/deploy/dev/examples/grid/GroupSummary.js
 
 Ext.grid.GroupSummary = function(config){
@@ -205,15 +206,15 @@ Ext.grid.GroupSummary.Calculations = {
     },
 
     'max' : function(v, record, field, data){
-        var v = record.data[field];
-        var max = data[field+'max'] === undefined ? (data[field+'max'] = v) : data[field+'max'];
-        return v > max ? (data[field+'max'] = v) : max;
+        var v2 = record.data[field];
+        var max = data[field+'max'] === undefined ? (data[field+'max'] = v2) : data[field+'max'];
+        return v2 > max ? (data[field+'max'] = v2) : max;
     },
 
     'min' : function(v, record, field, data){
-        var v = record.data[field];
-        var min = data[field+'min'] === undefined ? (data[field+'min'] = v) : data[field+'min'];
-        return v < min ? (data[field+'min'] = v) : min;
+        var v2 = record.data[field];
+        var min = data[field+'min'] === undefined ? (data[field+'min'] = v2) : data[field+'min'];
+        return v2 < min ? (data[field+'min'] = v2) : min;
     },
 
     'average' : function(v, record, field, data){

@@ -1,3 +1,4 @@
+/*globals Ext */
 
 /* This code fixes a bug on Radios */
 Ext.override(Ext.form.BasicForm, {
@@ -9,11 +10,11 @@ Ext.override(Ext.form.BasicForm, {
                 if(f){
                     if ( f.getEl().dom.type == 'radio' ) {
                         var group = this.el.dom.elements[f.getName()];
-                        for (var i=0; i < group.length; i++ ) {
-                            if(group[i].__ext_field) {
-                                group[i].__ext_field.setValue(group[i].value == v);
+                        for (var i2=0; i < group.length; i2++ ) {
+                            if(group[i2].__ext_field) {
+                                group[i2].__ext_field.setValue(group[i2].value == v);
                                 if(this.trackResetOnLoad){
-                                    group[i].__ext_field.originalValue = group[i].__ext_field.getValue();
+                                    group[i2].__ext_field.originalValue = group[i2].__ext_field.getValue();
                                 }
                             }
                         }
@@ -32,12 +33,12 @@ Ext.override(Ext.form.BasicForm, {
             for(id in values){
                 if(typeof values[id] != 'function' && (field = this.findField(id))){
                     if( field.getEl().dom.type == 'radio' ) {
-                        var group = this.el.dom.elements[field.getName()];
-                        for (var i=0; i < group.length; i++ ) {
-                            if(group[i].__ext_field) {
-                                group[i].__ext_field.setValue(group[i].value == values[id]);
+                        var group2 = this.el.dom.elements[field.getName()];
+                        for (var i3=0; i3 < group2.length; i3++ ) {
+                            if(group2[i3].__ext_field) {
+                                group2[i3].__ext_field.setValue(group2[i3].value == values[id]);
                                 if(this.trackResetOnLoad){
-                                    group[i].__ext_field.originalValue = group[i].__ext_field.getValue();
+                                    group2[i3].__ext_field.originalValue = group2[i3].__ext_field.getValue();
                                 }
                             }
                         }
@@ -78,7 +79,7 @@ Ext.override(Ext.form.Radio, {
             // and fire the "check" (false) event with the correct parameters
             // This cycles over all the radios...
             for(var i = 0; i < radios.elements.length; i++) {
-                if(radios.elements[i].__ext_field && radios.elements[i].__ext_field != this && radios.elements[i].name == this.el.dom.name && radios.elements[i].__ext_field.el.dom.checked == false)
+                if(radios.elements[i].__ext_field && radios.elements[i].__ext_field != this && radios.elements[i].name == this.el.dom.name && radios.elements[i].__ext_field.el.dom.checked === false)
                 {
                     radios.elements[i].__ext_field.checked = false;
                     radios.elements[i].__ext_field.fireEvent("check", radios.elements[i].__ext_field, false);

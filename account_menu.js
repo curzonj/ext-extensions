@@ -1,5 +1,7 @@
+/*globals SWorks, Ext, URLs, permissionsData */
+
 SWorks.CurrentUser = function() {
-  this.url = URLs['current_permissions'];
+  this.url = URLs.current_permissions;
   this.permissions = {};
   this.loggedIn = false;
 
@@ -7,16 +9,16 @@ SWorks.CurrentUser = function() {
     'loggedIn': true,
     'loggedOut': true,
     'permissionsChanged': true
-  })
+  });
   this.on('loggedIn', this.load, this);
-  this.on('loggedOut', function() { this.setPermissions(null) }, this);
+  this.on('loggedOut', function() { this.setPermissions(null); }, this);
 }
 Ext.extend(SWorks.CurrentUser, Ext.util.Observable, {
   isLoggedIn: function() {
     return this.loggedIn;
   },
   username: function() {
-    return this.permissions['username'];  
+    return this.permissions.username;  
   },
   setPermissions: function(newdata) {
     if(newdata) {
@@ -25,7 +27,7 @@ Ext.extend(SWorks.CurrentUser, Ext.util.Observable, {
       this.loggedIn = false;
       newdata = {};
     }
-    this.permissions = newdata
+    this.permissions = newdata;
     this.fireEvent('permissionsChanged', this.permissions);
   },
   load: function() {
@@ -46,7 +48,7 @@ Ext.extend(SWorks.CurrentUser, Ext.util.Observable, {
   // The reason there is no straight permissions check is because
   // they can change with time and you have to be ready for that.
   onPermission: function(perm, callback, scope) {
-    permCheck = function(p) {
+    var permCheck = function(p) {
       if (p[perm]) {
         callback.call(scope, perm, true);
       } else {
@@ -61,8 +63,8 @@ SWorks.CurrentUser = new SWorks.CurrentUser();
 SWorks.CurrentUser.setPermissions(permissionsData);
 
 SWorks.AccountMenu = Ext.extend(Ext.Panel, {
-  loginUrl: URLs['session'],
-  menuUrl: URLs['account_menu'],
+  loginUrl: URLs.session,
+  menuUrl: URLs.account_menu,
 
   initComponent: function() {
     SWorks.AccountMenu.superclass.initComponent.call(this);
@@ -70,43 +72,44 @@ SWorks.AccountMenu = Ext.extend(Ext.Panel, {
     this.loginWindow = this.createLoginWindow();
   },
   afterRender : function(ct, position){
-    SWorks.AccountMenu.superclass.afterRender.call(this, ct, position)
+    SWorks.AccountMenu.superclass.afterRender.call(this, ct, position);
 
     //Set the panel to reload it's conent on login or logout
     var mgr = this.getUpdater();
     mgr.setDefaultUrl(this.menuUrl);
-    SWorks.CurrentUser.on('loggedIn', mgr.refresh, mgr)
-    SWorks.CurrentUser.on('loggedOut', mgr.refresh, mgr)
+    SWorks.CurrentUser.on('loggedIn', mgr.refresh, mgr);
+    SWorks.CurrentUser.on('loggedOut', mgr.refresh, mgr);
 
     // Rewire the content when it gets updated
-    mgr.on('update', this.hookContent, this)
+    mgr.on('update', this.hookContent, this);
 
     // Manually wire the content the first time
-    this.hookContent()
+    this.hookContent();
   },
   hookContent: function(){
     // Wire the login link
-    var signinLink = Ext.get('signin-link')
+    var signinLink = Ext.get('signin-link');
     if(signinLink) {
       signinLink.on('click', function(e,t){
-        this.loginWindow.show(t.dom)
-      }, this)
+        this.loginWindow.show(t.dom);
+      }, this);
     }
 
     // A panel should listen for the update on our updater and wire to the
     // account-status element if it is there.
 
     // Wire the logout link
-    var logoutLink = Ext.get('logout-link')
+    var logoutLink = Ext.get('logout-link');
     if(logoutLink) {
       logoutLink.on('click', function(){
-          if(!this.loginWindow.rendered)
+          if(!this.loginWindow.rendered) {
             this.loginWindow.render(Ext.getBody());
+          }
           this.loginWindow.showMask();
           Ext.Ajax.request({
-            url: URLs['logout'],
+            url: URLs.logout,
             success: function(){
-              SWorks.CurrentUser.fireEvent('loggedOut')
+              SWorks.CurrentUser.fireEvent('loggedOut');
               this.loginWindow.show();
             },
             failure: function(){
@@ -114,8 +117,8 @@ SWorks.AccountMenu = Ext.extend(Ext.Panel, {
               this.loginWindow.hideMask();
             },
             scope: this
-          })
-      }, this)
+          });
+      }, this);
     }
   },
   createLoginWindow: function() {
@@ -154,8 +157,9 @@ SWorks.AccountMenu = Ext.extend(Ext.Panel, {
           })
         ],
         login: function() {
-          if(win.submitLock)
+          if(win.submitLock) {
             return;
+          }
           win.submitLock = true;
           win.keyMap.disable();
 
@@ -173,9 +177,9 @@ SWorks.AccountMenu = Ext.extend(Ext.Panel, {
               win.submitLock = false;
               win.keyMap.enable();
               panel.form.reset();
-              panel.form.items.item(0).focus()
+              panel.form.items.item(0).focus();
             }
-          })
+          });
         }
       }),
       buttons: [{
@@ -190,8 +194,8 @@ SWorks.AccountMenu = Ext.extend(Ext.Panel, {
         }
       }*/],
       keys: [
-        { key: 27, fn: function() { win.hide() }},
-        { key: Ext.EventObject.ENTER, fn: function() { panel.login() }}
+        { key: 27, fn: function() { win.hide(); }},
+        { key: Ext.EventObject.ENTER, fn: function() { panel.login(); }}
       ]
     });
     // TODO all dialog focus attempts in the whole app are broken
@@ -200,7 +204,7 @@ SWorks.AccountMenu = Ext.extend(Ext.Panel, {
         var test = 0;
       });
       panel.form.reset();
-      panel.form.items.item(0).focus()
+      panel.form.items.item(0).focus();
       var test = 0;
     });
 

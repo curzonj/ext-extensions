@@ -1,3 +1,5 @@
+/*globals Ext, SWorks */
+
 // Currently only used on nav tree, to be replaced by DataStoreBacking
 SWorks.DynamicTree = Ext.extend(Ext.tree.TreePanel, {
   rootVisible: false,
@@ -12,7 +14,7 @@ SWorks.DynamicTree = Ext.extend(Ext.tree.TreePanel, {
     var root = new Ext.ux.JsonTreeNode({
       id: 'root',
       text: 'Root Node (invisible)'
-    })
+    });
     this.setRootNode(root);
     if (this.initialData) {
       this.setChildren(this.initialData);
@@ -25,8 +27,9 @@ SWorks.DynamicTree = Ext.extend(Ext.tree.TreePanel, {
     root.destroyChildren();
     root.createChildren(children);
     this.fireEvent('load', this);
-    if (this.rendered)
+    if (this.rendered) {
       root.renderChildren();
+    }
   },
   load: function(url) {
     // TODO loading mask

@@ -1,9 +1,12 @@
+/*globals Ext */
+
 Ext.ux.JsonTreeNode = function(config) {
-  config = config || {}
-  Ext.applyIf(config, {leaf: (config.children == null)});
+  config = config || {};
+  Ext.applyIf(config, {leaf: (config.children === null)});
   Ext.ux.JsonTreeNode.superclass.constructor.call(this, config);
-  if (config.children)
+  if (config.children) {
     this.createChildren(config.children);
+  }
 };
 Ext.extend(Ext.ux.JsonTreeNode, Ext.tree.TreeNode, {
   createChildren: function(children) {
@@ -17,16 +20,17 @@ Ext.extend(Ext.ux.JsonTreeNode, Ext.tree.TreeNode, {
   //Only called on root, destroy() does the rest
   destroyChildren: function() {
     while(this.firstChild) {
-      var node = this.firstChild
+      var node = this.firstChild;
       this.removeChild(node);
-      if (node.destroy)
+      if (node.destroy) {
         node.destroy();
+      }
     }
   }
 });
 
 Ext.ux.DDBulkMultiselect = function(config) {
-  config.treeConfig = config.treeConfig || {}
+  config.treeConfig = config.treeConfig || {};
   Ext.applyIf(config.treeConfig, {
     animate: true,
     autoScroll: true,
@@ -43,7 +47,7 @@ Ext.ux.DDBulkMultiselect = function(config) {
     border: false,
     defaults: {
       style: "margin:10px",
-      columnWidth: .5,
+      columnWidth: 0.5,
       height: config.height
     },
     items: [
@@ -54,7 +58,7 @@ Ext.ux.DDBulkMultiselect = function(config) {
         dataIndex: config.dataIndex,
         setValue: function(v) {
           if(typeof v !== 'object') {
-            v = []
+            v = [];
           }
           this.value = v;
           this.setDomValue();
@@ -108,8 +112,8 @@ Ext.extend(Ext.ux.DDBulkMultiselect, Ext.Panel, {
     this.hiddenField.addItem(node.attributes.value || node.id);
   },
   setupTrees: function() {
-    new Ext.tree.TreeSorter(this.srcTree);
-    new Ext.tree.TreeSorter(this.dstTree);
+    var srcSorter = new Ext.tree.TreeSorter(this.srcTree);
+    var dstSorter = new Ext.tree.TreeSorter(this.dstTree);
 
     this.srcTree.setRootNode(new Ext.ux.JsonTreeNode({
       text: this.srcText,
@@ -136,7 +140,7 @@ Ext.extend(Ext.ux.DDBulkMultiselect, Ext.Panel, {
 
     // TODO use this to create a proper tree in the source
     var missingParentFilter = function(r) {
-      return (!r.data.parent_id || r.data.parent_id == "");
+      return (!r.data.parent_id || r.data.parent_id === "");
     }
 
     // I'm not sure what to query, if this were used without

@@ -1,9 +1,12 @@
+/*globals Ext */
+
 // Add cloning and mirroring ability
 Ext.override(Ext.data.Store, {
   clone: function clone(keep_filters, mirror_data) {
     // Never mess with a dirty data store
-    if (this.modified.length > 0)
+    if (this.modified.length > 0) {
       return;
+    }
 
     var newObj = {};
     Ext.apply(newObj, this);
@@ -112,14 +115,15 @@ Ext.ux.data.LoadAttempts = function(store, maxAttempts) {
 
   if(store.proxy) {
     store.proxy.on('loadexception', function(proxy, data, transaction) {
-      store.loadAttempts = store.loadAttempts ? store.loadAttempts + 1 : 1
-      if (store.loadAttempts < maxAttempts)
+      store.loadAttempts = store.loadAttempts ? store.loadAttempts + 1 : 1;
+      if (store.loadAttempts < maxAttempts) {
         store.load();
+      }
     }, store);
   }
 
   store.on('load', function() {
-    store.loadAttempts = 0
+    store.loadAttempts = 0;
   }, store);
 }
 
@@ -134,11 +138,12 @@ Ext.ux.data.ReloadingStore = function(store) {
 Ext.ux.data.ReloadingStore.overrides = {
   refreshPeriod: 360000,
   loadIfNeeded: function() {
-    if(!this.proxy)
+    if(!this.proxy) {
       return;
+    }
 
     var data = this.snapshot || this.filteredCache || this.data;
-    if(!this.refreshTask || (data.length == 0 && !this.proxy.activeRequest)) {
+    if(!this.refreshTask || (data.length === 0 && !this.proxy.activeRequest)) {
       this.load();
     }
   },
@@ -153,18 +158,20 @@ Ext.ux.data.ReloadingStore.overrides = {
     }
   },
   createRefreshTask: function(refreshRate) {
-    if(!this.proxy || refreshRate <= 0)
+    if(!this.proxy || refreshRate <= 0) {
       return;
+    }
 
-    if(this.refreshTask)
+    if(this.refreshTask) {
       this.refreshTask.cancel();
+    }
     //TODO maybe there is a way to not reload the table
     //if there is nothing new
     this.refreshTask = new Ext.util.DelayedTask();
     //If it is manually reloaded, we don't need to
     this.on('beforeload',function() {
       this.refreshTask.delay(refreshRate);
-    }, this)
+    }, this);
     this.refreshTask.setRefreshRate = function(newRate) {
       refreshRate = newRate;
       this.delay(refreshRate);
@@ -194,7 +201,7 @@ Ext.ux.data.PersistentFilters.overrides = {
   },
   clearFilter: function(suppressEvent) {
     // Just removes the effects of filterBy
-    this.filteredCache = this.filteredCache || this.snapshot || this.data
+    this.filteredCache = this.filteredCache || this.snapshot || this.data;
 
     if(this.filteredCache && this.filteredCache != this.data){
       this.data = this.filteredCache;
@@ -220,8 +227,9 @@ Ext.ux.data.PersistentFilters.overrides = {
   }, */
   addRegExFilter: function(property, value, anyMatch, caseSensitive) {
     var fn = this.createFilterFn(property, value, anyMatch, caseSensitive);
-    if (fn)
+    if (fn) {
       this.addFilter(fn);
+    }
   },
   addFilter: function(fn, scope, suppress_filtering) {
     this.filterChain = this.filterChain || [];
@@ -233,16 +241,18 @@ Ext.ux.data.PersistentFilters.overrides = {
       });
     }
 
-    if(!suppress_filtering)
+    if(!suppress_filtering) {
       this.applyFilters();
+    }
   },
   removeFilter: function(fn, scope, suppress_filtering) {
     var index;
     if((index = this.findFilter(fn, scope)) != -1) {
       this.filterChain.splice(index, 1);
 
-      if(!suppress_filtering)
+      if(!suppress_filtering) {
         this.applyFilters();
+      }
     }
   },
   findFilter: function(fn, scope) {
@@ -264,18 +274,19 @@ Ext.ux.data.PersistentFilters.overrides = {
     var fc = this.filterChain || [];
     var len = fc.length;
 
-    if(len != 0) {
+    if(len !== 0) {
       this.data = this.data.filterBy(function(record, id) {
         for(var i=0;i<len;i++) {
           var set = fc[i];
-          if(!set.fn.call((set.scope||this), record, id))
+          if(!set.fn.call((set.scope||this), record, id)) {
             return false;
+          }
         }
         return true;
       });
     }
 
-    this.filteredCache = this.data
+    this.filteredCache = this.data;
 
     if(fire_event !== false) {
       this.fireEvent("datachanged", this);

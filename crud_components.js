@@ -1,26 +1,28 @@
+/*globals SWorks, Ext, ds */
+
+ds = Ext.StoreMgr;
+
 SWorks.CrudStore = function(config) {
   // From JsonStore
   Ext.applyIf(config, {
     sortInfo: { field: 'id', direction: 'ASC' },
     proxy: !config.data ? new Ext.data.HttpProxy({url: config.url}) : undefined,
     reader: new Ext.data.JsonReader(config, config.fields)
-  })
+  });
 
   SWorks.CrudStore.superclass.constructor.call(this, config);
 
   // TODO change back to proper RW sometime
   this.rwPerm = this.root+'.view';
 
-  Ext.ux.data.LoadAttempts(this),
-  Ext.ux.data.ReloadingStore(this),
-  Ext.ux.data.PersistentFilters(this)
+  Ext.ux.data.LoadAttempts(this);
+  Ext.ux.data.ReloadingStore(this);
+  Ext.ux.data.PersistentFilters(this);
 }
-ds = Ext.StoreMgr
-
 Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
   linkToParent: function(p, idCol) {
     this.parentIdColumn = idCol;
-    this.checkParentColumns(idCol)
+    this.checkParentColumns(idCol);
 
     p.on('load', function(form, record) {
       if(form == p.form) {
@@ -45,21 +47,22 @@ Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
       var column = idCol.replace(/id/, "type");
       var value = (this.recordType.prototype.fields.keys.indexOf(column) != -1);
 
-      this.hasParentType = function() { return value; }
-      if(value)
+      this.hasParentType = function() { return value; };
+      if(value) {
         this.parentTypeColumn = idCol.replace(/id/, "type");
+      }
     }
   },
   parentFilter: function(record){
-    var idMatch = (record.data[this.parentIdColumn] == this.relation_id)
+    var idMatch = (record.data[this.parentIdColumn] == this.relation_id);
     var typeMatch = true;
 
     //Provides automatic filtering on polymophic relations
     if(this.hasParentType()) {
-      typeMatch = (record.data[this.parentTypeColumn] == this.relation_type)
+      typeMatch = (record.data[this.parentTypeColumn] == this.relation_type);
     }
 
-    return (idMatch && typeMatch)
+    return (idMatch && typeMatch);
   }
 });
 
@@ -68,7 +71,7 @@ Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
 SWorks.commonCrudPanelFunctions = {
   border: false,
   checkToolbarButtons: function() {
-    if(this.topToolbar && this.topToolbar.items)
+    if(this.topToolbar && this.topToolbar.items) {
       for(var i = 0; i < this.topToolbar.items.items.length; i++){
         var b = this.topToolbar.items.items[i];
         if(b.type == "button") {
@@ -84,14 +87,17 @@ SWorks.commonCrudPanelFunctions = {
           }
         }
       }
+    }
   },
   setupEditor: function() {
-    if(!this.editor)
+    if(!this.editor) {
       return;
+    }
 
     // deleteRecord is the least commonly overloaded
-    if (!this.editor.addListener)
+    if (!this.editor.addListener) {
       this.editor = new SWorks.DialogCrudEditor(this.editor);
+    }
 
     this.editor.crudPanel = this;
     if(!this.store) {
@@ -158,8 +164,9 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
       tb.push('-');
       tb.push(new Ext.Toolbar.TextItem("Quicksearch"));
       tb.push(SWorks.createFilterField(this.store));
-      if(this.editor)
+      if(this.editor) {
         tb.push('-');
+      }
     }
 
     if(this.editor) {
@@ -205,8 +212,9 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
       }
     }
 
-    if(tb.length > 0)
+    if(tb.length > 0) {
       return new Ext.Toolbar(tb);
+    }
   },
   createOptionsMenu: function(){
     var viewMenuOptions = [], groupByMenuOptions = [];
@@ -217,12 +225,13 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
         var v = cv[i];
         var options = {
           group: 'customview',
-          checked: (v.default == true),
+          checked: (v.isDefault === true),
           text: v.text,
           checkHandler: function() {
             var prev = this.store.customViewHander;
-            if(prev)
+            if(prev) {
               this.store.removeFilter(prev);
+            }
 
             this.store.customViewHandler = v.filter;
             this.store.addFilter(v.filter);
@@ -250,7 +259,7 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
         }]
       },
       readOnly: true,
-      gridOperation: true,
+      gridOperation: true
     }
   },
   onClickAddBtn: function(){
@@ -263,9 +272,9 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
   },
   grabCurrentRecordRow: function() {
     //This makes changes, so it isn't just a getter
-    var sel = this.getSelections()
+    var sel = this.getSelections();
     var r = sel[0]; 
-    this.setRecordSelection(r)
+    this.setRecordSelection(r);
 
     return r;
   },
@@ -281,12 +290,12 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
   },
   // Default scope is the crudgrid
   confirmMultipleRows: function(msg, alt, fn, scope){
-    var n = this.getSelections().length
+    var n = this.getSelections().length;
     if(n > 0) {
       Ext.MessageBox.confirm('Message', String.format(msg, n),
         function(btn) {
           if(btn == 'yes') {
-            var list = this.getSelections()
+            var list = this.getSelections();
             for(var i = 0, len = list.length; i < len; i++){
               fn.call(scope||this, list[i]);
             }
@@ -310,25 +319,26 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
   },
   setRecordSelection: function(r) {
     // select the right record if it exists
-    if(this.store.indexOf(r) != -1)
-      this.getSelectionModel().selectRecords([r],false)
+    if(this.store.indexOf(r) != -1) {
+      this.getSelectionModel().selectRecords([r],false);
+    }
   },
   saveSelections: function(sm) {
     this.savedSelections = [];
     var selectedRows = sm.getSelections();
     for (var i=0; i<selectedRows.length; i++) {
       this.savedSelections.push(selectedRows[i].id);
-    };
+    }
   },
   restoreSelections: function() {
     if(this.savedSelections && this.savedSelections.length > 0) {
-      var selectedRows = []
+      var selectedRows = [];
       for (var i=0; i<this.savedSelections.length; i++) {
         selectedRows.push(this.store.getById(this.savedSelections[i]));
       }
-      this.getSelectionModel().selectRecords(selectedRows,false)
+      this.getSelectionModel().selectRecords(selectedRows,false);
     }
-  },
+  }
 });
 Ext.override(SWorks.CrudGridPanel, SWorks.commonCrudPanelFunctions);
 
@@ -403,7 +413,7 @@ Ext.extend(SWorks.CrudTreePanel, Ext.tree.TreePanel, {
 
     this.setupEditor();
 
-    new Ext.tree.TreeSorter(this, {folderSort: true});
+    var mySorter = new Ext.tree.TreeSorter(this, {folderSort: true});
 
     this.elements += ',tbar';
     this.topToolbar = this.createToolbar();
@@ -469,15 +479,16 @@ Ext.extend(SWorks.CrudTreePanel, Ext.tree.TreePanel, {
       }
     }
 
-    if(tb.length > 0)
+    if(tb.length > 0) {
       return new Ext.Toolbar(tb);
+    }
   },
   onClickRefresh: function() {
     this.store.reload();                
   },
   // For the sake of checkToolbarButtons
   getSelections: function() {
-    node = this.getSelection();
+    var node = this.getSelection();
     return [ node ];
   },
   getSelection: function() {
@@ -492,25 +503,29 @@ Ext.extend(SWorks.CrudTreePanel, Ext.tree.TreePanel, {
   },
   onClickEditBtn: function() {
     var node = this.getSelection();
-    if(!node)
+    if(!node) {
       return;
+    }
 
     this.editor.loadRecord(node.attributes.record);
   },
   onClickDeleteBtn: function() {
     var node = this.getSelection();
-    if(!node)
+    if(!node) {
       return;
+    }
 
     var msg = "Do you really want to delete {0}?";
-    if(node.childNodes.length > 0)
+    if(node.childNodes.length > 0) {
       msg = "Do you really want to delete {0} <b>and all it's children</b>?";
+    }
 
     // TODO make this delete all the children too
     Ext.MessageBox.confirm("Confirmation", String.format(msg, node.text),
       function(btn) {
-        if(btn == 'yes')
+        if(btn == 'yes') {
           this.editor.deleteRecord(node.attributes.record);
+        }
       }, this);
   },
   onDblClickNode: function(node, e) {
@@ -528,7 +543,7 @@ Ext.override(SWorks.CrudTreePanel, SWorks.commonCrudPanelFunctions);
 // TODO put this validation and rendering stuff in a namespace
 Ext.form.VTypes.phoneNumberMask = /[1234567890\-\ ]/;
 Ext.form.VTypes.phoneNumber = function(value) {
-  var ph = value.replace(/\D/g, "")
+  var ph = value.replace(/\D/g, "");
   if(ph.length < 10) {
     return "Area code is required.";
   } else {
@@ -549,36 +564,38 @@ SWorks.createFilterField = function(store) {
   var filterRegexArray = null;
 
   var regexFilter = function(r) {
-    var reArray = filterRegexArray //threading issues
+    var reArray = filterRegexArray; //threading issues
 
-    if(reArray)
+    if(reArray) {
       // This creates an implicit and between all words in the
       // search that is why we are looking for a false negative
       // instead of a positive match
       for (var i=0; i<reArray.length; i++) {
         var re = reArray[i];
         var decision = false;
-        for (property in r.data) {
-          if (re.test(r.data[property])==true) {
+        for (var property in r.data) {
+          if (re.test(r.data[property]) === true) {
             // If any match, grid record is still a possibility
             decision = true;
-          };
+          }
          }
          //If none of grid records fields match the current
          //keyword, grid record doesn't match the search
-         if (decision == false)
+         if (decision === false) {
            return false;
+         }
       }
+    }
     //All of the keywords matched somthing
     return true;
   }
 
   var applyGridFilter = function(filter) {
-    if (filter.length==0) {
+    if (filter.length===0) {
       store.removeFilter(regexFilter);
     } else {
       var value = filter.replace(/^\s+|\s+$/g, "");
-      if (value=="") {
+      if (value==="") {
         store.removeFilter(regexFilter);
       } else {
         var valueArr = value.split(/\ +/);
@@ -606,7 +623,7 @@ SWorks.createFilterField = function(store) {
   searchField.on('render', function() {
     searchField = Ext.get(searchField.getEl()); //convert from HTMLElement to Element
     searchField.on('keyup', function(e) {
-      applyGridFilter(e.getTarget().value)
+      applyGridFilter(e.getTarget().value);
     }, null, {buffer: 250});
   });
 
