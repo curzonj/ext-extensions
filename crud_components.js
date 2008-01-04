@@ -109,14 +109,14 @@ SWorks.commonCrudPanelFunctions = {
 /* SWorks.CrudGridPanel
  */
 SWorks.CrudGridPanel = function(config) {
-  Ext.applyIf(config, {
+/*  Ext.applyIf(config, {
     loadMask: {
       // Just mask the grid the first time,
       // after that we have data to show until
       // the load returns
       removeMask: true
     }
-  });
+  }); */
 
   SWorks.CrudGridPanel.superclass.constructor.call(this, config);
 };
@@ -367,6 +367,9 @@ SWorks.CrudGridDialog = Ext.extend(SWorks.CrudGridPanel, {
   loadRecord: function(record) {
     if(this.fireEvent('beforeload', this, record, this.dialog) !== false) {
       this.store.filterOnRelation(record);
+      if(this.rendered) {
+        this.getSelectionModel().clearSelections();
+      }
       this.fireEvent('load', this, record, this.dialog);
 
       this.dialog.show();
@@ -387,10 +390,18 @@ SWorks.CrudGridDialog = Ext.extend(SWorks.CrudGridPanel, {
       collapsible: false,
       defaults: { border: false },
       layout: 'fit',
-      items: this
+      items: this,
+      buttons: [{
+        text: "Close",
+        handler: this.onClickClose,
+        scope: this
+      }],
     });
 
     this.dialog = new Ext.Window(config);
+  },
+  onClickClose: function() {
+    this.dialog.hide();
   }
 });
 
