@@ -74,7 +74,7 @@ SWorks.AccountMenu = Ext.extend(Ext.Panel, {
   afterRender : function(ct, position){
     SWorks.AccountMenu.superclass.afterRender.call(this, ct, position);
 
-    //Set the panel to reload it's conent on login or logout
+    //Set the panel to reload its content on login or logout
     var mgr = this.getUpdater();
     mgr.setDefaultUrl(this.menuUrl);
     SWorks.CurrentUser.on('loggedIn', mgr.refresh, mgr);
