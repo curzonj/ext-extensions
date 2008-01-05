@@ -143,12 +143,14 @@ SWorks.AccountMenu = Ext.extend(Ext.Panel, {
         bodyStyle: 'padding:5px',
         items: [
           new Ext.form.TextField({
+            id: 'login-user-name-field',
             fieldLabel: 'Username',
             name: 'login',
             allowBlank: false,
             width: 140
           }),
           new Ext.form.TextField({
+            id: 'password-field',
             fieldLabel: 'Password',
             name: 'password',
             inputType: 'password',
@@ -183,6 +185,7 @@ SWorks.AccountMenu = Ext.extend(Ext.Panel, {
         }
       }),
       buttons: [{
+        id: 'signin-submit-btn',
         text: "Sign in",
         handler: function() {
           panel.login();
