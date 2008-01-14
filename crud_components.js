@@ -25,7 +25,7 @@ Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
     this.checkParentColumns(idCol);
 
     p.on('load', function(form, record) {
-      if(form == p.form) {
+      if(!p.form || p.form == form) {
         //This deals with polymorphic relations
         this.relation_id = record.id;
         this.relation_type = p.store.klass; // New records do have a store
@@ -36,18 +36,16 @@ Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
   },
   filterOnRelation: function(record) {
     //This deals with polymorphic relations
-    this.relation_id = record.id;
-    this.relation_type = record.store.klass;
+    this.relation_id = record.data.id;
+    this.relation_type = record.data.type || record.store.klass;
 
     this.addFilter(this.parentFilter, this);
   },
-  hasParentType: Ext.emptyFn,
   checkParentColumns: function(idCol) {
     if(idCol) {
       var column = idCol.replace(/id/, "type");
       var value = (this.recordType.prototype.fields.keys.indexOf(column) != -1);
 
-      this.hasParentType = function() { return value; };
       if(value) {
         this.parentTypeColumn = idCol.replace(/id/, "type");
       }
@@ -58,7 +56,7 @@ Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
     var typeMatch = true;
 
     //Provides automatic filtering on polymophic relations
-    if(this.hasParentType()) {
+    if(this.parentTypeColumn) {
       typeMatch = (record.data[this.parentTypeColumn] == this.relation_type);
     }
 
@@ -103,6 +101,10 @@ SWorks.commonCrudPanelFunctions = {
     if(!this.store) {
       this.store = this.editor.store;
     }
+
+    if(!this.parentIdColumn && this.editor.parentIdColumn) {
+      this.parentIdColumn = this.editor.parentIdColumn;
+    }
   }
 };
 
@@ -128,6 +130,8 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
   initComponent: function() {
     SWorks.CrudGridPanel.superclass.initComponent.call(this);
 
+    this.addEvents('load', 'beforeload');
+
     this.setupEditor();
 
     if(this.store.groupBy) {
@@ -141,6 +145,13 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
       this.view = new Ext.grid.GridView(Ext.apply({
         forceFit:true
       }));
+    }
+
+    // Normally the editor takes care of this. This is for special cases.
+    var rel_id = this.parentIdColumn;
+    if(rel_id) {
+      this.store.parentIdColumn = rel_id;
+      this.store.checkParentColumns(rel_id);
     }
 
     this.elements += ',tbar';
@@ -276,6 +287,19 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
     var r = this.grabCurrentRecordRow();
     this.editRecord(r);
   },
+  onLoadRecord: function(record) {
+    this.currentRecord = record;
+    this.store.filterOnRelation(record);
+  },
+  loadRecord: function(record) {
+    if(this.fireEvent('beforeload', this, record, this.dialog) !== false) {
+      this.onLoadRecord(record);
+      if(this.rendered) {
+        this.getSelectionModel().clearSelections();
+      }
+      this.fireEvent('load', this, record, this.dialog);
+    }
+  },
   grabCurrentRecordRow: function() {
     //This makes changes, so it isn't just a getter
     var sel = this.getSelections();
@@ -344,36 +368,62 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
       }
       this.getSelectionModel().selectRecords(selectedRows,false);
     }
+  },
+  setParent: function(p) {
+    this.parent = p;
+    if(this.editor) {
+      this.editor.setParent(p);
+    }
+
+    if(this.parentIdColumn) {
+      this.store.linkToParent(p, this.parentIdColumn);
+    }
   }
 });
 Ext.override(SWorks.CrudGridPanel, SWorks.commonCrudPanelFunctions);
+
+SWorks.DependentUrlCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
+  setParent: function(p) {
+    SWorks.DependentUrlCrudGrid.superclass.setParent(p);
+
+    p.on('load', function(form, record) {
+      if(form == p.form) {
+        this.loadRecord(record);
+      }
+    }, this);
+  },
+  onLoadRecord: function(record) {
+    this.currentRecord = record;
+    this.loadGridRecords();
+  },
+  loadGridRecords: function() {
+    if(!this.currentRecord.newRecord) {
+      this.store.proxy.conn.url = 
+        String.format(this.store.baseUrl, this.currentRecord.id);
+      this.store.load();
+    }
+  },
+  onClickRefresh: function() {
+    SWorks.CrudEditor.prototype.executeOnFormSaved.call(
+      this,
+      this.parent.form,
+      function() { this.parent.save(); },
+      function() { this.loadGridRecords(); }
+    );
+  }
+});
 
 SWorks.CrudGridDialog = Ext.extend(SWorks.CrudGridPanel, {
   initComponent: function() {
     SWorks.CrudGridDialog.superclass.initComponent.call(this);
 
-   this.addEvents('load', 'beforeload');
-
     if(!this.dialog) {
       this.createWindow();
     }
 
-    var rel_id = this.parentIdColumn || this.editor.parentIdColumn;
-    if(rel_id) {
-      this.store.parentIdColumn = rel_id;
-      this.store.checkParentColumns(rel_id);
-    }
-  },
-  loadRecord: function(record) {
-    if(this.fireEvent('beforeload', this, record, this.dialog) !== false) {
-      this.store.filterOnRelation(record);
-      if(this.rendered) {
-        this.getSelectionModel().clearSelections();
-      }
-      this.fireEvent('load', this, record, this.dialog);
-
+    this.on('load', function() {
       this.dialog.show();
-    }
+    }, this);
   },
   createWindow: function() {
     var config = this.dialogConfig || {};
@@ -395,7 +445,7 @@ SWorks.CrudGridDialog = Ext.extend(SWorks.CrudGridPanel, {
         text: "Close",
         handler: this.onClickClose,
         scope: this
-      }],
+      }]
     });
 
     this.dialog = new Ext.Window(config);
