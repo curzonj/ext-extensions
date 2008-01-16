@@ -120,6 +120,7 @@ SWorks.CrudGridPanel = function(config) {
     }
   }); */
 
+
   SWorks.CrudGridPanel.superclass.constructor.call(this, config);
 };
 // The crudgrid is not currently compatable with inline editing
@@ -134,6 +135,10 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
 
     this.setupEditor();
 
+    if(this.store.loadIfNeeded) {
+      this.store.loadIfNeeded();
+    }
+
     if(this.store.groupBy) {
       this.view = new Ext.grid.GroupingView(Ext.apply({
         forceFit:true,
@@ -145,13 +150,6 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
       this.view = new Ext.grid.GridView(Ext.apply({
         forceFit:true
       }));
-    }
-
-    // Normally the editor takes care of this. This is for special cases.
-    var rel_id = this.parentIdColumn;
-    if(rel_id) {
-      this.store.parentIdColumn = rel_id;
-      this.store.checkParentColumns(rel_id);
     }
 
     this.elements += ',tbar';

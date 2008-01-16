@@ -15,10 +15,11 @@ Ext.override(Ext.data.Store, {
     if(mirror_data !== false) {
       newObj.mirror(this);
     } else {
-      // The current records point to the other store
-      // as `their` store. We need our own records if
-      // we arn't going to mirror our source
-      newObj.reload();
+      //We start out with the same instance of data, and load()
+      //just clears the items from the data collection and puts
+      //new ones in. This gives us our own records and our own
+      //instance of data.
+      newObj.initData();
     }
 
     if(!keep_filters) {
@@ -26,6 +27,12 @@ Ext.override(Ext.data.Store, {
     }
 
     return newObj;
+  },
+  initData: function() {
+    this.data = new Ext.util.MixedCollection(false);
+    this.data.getKey = function(o){
+        return o.id;
+    };
   },
   mirror: function(source) {
     // Mirrored data stores only work for a limited subset of the total
@@ -117,7 +124,7 @@ Ext.ux.data.LoadAttempts = function(store, maxAttempts) {
     store.proxy.on('loadexception', function(proxy, data, transaction) {
       store.loadAttempts = store.loadAttempts ? store.loadAttempts + 1 : 1;
       if (store.loadAttempts < maxAttempts) {
-        store.load();
+        store.reload();
       }
     }, store);
   }
@@ -138,7 +145,9 @@ Ext.ux.data.ReloadingStore = function(store) {
 Ext.ux.data.ReloadingStore.overrides = {
   refreshPeriod: 360000,
   loadIfNeeded: function() {
-    if(!this.proxy) {
+    if(!(this.proxy &&
+         this.proxy.conn &&
+         this.proxy.conn.url )) {
       return;
     }
 

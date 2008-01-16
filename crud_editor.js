@@ -34,7 +34,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
 
     return {
       form: form,
-      type: this.type,
+      daoClass: this.daoClass,
       save: saveParent,
       on: listenerDelegate
     };
@@ -86,7 +86,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
 
     if (this.recordType.prototype.fields.keys.indexOf(typeColumn) != -1) {
       var typeField = String.format(this.parameterTemplate, typeColumn);
-      values[typeField] = this.parent.type;
+      values[typeField] = this.parent.daoClass;
     }
 
     return values;
@@ -97,25 +97,13 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
    * Updating and saving records
    *
    */
-  eventHandler: function(evt, msg) {
-    //example = callback: editor.eventHandler('disable', "Sorry, failed");
-    return this.sendEvent.createDelegate(this, [evt, msg], true);
-  },
-  sendEvent: function(record, eventName, failedMsg){
-    this.postToRecord(record.id, {
-      errmsg: failedMsg,
-      record: record,
-      params: {
-        'event': eventName,
-        '_method': 'put'
-      }
-    });
-  },
   saveRecord: function(o) {
     // Options: record, callback
     if(o.record && !o.record.data) {
       o.record = this.newRecord(o.record, false);
     }
+
+    o = this.setUpdateOrCreate(o.record, o);
     Ext.applyIf(o.params, this.serializeRecord(o.record));
 
     this.postToRecord(o.record.id, o);
@@ -147,11 +135,11 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     o.params = o.params || {};
     
     if(record.newRecord) {
-      o.url = this.createUrl;
-      o.params._method = 'post';
+      Ext.applyIf(o, { url: this.createUrl});
+      Ext.applyIf(o.params, { '_method': 'post'});
     } else {
-      o.url = String.format(this.restUrl, record.id);
-      o.params._method = 'put';
+      Ext.applyIf(o, { url: String.format(this.restUrl, record.id)});
+      Ext.applyIf(o.params, { '_method': 'put'});
     }
 
     return o;
@@ -171,7 +159,10 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     return values;
   },
   postToRecord: function(rid, o) {
-    Ext.MessageBox.wait(o.waitMsg || "Updating Record...");
+    if(o.waitMsg !== false) {
+      Ext.MessageBox.wait(o.waitMsg || "Updating Record...");
+    }
+
     // TODO add a retry mechanism
 
     if(o.record) {
@@ -192,8 +183,10 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     }));
   },
   postToRecordCallback: function(options, success, response) {
-    Ext.MessageBox.updateProgress(1);
-    Ext.MessageBox.hide();
+    if(options.waitMsg !== false) {
+      Ext.MessageBox.updateProgress(1);
+      Ext.MessageBox.hide();
+    }
 
     var result = null;
     if(success) {
@@ -209,11 +202,13 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
         }
         this.updateRecord(record, result);
       } else {
-        record = new this.recordType(result.data, result.object_id);
+        record = new this.recordType(result.data, result.objectid);
       }
-      
-      options.cb.fn.call(options.cb.scope || this, record);
-      this.fireEvent('save', record);
+     
+      if(options.cb.fn) { 
+        options.cb.fn.call(options.cb.scope || this, record, result);
+      }
+      this.fireEvent('save', record, result);
       record.newBeforeSave = false;
     } else {
       var msg = ((result && result.errors) ? (result.errors.base || options.errmsg) : options.errmsg);
@@ -257,7 +252,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
       }
 
       this.updateRecord(record, action.result);
-      this.fireEvent('save', form.record);
+      this.fireEvent('save', form.record, action.result);
       form.record.newBeforeSave = false;
     }
 
@@ -467,17 +462,27 @@ SWorks.ManagedCrudEditor = function(config) {
    */
   SWorks.ManagedCrudEditor.superclass.constructor.call(this, config);
 
-  if(this.store.loadIfNeeded) {
-    this.store.loadIfNeeded();
-  }
-
   this.createUrl = this.store.url;
   this.restUrl = this.store.url + '/{0}';
   this.parameterTemplate = this.store.model + "[{0}]";
-  this.model = this.store.klass; // TODO
+  this.daoClass = this.store.klass;
   this.recordType = this.store.recordType;
 };
 Ext.extend(SWorks.ManagedCrudEditor, SWorks.CrudEditor, {
+  eventHandler: function(evt, msg) {
+    //example = callback: editor.eventHandler('disable', "Sorry, failed");
+    return this.sendEvent.createDelegate(this, [evt, msg], true);
+  },
+  sendEvent: function(record, eventName, failedMsg){
+    this.postToRecord(record.id, {
+      errmsg: failedMsg,
+      record: record,
+      params: {
+        'event': eventName,
+        '_method': 'put'
+      }
+    });
+  },
   createParentRef: function(form) {
     var result = SWorks.ManagedCrudEditor.superclass.createParentRef.call(this, form);
     result.store = this.store;
@@ -489,8 +494,9 @@ Ext.extend(SWorks.ManagedCrudEditor, SWorks.CrudEditor, {
     if(success && result.success) {
       var id = options.deleting_id;
       var record = this.store.getById(id);
-
-      this.store.remove(record);
+      if(record) {
+        this.store.remove(record);
+      }
     }
 
     return result;
@@ -525,6 +531,7 @@ Ext.extend(SWorks.ManagedCrudEditor, SWorks.CrudEditor, {
   },
   updateRecord: function(record, result) {
     if(record.newRecord) {
+      record.id = result.objectid;
       this.store.add(record);
     }
     SWorks.ManagedCrudEditor.superclass.updateRecord.call(this, record, result);
@@ -753,7 +760,7 @@ Ext.extend(SWorks.TabbedCrudEditor, SWorks.ManagedCrudEditor, {
       if( panel.form &&
           panel.form.el &&
           panel.form.isDirty()) {
-        this.saveForm(panel.form, { waitMsg: null });
+        this.saveForm(panel.form, { waitMsg: false });
       }
     }, this);
     panel.on('destroy', function() {
