@@ -14,16 +14,20 @@ Ext.override(Ext.util.Observable, {
 });
 
 Ext.onReady(function() {
- Ext.Ajax.on('beforerequest', function(conn, options) {
-    if(typeof options.params == 'object') {
-      //Make the two possibilities easier
-      options.params = Ext.urlEncode(options.params);
-    } else if(options.params && typeof options.params == "string") {
-      options.params = options.params+'&'+CSRFKiller.field+'='+CSRFKiller.token;
-    } else if(typeof options.params == 'undefined' && options.form) {
-      options.params = CSRFKiller.field+'='+CSRFKiller.token;
-    }
- });
+  if(CSRFKiller.field) {
+    Ext.Ajax.on('beforerequest', function(conn, options) {
+      if(typeof options.params == 'object') {
+        //Make the two possibilities easier
+        options.params = Ext.urlEncode(options.params);
+      } 
+
+      if(options.params && typeof options.params == "string") {
+        options.params = options.params+'&'+CSRFKiller.field+'='+CSRFKiller.token;
+      } else if(typeof options.params == 'undefined' && options.form) {
+        options.params = CSRFKiller.field+'='+CSRFKiller.token;
+      }
+    });
+  }
 });
 
 Ext.override(Ext.form.Field, {

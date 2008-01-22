@@ -13,7 +13,9 @@ SWorks.CrudStore = function(config) {
   SWorks.CrudStore.superclass.constructor.call(this, config);
 
   // TODO change back to proper RW sometime
-  this.rwPerm = this.root+'.view';
+  if(!this.rwPerm && this.reader) {
+    this.rwPerm = this.reader.meta.root+'.view';
+  }
 
   Ext.ux.data.LoadAttempts(this);
   Ext.ux.data.ReloadingStore(this);
@@ -21,7 +23,6 @@ SWorks.CrudStore = function(config) {
 };
 Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
   linkToParent: function(p, idCol) {
-    this.parentIdColumn = idCol;
     this.checkParentColumns(idCol);
 
     p.on('load', function(form, record) {
@@ -43,6 +44,8 @@ Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
   },
   checkParentColumns: function(idCol) {
     if(idCol) {
+      this.parentIdColumn = idCol;
+
       var column = idCol.replace(/id/, "type");
       var value = (this.recordType.prototype.fields.keys.indexOf(column) != -1);
 
@@ -150,6 +153,10 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
       this.view = new Ext.grid.GridView(Ext.apply({
         forceFit:true
       }));
+    }
+
+    if(this.parentIdColumn) {
+      this.store.checkParentColumns(this.parentIdColumn);
     }
 
     this.elements += ',tbar';
@@ -307,13 +314,22 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
     return r;
   },
   editRecord: function(r) {
-    this.editor.loadRecord(r);
+    if(this.editor) {
+      this.editor.loadRecord(r);
+    }
+  },
+  onClickHideBtn: function() {
+    this.confirmMultipleRows(
+      "Do you really want to delete <b>all {0} selected items</b>?",
+      "Please select at least on item to delete.",
+      this.editor.hideRecord,
+      this.editor);
   },
   onClickDeleteBtn: function() {
     this.confirmMultipleRows(
       "Do you really want to delete <b>all {0} selected items</b>?",
       "Please select at least on item to delete.",
-      this.editor.hideRecord,
+      this.editor.deleteRecord,
       this.editor);
   },
   // Default scope is the crudgrid
@@ -341,7 +357,7 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
   onGridCellClicked: function(grid, rowIndex, cellIndex, e) {
     var r = this.store.getAt(rowIndex);
     this.setRecordSelection(r);
-    if (this.editor && SWorks.CurrentUser.has(this.store.rwPerm)) {
+    if (SWorks.CurrentUser.has(this.store.rwPerm)) {
       this.editRecord(r);
     }
   },
@@ -402,57 +418,48 @@ SWorks.DependentUrlCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
     }
   },
   onClickRefresh: function() {
-    SWorks.CrudEditor.prototype.executeOnFormSaved.call(
-      this,
-      this.parent.form,
-      function() { this.parent.save(); },
-      function() { this.loadGridRecords(); }
-    );
-  }
-});
-
-SWorks.CrudGridDialog = Ext.extend(SWorks.CrudGridPanel, {
-  initComponent: function() {
-    SWorks.CrudGridDialog.superclass.initComponent.call(this);
-
-    if(!this.dialog) {
-      this.createWindow();
-    }
-
-    this.on('load', function() {
-      this.dialog.show();
-    }, this);
-  },
-  createWindow: function() {
-    var config = this.dialogConfig || {};
-
-    Ext.applyIf(config, {
-      width: 500,
-      height: 300,
-      autoCreate: true,
-      modal: true,
-      closable: true,
-      closeAction: 'hide',
-      resizeable: true,
-      draggable: true,
-      collapsible: false,
-      defaults: { border: false },
-      layout: 'fit',
-      items: this,
-      buttons: [{
-        text: "Close",
-        handler: this.onClickClose,
+    var p = this.parent;
+    if(p.form.newRecord || p.form.isDirty()) {
+      p.save({
+        callback: this.loadGridRecords,
         scope: this
-      }]
-    });
-
-    this.dialog = new Ext.Window(config);
-  },
-  onClickClose: function() {
-    this.dialog.hide();
+      });
+    } else {
+      this.loadGridRecords();
+    }
   }
 });
 
+SWorks.dialogOnLoad = function(grid, config) {
+  var dialog;
+
+  config = config || {};
+  Ext.applyIf(config, {
+    width: 500,
+    height: 300,
+    autoCreate: true,
+    modal: true,
+    closable: true,
+    closeAction: 'hide',
+    resizeable: true,
+    draggable: true,
+    collapsible: false,
+    defaults: { border: false },
+    layout: 'fit',
+    items: grid,
+    buttons: [{
+      text: "Close",
+      handler: function() { dialog.hide(); }
+    }]
+  });
+
+  dialog = new Ext.Window(config);
+  grid.dialog = dialog;
+
+  grid.on('load', function() {
+    dialog.show();
+  }, this);
+};
 
 SWorks.CrudTreePanel = function(config) {
   config.nodes.store = config.editor.store;

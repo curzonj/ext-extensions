@@ -29,8 +29,8 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
    * 
    */
   createParentRef: function(form) {
-    var saveParent = this.saveForm.createDelegate(this, [form]);
     var listenerDelegate = this.on.createDelegate(this);
+    var saveParent = function(o) { this.saveForm(form, o); }.createDelegate(this);
 
     return {
       form: form,
@@ -56,26 +56,6 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
   },
   setParent: function(p) {
     this.parent = p;
-  },
-  executeOnFormSaved: function(form, saveFn, fn, scope, allowDirty) {
-    // allowDirty and scope are optional
-    scope = scope || this;
-    if(form.record.newRecord || (!allowDirty && form.isDirty())) {
-      var failFn, loadFn = function() {
-        form.un('actionfailed', failFn, null);
-        fn.call(scope);
-      };
-      failFn = function() {
-        form.un('actioncomplete', loadFn, null);
-      };
-
-      form.on('actioncomplete', loadFn, null, {single: true});
-      form.on('actionfailed', failFn, null, {single: true});
-
-      saveFn.call(scope);
-    } else {
-      fn.call(scope);
-    }
   },
   getParentRelAttrs: function(record) {
     var values = {};
@@ -117,7 +97,9 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
 
      var id = options.id || options.record.id;
 
-     options.params._method = 'put';
+     options.params = {
+       '_method': 'put'
+     };
 
      if(options.field) {
        var key = String.format(this.parameterTemplate, options.field);
@@ -146,7 +128,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
   },
   serializeRecord: function(record) {
     var values = {};
-    var data = record.data;
+    var data = record.data || record;
     var fields = this.serializedFields || record.fields.keys;
     for(var i=0;i<fields.length;i++) {
       var key = String.format(this.parameterTemplate, fields[i]);
@@ -159,19 +141,24 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     return values;
   },
   postToRecord: function(rid, o) {
+    if(typeof rid == 'object') {
+      o = rid;
+      rid = o.id;
+    }
+
     if(o.waitMsg !== false) {
       Ext.MessageBox.wait(o.waitMsg || "Updating Record...");
     }
 
     // TODO add a retry mechanism
 
-    if(o.record) {
+    if(!o.url && o.record) {
       o = this.setUpdateOrCreate(o.record, o);
     } else {
       o.url = o.url || String.format(this.restUrl, rid);
     }
 
-    o.errmsg = o.errmsg || "Failed create update the record. Please try again.";
+    o.errmsg = o.errmsg || "Failed update the record. Please try again.";
     o.cb = {
       fn: o.callback,
       scope: o.scope
@@ -230,13 +217,21 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
 
     var record = form.record;
     o = this.setUpdateOrCreate(record, o);
+    o.waitMsg = o.waitMsg || "Saving record...";
 
     if(this.parent) {
       Ext.applyIf(o.params, this.getParentRelAttrs(record));
     }
 
-    form.submit(Ext.applyIf(o ,{
-      waitMsg: "Saving record...",
+    if(o.callback) {
+      o.cb = {
+        fn: o.callback,
+        scope: o.scope
+      };
+      delete o.callback;
+    }
+
+    form.submit(Ext.apply(o ,{
       success: this.formSuccess,
       failure: this.formFailure,
       scope: this
@@ -252,6 +247,9 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
       }
 
       this.updateRecord(record, action.result);
+      if(action.options.cb) {
+        action.options.cb.fn.call(action.options.cb.scope, form, action);
+      }
       this.fireEvent('save', form.record, action.result);
       form.record.newBeforeSave = false;
     }
@@ -406,11 +404,13 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
       this.loadRecord(record);
     };
 
-    if(this.parent && this.parent.form) {
-      this.executeOnFormSaved(
-        this.parent.form, this.parent.save,
-        fn.createDelegate(this),
-        this, true);
+    if(this.parent && this.parent.form &&
+       this.parent.form.record.newRecord) {
+
+      this.parent.save({
+        callback: fn,
+        scope: this
+      });
     } else {
       fn.call(this);
     }
@@ -421,15 +421,19 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
    * Delete existing Records
    *
    */
-  deleteRecord: function(record){
-    this.deleteRecordById(record.id);
+  deleteRecord: function(record, cb, scope){
+    this.deleteRecordById(record.id, cb, scope);
   },
-  deleteRecordById: function(id){
+  deleteRecordById: function(id, cb, scope){
     // TODO add a retry mechanism, use the spinner. The reason
     // the msgBox doesn't work is because this method is called
     // seperately for each record to delete
     if(this.restUrl) {
       Ext.Ajax.request({
+        cb: {
+          fn: cb,
+          scope: scope || this
+        },
         deleting_id: id,
         url: String.format(this.restUrl, id),
         method: "DELETE",
@@ -445,6 +449,9 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     }
 
     if (success && result.success) {
+      if(options.cb.fn) {
+        options.cb.fn.call(options.cb.scope);
+      }
       this.fireEvent('delete', id);
     } else {
       var msg = (result && result.msg ? result.msg : "Failed to delete the record. Please try again.");
@@ -692,9 +699,10 @@ Ext.extend(SWorks.TabbedCrudEditor, SWorks.ManagedCrudEditor, {
 
       Ext.MessageBox.confirm("Save changes", "Do you want to save your changes?", function(btn) {
         // Often the data gets saved while the person choses
-        if(btn == "yes") {
-          this.executeOnFormSaved( panel.form,
-            function() { this.saveForm(panel.form); }, closePanelFn);
+        if(btn == "yes" && (panel.form.record.newRecord || panel.form.isDirty() )) {
+          this.saveForm(panel.form, {
+            callback: closePanelFn
+          });
         } else {
           closePanelFn.call();
         }

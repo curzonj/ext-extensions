@@ -253,6 +253,8 @@ Ext.ux.data.PersistentFilters.overrides = {
     if(!suppress_filtering) {
       this.applyFilters();
     }
+
+    return this;
   },
   removeFilter: function(fn, scope, suppress_filtering) {
     var index;
