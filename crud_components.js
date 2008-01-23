@@ -97,7 +97,7 @@ SWorks.commonCrudPanelFunctions = {
 
     // deleteRecord is the least commonly overloaded
     if (!this.editor.addListener) {
-      this.editor = new SWorks.DialogCrudEditor(this.editor);
+      this.editor = new SWorks.PanelCrudEditor(this.editor);
     }
 
     this.editor.crudPanel = this;

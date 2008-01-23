@@ -40,6 +40,10 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     };
   },
   findChildren: function(panel, form) {
+    if(this.disableParentCascade) {
+      return;
+    }
+
     var pVal = this.createParentRef(form);
     panel.cascade(function() {
       if(this != panel) {
@@ -568,88 +572,84 @@ Ext.extend(SWorks.ManagedCrudEditor, SWorks.CrudEditor, {
   }
 });
 
-SWorks.DialogCrudEditor = function(config) {
-  SWorks.DialogCrudEditor.superclass.constructor.call(this, config);
+SWorks.PanelCrudEditor = function(config) {
+  SWorks.PanelCrudEditor.superclass.constructor.call(this, config);
 
-  if(!this.dialog || !this.dialog.doLayout) {
-    this.createWindow();
-  }
-
-  this.form = this.formPanel.form;
-
-  this.recordUpdateDelegate = this.onRecordUpdate.createDelegate(this, [this.form], true);
-  this.store.on('update', this.recordUpdateDelegate);
-
-  this.relayEvents(this.form, ['beforeaction', 'actionfailed', 'actioncomplete']);
-
-  this.findChildren(this.dialog, this.form);
+  this.createPanel();
+  this.setupForm();
 };
-Ext.extend(SWorks.DialogCrudEditor, SWorks.ManagedCrudEditor, {
+Ext.extend(SWorks.PanelCrudEditor, SWorks.ManagedCrudEditor, {
+  useDialog: true,
+
+  setupForm: function() {
+    this.formPanel = this.panel.findByType('form')[0];
+    this.formPanel.border = false;
+    this.formPanel.bodyStyle = "padding:10px";
+    this.form = this.formPanel.form;
+
+    this.recordUpdateDelegate = this.onRecordUpdate.createDelegate(this, [this.form], true);
+    this.store.on('update', this.recordUpdateDelegate);
+
+    this.relayEvents(this.form, ['beforeaction', 'actionfailed', 'actioncomplete']);
+
+    this.findChildren(this.panel, this.form);
+  },
   loadRecord: function(record) {
-    if(!this.dialog.rendered) {
+    if(!this.rendered && this.useDialog) {
       this.dialog.render(Ext.getBody());
     }
 
-    this.on('load', function() {
+    if(this.loadForm(this.form, record) && this.useDialog) {
       this.dialog.show();
-    }, this, {single:true});
-    this.loadForm(this.form, record);
-  },
-  /* This is good functionality, what do we do with it?
-  getRecord: function() {
-    var record = this.form.record;
-
-    if(!record)
-      return;
-    
-    if(!record.newRecord) {
-      // Sometimes our store gets reloaded in between
-      // and we throw errors if we use old records
-     this.form.record = record = record.store.getById(record.id);
     }
-    return record;
-  },*/
-  createWindow: function() {
+  },
+  createPanel: function() {
     var config = this.initialConfig;
-    Ext.applyIf(config, {
-      width: 500,
-      height: 300,
-      autoCreate: true,
-      modal: true,
-      closable: false,
-      resizable: true,
-      draggable: true,
-      collapsible: false,
-      defaults: { border: false },
-      title: ('Edit: '+config.store.klass),
-      layout: 'fit',
-      buttons: [{
-        text: "Save",
-        handler: this.onClickSave,
-        scope: this
-      }, {
-        text: "Close",
-        handler: this.onClickClose,
-        scope: this
-      }],
-      keys: [
-        { key: 27, fn: this.onClickClose, scope: this },
-        { key: Ext.EventObject.ENTER, fn: this.onClickSave, scope: this }
-      ]
-    });
+    var type = this.useDialog ? Ext.Window : Ext.Panel;
 
-    this.dialog = new Ext.Window(config);
+    if(this.useDialog) {
+      Ext.applyIf(config, {
+        width: 500,
+        height: 300,
+        autoCreate: true,
+        modal: true,
+        closable: false,
+        resizable: true,
+        draggable: true,
+        collapsible: false,
+        defaults: { border: false },
+        title: ('Edit: '+config.store.klass),
+        layout: 'fit',
+        buttons: [{
+          text: "Save",
+          handler: this.onClickSave,
+          scope: this
+        }, {
+          text: "Close",
+          handler: this.onClickClose,
+          scope: this
+        }],
+        keys: [
+          { key: 27, fn: this.onClickClose, scope: this },
+          { key: Ext.EventObject.ENTER, fn: this.onClickSave, scope: this }
+        ]
+      });
+    }
 
-    this.formPanel = this.dialog.findByType('form')[0];
-    this.formPanel.border = false;
-    this.formPanel.bodyStyle = "padding:10px";
+    this.panel = new type(config);
 
-    this.dialog.on('show', function(){ this.dialog.keyMap.enable(); }, this);
-    // TODO focus is broken all over
-    //this.on('show', function(){ this.form.items.item(0).focus() }, this);
-    //
-    // TODO disable the save button unless dirty and
-    // warn about leaving w/o saving
+    if(this.useDialog) {
+      this.dialog = this.panel;
+      this.dialog.on('show', function(){
+        this.dialog.keyMap.enable();
+
+        // TODO focus is broken all over
+        this.form.items.item(0).focus();
+      }, this);
+
+      // TODO disable the save button unless dirty and
+      // warn about leaving w/o saving
+    }
   },
   // TODO onRender, resize to component's size
   onClickSave: function(trigger, e) {
