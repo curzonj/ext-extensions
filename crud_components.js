@@ -51,6 +51,8 @@ Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
 
       if(value) {
         this.parentTypeColumn = idCol.replace(/id/, "type");
+      } else {
+        this.parentTypeColumn = null;
       }
     }
   },
@@ -76,19 +78,20 @@ SWorks.commonCrudPanelFunctions = {
       for(var i = 0; i < this.topToolbar.items.items.length; i++){
         var b = this.topToolbar.items.items[i];
         if(b.type == "button") {
-          // A button by default is !readOnly and !gridOperation
-          // If this isn't a readonly button and we dont' have permission
-          if (!SWorks.CurrentUser.has(this.store.rwPerm) && !b.readOnly) {
-            b.disable();
-          // If this works on rows and none are selected
-          } else if(this.getSelections().length < 1 && !b.gridOperation) {
-            b.disable();
-          } else {
+          if(this.tbButtonCheck(b)) {
             b.enable();
+          } else {
+            b.disable();
           }
         }
       }
     }
+  },
+  tbButtonCheck: function(b) {
+    // A button by default is !readOnly and !gridOperation
+    return ( (SWorks.CurrentUser.has(this.store.rwPerm) &&
+              (this.getSelections().length > 0 || b.gridOperation))
+            || b.readOnly);
   },
   setupEditor: function() {
     if(!this.editor) {
@@ -128,7 +131,6 @@ SWorks.CrudGridPanel = function(config) {
 };
 // The crudgrid is not currently compatable with inline editing
 Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
-  lifeCycleDelay: 300000, //5min
   autoSizeColumns: true,
 
   initComponent: function() {
@@ -398,7 +400,7 @@ Ext.override(SWorks.CrudGridPanel, SWorks.commonCrudPanelFunctions);
 
 SWorks.DependentUrlCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
   setParent: function(p) {
-    SWorks.DependentUrlCrudGrid.superclass.setParent(p);
+    SWorks.DependentUrlCrudGrid.superclass.setParent.call(this, p);
 
     p.on('load', function(form, record) {
       if(form == p.form) {

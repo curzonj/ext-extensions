@@ -330,7 +330,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
 
     if(this.fireEvent('beforeload', form, record, panel) !== false) {
 
-      this.onFormLoad(form, record, panel);
+      this.onLoadForm(form, record, panel);
       this.fireEvent('load', form, record, panel);
 
       return true;
@@ -338,7 +338,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
       return false;
     }
   },
-  onFormLoad: function(form, record, panel) {
+  onLoadForm: function(form, record, panel) {
     form.trackResetOnLoad = true;
     form.loadRecord(record);
     form.clearInvalid();
