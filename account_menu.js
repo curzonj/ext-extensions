@@ -43,7 +43,7 @@ Ext.extend(SWorks.CurrentUser, Ext.util.Observable, {
     });
   },
   has: function(perm) {
-    return this.permissions[perm];
+    return (this.permissions[perm] === true);
   },
   // The reason there is no straight permissions check is because
   // they can change with time and you have to be ready for that.

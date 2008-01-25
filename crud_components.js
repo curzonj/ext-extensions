@@ -42,6 +42,15 @@ Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
 
     this.addFilter(this.parentFilter, this);
   },
+  findRelations: function(record) {
+    //Searches everything. Quite the hack.
+    return this.snapshot.filterBy(this.parentFilter, {
+      relation_id: record.data.id,
+      relation_type: record.data.type || record.store.klass,
+      parentIdColumn: this.parentIdColumn,
+      parentTypeColumn: this.parentTypeColumn
+    });
+  },
   checkParentColumns: function(idCol) {
     if(idCol) {
       this.parentIdColumn = idCol;
@@ -90,8 +99,9 @@ SWorks.commonCrudPanelFunctions = {
   tbButtonCheck: function(b) {
     // A button by default is !readOnly and !gridOperation
     return ( (SWorks.CurrentUser.has(this.store.rwPerm) &&
-              (this.getSelections().length > 0 || b.gridOperation))
-            || b.readOnly);
+              (this.getSelections().length > 0 ||
+               b.gridOperation === true))
+             || b.readOnly === true);
   },
   setupEditor: function() {
     if(!this.editor) {
@@ -166,9 +176,9 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
   
     this.colModel.defaultSortable = true;
     this.on('celldblclick', this.onGridCellClicked, this);
-    this.on('cellclick', this.checkToolbarButtons, this);
     this.store.on('load',this.restoreSelections, this);
-    this.getSelectionModel().on('selectionchange',this.saveSelections, this);
+    this.getSelectionModel().on('selectionchange', this.saveSelections, this);
+    this.getSelectionModel().on('selectionchange', this.checkToolbarButtons, this);
     SWorks.CurrentUser.onPermission(this.store.rwPerm, this.checkToolbarButtons, this);
 
     // TODO if there is a default custom view, load it
@@ -390,6 +400,10 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
     if(this.editor) {
       this.editor.setParent(p);
     }
+
+    p.on('load', function() {
+      this.checkToolbarButtons();
+    }, this);
 
     if(this.parentIdColumn) {
       this.store.linkToParent(p, this.parentIdColumn);
@@ -637,6 +651,9 @@ Ext.form.VTypes.zipCode = SWorks.getVtypeRegexFn(/^\d{5}(?:-\d{4})?$/);
 
 Ext.util.Format.yesNo = function(value){  
   return value ? "Yes" :  "No";
+};
+Ext.util.Format.csvArray = function(value){  
+  return ((value && value.join) ? value.join(", ") : "");
 };
 Ext.util.Format.dateMjy = function(value) {
   return Date.parseDate(value, 'Y/m/d H:i:s').format("M j Y");

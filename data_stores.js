@@ -152,7 +152,11 @@ Ext.ux.data.ReloadingStore.overrides = {
     }
 
     var data = this.snapshot || this.filteredCache || this.data;
-    if(!this.refreshTask || (data.length === 0 && !this.proxy.activeRequest)) {
+    // If there isn't a request in progress, and
+    //    we arn't automatically refreshing the data, or
+    //    the data hasn't been loaded yet
+    if( !this.proxy.activeRequest &&
+        (!(this.refreshTask || (this.mirrorSource && this.mirrorSource.refreshTask)) || data.length === 0)) {
       this.load();
     }
   },
@@ -194,7 +198,9 @@ Ext.ux.data.ReloadingStore.overrides = {
       this.refreshTask.delay(refreshRate);
       //reload the data. If we fail, we already rescheduled, if we succeed,
       //beforeload will delay the next reload
-      this.reload();
+      if(Ext.ux.data.ReloadingStore.disableReloading !== false) {
+        this.reload();
+      }
     }, this);
     return this.refreshTask;
   }
