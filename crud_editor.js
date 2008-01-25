@@ -541,11 +541,10 @@ Ext.extend(SWorks.ManagedCrudEditor, SWorks.CrudEditor, {
     }
   },
   updateRecord: function(record, result) {
-    if(record.newRecord) {
-      record.id = result.objectid;
-      this.store.add(record);
-    }
     SWorks.ManagedCrudEditor.superclass.updateRecord.call(this, record, result);
+    if(record.newBeforeSave) {
+      this.store.addSorted(record);
+    }
   },
   hideRecord: function(record) {
     this.updateAttribute({
@@ -605,7 +604,6 @@ Ext.extend(SWorks.PanelCrudEditor, SWorks.ManagedCrudEditor, {
   },
   createPanel: function() {
     var config = this.initialConfig;
-    var type = this.useDialog ? Ext.Window : Ext.Panel;
 
     if(this.useDialog) {
       Ext.applyIf(config, {
@@ -636,7 +634,9 @@ Ext.extend(SWorks.PanelCrudEditor, SWorks.ManagedCrudEditor, {
       });
     }
 
-    this.panel = new type(config);
+    var Type = this.useDialog ? Ext.Window : Ext.Panel;
+    // JSlint wants Type to be capitalized
+    this.panel = new Type(config);
 
     if(this.useDialog) {
       this.dialog = this.panel;

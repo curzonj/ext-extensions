@@ -49,7 +49,7 @@ Ext.override(Ext.data.Store, {
     var update = function() {
       this.snapshot = source.snapshot || source.data;
       this.applyFilters();
-    }
+    };
 
     //The index from add/remove won't match with ours and
     //we may not want their records anyways, so we have to
@@ -132,7 +132,7 @@ Ext.ux.data.LoadAttempts = function(store, maxAttempts) {
   store.on('load', function() {
     store.loadAttempts = 0;
   }, store);
-}
+};
 
 Ext.ux.data.ReloadingStore = function(store) {
   store.mirror_without_reloading = store.mirror;
@@ -141,7 +141,7 @@ Ext.ux.data.ReloadingStore = function(store) {
   store.on('beforeload', function() {
     this.createRefreshTask(this.refreshPeriod);
   }, store, {single:true});
-}
+};
 Ext.ux.data.ReloadingStore.overrides = {
   refreshPeriod: 360000,
   loadIfNeeded: function() {
@@ -188,7 +188,7 @@ Ext.ux.data.ReloadingStore.overrides = {
     this.refreshTask.setRefreshRate = function(newRate) {
       refreshRate = newRate;
       this.delay(refreshRate);
-    }
+    };
     this.refreshTask.delay(refreshRate, function(){
       //Causes ourselves to re-execute
       //Although we could save a reference in this scope to the task
@@ -204,11 +204,11 @@ Ext.ux.data.ReloadingStore.overrides = {
     }, this);
     return this.refreshTask;
   }
-}
+};
 
 Ext.ux.data.PersistentFilters = function(store) {
   Ext.apply(store, Ext.ux.data.PersistentFilters.overrides);
-}
+};
 Ext.ux.data.PersistentFilters.overrides = {
   onDataChanged: function() {
     this.applySort();
@@ -309,4 +309,4 @@ Ext.ux.data.PersistentFilters.overrides = {
       this.fireEvent("datachanged", this);
     }
   }
-}
+};
