@@ -38,6 +38,19 @@ Ext.override(Ext.form.Field, {
   }
 });
 
+Ext.override(Ext.Element, {
+  maskLoading: function(timeout) {
+    this.mask('Loading...', 'x-mask-loading');
+
+    if(timeout) {
+      var me = this;
+      setTimeout(function() {
+        me.unmask();
+      }, timeout);
+    }
+  }
+});
+
 Ext.override(Ext.data.Store, {
   // Their load records function isn't very extensible,
   // so I had to copy it in here
