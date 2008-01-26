@@ -6,7 +6,10 @@ SWorks.CrudStore = function(config) {
   // From JsonStore
   Ext.applyIf(config, {
     sortInfo: { field: 'id', direction: 'ASC' },
-    proxy: !config.data ? new Ext.data.HttpProxy({url: config.url}) : undefined,
+    proxy: !config.data ? new Ext.data.HttpProxy({
+      method: "GET",
+      url: config.url
+    }) : undefined,
     reader: new Ext.data.JsonReader(config, config.fields)
   });
 
@@ -38,7 +41,7 @@ Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
   filterOnRelation: function(record) {
     //This deals with polymorphic relations
     this.relation_id = record.data.id;
-    this.relation_type = record.data.type || record.store.klass;
+    this.relation_type = record.data.klass || (record.store ? record.store.klass : null);
 
     this.addFilter(this.parentFilter, this);
   },
@@ -500,6 +503,10 @@ Ext.extend(SWorks.CrudTreePanel, Ext.tree.TreePanel, {
     SWorks.CrudTreePanel.superclass.initComponent.call(this);
 
     this.setupEditor();
+
+    if(this.store.loadIfNeeded) {
+      this.store.loadIfNeeded();
+    }
 
     var mySorter = new Ext.tree.TreeSorter(this, {folderSort: true});
 

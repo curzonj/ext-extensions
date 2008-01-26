@@ -198,7 +198,7 @@ Ext.ux.data.ReloadingStore.overrides = {
       this.refreshTask.delay(refreshRate);
       //reload the data. If we fail, we already rescheduled, if we succeed,
       //beforeload will delay the next reload
-      if(Ext.ux.data.ReloadingStore.disableReloading !== false) {
+      if(!Ext.ux.data.ReloadingStore.disableReloading) {
         this.reload();
       }
     }, this);
