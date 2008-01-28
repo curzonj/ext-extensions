@@ -10,6 +10,7 @@ SWorks.CrudEditor = function(config) {
   Ext.apply(this, config);
 
   this.addEvents([
+    'ready',
     'beforeaction',
     'actionfailed',
     'actioncomplete',
@@ -20,8 +21,12 @@ SWorks.CrudEditor = function(config) {
   ]);
 
   SWorks.CrudEditor.superclass.constructor.call(this, config);
+
+  this.initComponent();
+  this.fireEvent('ready', this);
 };
 Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
+  initComponent: Ext.emptyFn,
   parameterTemplate: "{0}",
 
   /*
@@ -470,20 +475,20 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
   }
 });
 
-SWorks.ManagedCrudEditor = function(config) {
-  /*
-   * This extracts everything that depends on a store
-   * is is wacky.
-   */
-  SWorks.ManagedCrudEditor.superclass.constructor.call(this, config);
+/*
+ * This extracts everything that depends on a store
+ * is is wacky.
+ */
+SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
+  initComponent: function() {
+    SWorks.ManagedCrudEditor.superclass.initComponent.call(this);
 
-  this.createUrl = this.store.url;
-  this.restUrl = this.store.url + '/{0}';
-  this.parameterTemplate = this.store.model + "[{0}]";
-  this.daoClass = this.store.klass;
-  this.recordType = this.store.recordType;
-};
-Ext.extend(SWorks.ManagedCrudEditor, SWorks.CrudEditor, {
+    this.createUrl = this.store.url;
+    this.restUrl = this.store.url + '/{0}';
+    this.parameterTemplate = this.store.model + "[{0}]";
+    this.daoClass = this.store.klass;
+    this.recordType = this.store.recordType;
+  },
   eventHandler: function(evt, msg) {
     //example = callback: editor.eventHandler('disable', "Sorry, failed");
     return this.sendEvent.createDelegate(this, [evt, msg], true);
@@ -576,20 +581,27 @@ Ext.extend(SWorks.ManagedCrudEditor, SWorks.CrudEditor, {
   }
 });
 
-SWorks.PanelCrudEditor = function(config) {
-  SWorks.PanelCrudEditor.superclass.constructor.call(this, config);
-
-  this.createPanel();
-  this.setupForm();
-};
-Ext.extend(SWorks.PanelCrudEditor, SWorks.ManagedCrudEditor, {
+SWorks.PanelCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
   useDialog: true,
+  initComponent: function() {
+    SWorks.PanelCrudEditor.superclass.initComponent.call(this);
+
+    this.createPanel();
+    this.setupForm();
+  },
 
   setupForm: function() {
     this.formPanel = this.panel.findByType('form')[0];
     this.formPanel.border = false;
     this.formPanel.bodyStyle = "padding:10px";
     this.form = this.formPanel.form;
+
+    var index = new Ext.ux.data.CollectionIndex(this.form.items,
+      function(o) {
+        return o.dataIndex;
+      }
+    );
+    this.formFields = index.map;
 
     this.recordUpdateDelegate = this.onRecordUpdate.createDelegate(this, [this.form], true);
     this.store.on('update', this.recordUpdateDelegate);
@@ -682,18 +694,18 @@ Ext.extend(SWorks.PanelCrudEditor, SWorks.ManagedCrudEditor, {
 });
 
 
-SWorks.TabbedCrudEditor = function(config) {
-  SWorks.TabbedCrudEditor.superclass.constructor.call(this, config);
-
-  this.tabPanel.autoDestroy = true;
-  this.tabPanel.on('beforeremove', this.onBeforeRemove, this);
-
-  this.panels = {};
-  this.cachedEditPanel = this.createEditPanel();
-};
-Ext.extend(SWorks.TabbedCrudEditor, SWorks.ManagedCrudEditor, {
+SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
   autoSaveInterval: 2000,
   maxAttempts: 3,
+  initComponent: function() {
+    SWorks.TabbedCrudEditor.superclass.initComponent.call(this);
+
+    this.tabPanel.autoDestroy = true;
+    this.tabPanel.on('beforeremove', this.onBeforeRemove, this);
+
+    this.panels = {};
+    this.cachedEditPanel = this.createEditPanel();
+  },
 
   onBeforeRemove: function(ct, panel) {
     if(panel.form && !panel.form.bypassSaveOnClose && panel.form.isDirty()) {
