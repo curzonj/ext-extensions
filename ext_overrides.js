@@ -1,6 +1,6 @@
 /*globals Ext, CSRFKiller */
 
-Ext.namespace("Ext.ux", "Ext.ux.data", "Ext.ux.tree"); //Used by extensions
+Ext.namespace("Ext.ux", "Ext.ux.data", "Ext.ux.tree", "Ext.ux.grid"); //Used by extensions
 
 // Required by data mirroring
 Ext.override(Ext.util.Observable, {

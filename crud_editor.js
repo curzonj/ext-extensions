@@ -137,7 +137,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     for(var i=0;i<fields.length;i++) {
       var key = String.format(this.parameterTemplate, fields[i]);
       var value = data[fields[i]];
-      if(typeof value != "undefined") {
+      if(typeof value != "undefined" && fields[i] != 'id' && fields[i] != 'type') {
         values[key] = value;
       }
     }
@@ -148,6 +148,8 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     if(typeof rid == 'object') {
       o = rid;
       rid = o.id;
+    } else if(typeof rid == 'undefined') {
+      Ext.MessageBox.alert('Operation failed', "There was an internal error. Please report the issue and reload the application");
     }
 
     if(o.waitMsg !== false) {
@@ -197,11 +199,15 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
       }
      
       if(options.cb.fn) { 
-        options.cb.fn.call(options.cb.scope || this, record, result);
+        options.cb.fn.call(options.cb.scope || this, true, record, result);
       }
       this.fireEvent('save', record, result);
       record.newBeforeSave = false;
     } else {
+      if(options.cb.fn) { 
+        options.cb.fn.call(options.cb.scope || this, false, record, result);
+      }
+
       var msg = ((result && result.errors) ? (result.errors.base || options.errmsg) : options.errmsg);
       Ext.MessageBox.alert('Operation failed', msg);
     }
@@ -281,9 +287,6 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     form.submitLock = false;
   },
   updateRecord: function(record, result) {
-    // You need to pass in your own upto date record, (formSuccess does)
-    record.id = result.objectid;
-
     if( result.hidden ) {
       if ( !record.newRecord &&
            record.store &&
@@ -292,6 +295,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
       }
     } else {
       if(record.newRecord) {
+        record.id = result.objectid;
         record.newRecord = false;
         record.newBeforeSave = true;
       }
@@ -541,6 +545,7 @@ Ext.extend(SWorks.ManagedCrudEditor, SWorks.CrudEditor, {
     }
   },
   updateRecord: function(record, result) {
+    this.processRecords(result);
     SWorks.ManagedCrudEditor.superclass.updateRecord.call(this, record, result);
     if(record.newBeforeSave) {
       this.store.addSorted(record);
@@ -564,7 +569,7 @@ Ext.extend(SWorks.ManagedCrudEditor, SWorks.CrudEditor, {
             record = new store.reader.recordType();
             record.newRecord = true;
           }
-          this.updateRecord(record, r);
+          this.updateRecord(record, {objectid:r.id, data:r});
         }
       }
     }

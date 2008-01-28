@@ -48,7 +48,9 @@ Ext.override(Ext.data.Store, {
 
     var update = function() {
       this.snapshot = source.snapshot || source.data;
-      this.applyFilters();
+      this.onDataChanged();
+
+      this.fireEvent("datachanged", this);
     };
 
     //The index from add/remove won't match with ours and
@@ -64,7 +66,7 @@ Ext.override(Ext.data.Store, {
     source.on('update', function(store, record, type) {
       // If it's attributes have changed, it's filter conditions
       // might have changed
-      this.applyFilters();
+      this.onDataChanged();
       // Our listeners only care if this record is in our dataset
       // right now. Unlike other events, people will be listening
       // for changes to this specific record
