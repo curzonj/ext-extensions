@@ -232,7 +232,9 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
 
     var record = form.record;
     o = this.setUpdateOrCreate(record, o);
-    o.waitMsg = o.waitMsg || "Saving record...";
+    if(typeof o.waitMsg == 'undefined') {
+      o.waitMsg = o.waitMsg || "Saving record...";
+    }
 
     if(this.parent) {
       Ext.applyIf(o.params, this.getParentRelAttrs(record));
