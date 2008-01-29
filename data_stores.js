@@ -11,6 +11,7 @@ Ext.override(Ext.data.Store, {
     var newObj = {};
     Ext.apply(newObj, this);
     newObj.resetEvents();
+    delete newObj.clones;
 
     if(mirror_data !== false) {
       newObj.mirror(this);
@@ -83,6 +84,7 @@ Ext.override(Ext.data.Store, {
     // code executes because a delegate method ignores any
     // scope applied to it. In this way, only base stores
     // will have their real methods called
+    this.addSorted = source.addSorted.createDelegate(source);
     this.add = source.add.createDelegate(source);
     this.remove = source.remove.createDelegate(source);
     this.load = source.load.createDelegate(source);
