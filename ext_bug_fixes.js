@@ -160,6 +160,16 @@ Ext.override(Ext.form.ComboBox, {
 });
 
 Ext.override(Ext.data.Store, {
+  onMetaChange: function(meta, rtype, o) {
+    this.recordType = rtype;
+    this.fields = rtype.prototype.fields;
+    delete this.snapshot;
+    if(meta.sortInfo) {
+      this.sortInfo = meta.sortInfo
+    }
+    this.modified = [];
+    this.fireEvent('metachange', this, this.reader.meta);
+  },
   insert: function(index, records) {
     records = [].concat(records);
     for(var i = 0, len = records.length; i < len; i++){

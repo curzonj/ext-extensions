@@ -49,6 +49,7 @@ Ext.override(Ext.data.Store, {
 
     var update = function() {
       this.snapshot = source.snapshot || source.data;
+      this.data = this.snapshot;
       this.onDataChanged();
 
       this.fireEvent("datachanged", this);
@@ -74,6 +75,9 @@ Ext.override(Ext.data.Store, {
       if(this.indexOf(record) != -1) {
         this.fireEvent('update', store, record, type);
       }
+    }, this);
+    source.on('metachange', function(grid, meta) {
+      this.onMetaChange(meta, grid.recordType, null);
     }, this);
 
     this.relayEvents(source, ['load']);
@@ -215,8 +219,8 @@ Ext.ux.data.PersistentFilters = function(store) {
 };
 Ext.ux.data.PersistentFilters.overrides = {
   onDataChanged: function() {
-    this.applySort();
     this.applyFilters(false);
+    this.applySort();
   },
   clearFilter: function(suppressEvent) {
     // Just removes the effects of filterBy

@@ -15,11 +15,6 @@ SWorks.CrudStore = function(config) {
 
   SWorks.CrudStore.superclass.constructor.call(this, config);
 
-  // TODO change back to proper RW sometime
-  if(!this.rwPerm && this.reader) {
-    this.rwPerm = this.reader.meta.root+'.view';
-  }
-
   Ext.ux.data.LoadAttempts(this);
   Ext.ux.data.ReloadingStore(this);
   Ext.ux.data.PersistentFilters(this);
@@ -101,7 +96,7 @@ SWorks.commonCrudPanelFunctions = {
   },
   tbButtonCheck: function(b) {
     // A button by default is !readOnly and !gridOperation
-    return ( (SWorks.CurrentUser.has(this.store.rwPerm) &&
+    return ( (SWorks.CurrentUser.has(this.rwPerm) &&
               (this.getSelections().length > 0 ||
                b.gridOperation === true))
              || b.readOnly === true);
@@ -182,7 +177,7 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
     this.store.on('load',this.restoreSelections, this);
     this.getSelectionModel().on('selectionchange', this.saveSelections, this);
     this.getSelectionModel().on('selectionchange', this.checkToolbarButtons, this);
-    SWorks.CurrentUser.onPermission(this.store.rwPerm, this.checkToolbarButtons, this);
+    SWorks.CurrentUser.onPermission(this.rwPerm, this.checkToolbarButtons, this);
 
     // TODO if there is a default custom view, load it
   },
@@ -372,7 +367,7 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
   onGridCellClicked: function(grid, rowIndex, cellIndex, e) {
     var r = this.store.getAt(rowIndex);
     this.setRecordSelection(r);
-    if (SWorks.CurrentUser.has(this.store.rwPerm)) {
+    if (SWorks.CurrentUser.has(this.rwPerm)) {
       this.editRecord(r);
     }
   },
@@ -514,7 +509,7 @@ Ext.extend(SWorks.CrudTreePanel, Ext.tree.TreePanel, {
     this.topToolbar = this.createToolbar();
 
     this.on('dblclick', this.onDblClickNode, this);
-    SWorks.CurrentUser.onPermission(this.store.rwPerm, this.checkToolbarButtons, this);
+    SWorks.CurrentUser.onPermission(this.rwPerm, this.checkToolbarButtons, this);
   },
   afterRender: function() {
     SWorks.CrudTreePanel.superclass.afterRender.call(this);

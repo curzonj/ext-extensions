@@ -17,6 +17,22 @@ Ext.extend(SWorks.CurrentUser, Ext.util.Observable, {
   isLoggedIn: function() {
     return this.loggedIn;
   },
+  logout: function(cb, scope) {
+    Ext.Ajax.request({
+      url: URLs.logout,
+      callback: function(options, success, response) {
+        if(success) {
+          SWorks.CurrentUser.fireEvent('loggedOut');
+        } else {
+          Ext.MessageBox.alert("Logout failed","There was an error when logging out. Please try again.");
+        }
+        if(cb) {
+          cb.call(scope || this, success, response);
+        }
+      },
+      scope: this
+    });
+  },
   username: function() {
     return this.permissions.username;  
   },
@@ -43,13 +59,13 @@ Ext.extend(SWorks.CurrentUser, Ext.util.Observable, {
     });
   },
   has: function(perm) {
-    return (this.permissions[perm] === true);
+    return (typeof perm == 'undefined' || this.permissions[perm] === true);
   },
   // The reason there is no straight permissions check is because
   // they can change with time and you have to be ready for that.
   onPermission: function(perm, callback, scope) {
     var permCheck = function(p) {
-      if (p[perm]) {
+      if (typeof perm == 'undefined' || p[perm]) {
         callback.call(scope, perm, true);
       } else {
         callback.call(scope, perm, false);
@@ -70,6 +86,9 @@ SWorks.AccountMenu = Ext.extend(Ext.Panel, {
     SWorks.AccountMenu.superclass.initComponent.call(this);
     //This doesn't render yet, so it should be pretty quick
     this.loginWindow = this.createLoginWindow();
+    SWorks.CurrentUser.on('loggedOut', function() {
+      this.loginWindow.show();
+    }, this);
   },
   afterRender : function(ct, position){
     SWorks.AccountMenu.superclass.afterRender.call(this, ct, position);
@@ -106,18 +125,11 @@ SWorks.AccountMenu = Ext.extend(Ext.Panel, {
             this.loginWindow.render(Ext.getBody());
           }
           this.loginWindow.showMask();
-          Ext.Ajax.request({
-            url: URLs.logout,
-            success: function(){
-              SWorks.CurrentUser.fireEvent('loggedOut');
-              this.loginWindow.show();
-            },
-            failure: function(){
-              Ext.MessageBox.alert("Logout failed","There was an error when logging out. Please try again.");
+          SWorks.CurrentUser.logout(function(success, response) {
+            if (!success) {
               this.loginWindow.hideMask();
-            },
-            scope: this
-          });
+            }
+          }, this);
       }, this);
     }
   },
