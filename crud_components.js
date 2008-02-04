@@ -26,11 +26,14 @@ Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
     p.on('load', function(form, record) {
       if(!p.form || p.form == form) {
         //This deals with polymorphic relations
-        this.relation_id = record.id;
+        this.relation_id = p.form.record.id;
         this.relation_type = p.store.klass; // New records do have a store
 
         this.addFilter(this.parentFilter, this);
       }
+    }, this);
+    p.on('save', function() {
+      this.relation_id = p.form.record.id;
     }, this);
   },
   filterOnRelation: function(record) {
@@ -140,6 +143,7 @@ SWorks.CrudGridPanel = function(config) {
 // The crudgrid is not currently compatable with inline editing
 Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
   autoSizeColumns: true,
+  minColumnWidth: 5,
 
   initComponent: function() {
     SWorks.CrudGridPanel.superclass.initComponent.call(this);

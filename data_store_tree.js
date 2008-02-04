@@ -84,7 +84,7 @@ Ext.ux.tree.DataStoreBacking.prototype = {
     });
 
     // Remove old children
-    for(var i2=0;i<remove.length;i++) {
+    for(var i2=0;i2<remove.length;i2++) {
       // Normally remove would remove the rendering
       // too, but the method thinks it doesn't exist
       // because beginUpdate set childrenRendered = false
