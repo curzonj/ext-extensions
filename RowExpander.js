@@ -5,6 +5,7 @@
  * 
  * http://extjs.com/license
  */
+/*globals Ext */
 
 Ext.grid.RowExpander = function(config){
     Ext.apply(this, config);

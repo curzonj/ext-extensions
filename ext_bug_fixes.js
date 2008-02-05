@@ -165,7 +165,7 @@ Ext.override(Ext.data.Store, {
     this.fields = rtype.prototype.fields;
     delete this.snapshot;
     if(meta.sortInfo) {
-      this.sortInfo = meta.sortInfo
+      this.sortInfo = meta.sortInfo;
     }
     this.modified = [];
     this.fireEvent('metachange', this, this.reader.meta);

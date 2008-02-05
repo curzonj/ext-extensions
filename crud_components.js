@@ -101,8 +101,7 @@ SWorks.commonCrudPanelFunctions = {
     // A button by default is !readOnly and !gridOperation
     return ( (SWorks.CurrentUser.has(this.rwPerm) &&
               (this.getSelections().length > 0 ||
-               b.gridOperation === true))
-             || b.readOnly === true);
+               b.gridOperation === true)) || b.readOnly === true);
   },
   setupEditor: function() {
     if(!this.editor) {
