@@ -191,9 +191,8 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
       result =  Ext.decode(response.responseText);
     }
 
+    var record = options.record;
     if (success && result.success) {
-      var record = options.record;
-
       if(record) {
         if(record.store) {
           record = record.store.getById(record.id);
@@ -332,6 +331,10 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
    * Load records
    *
    */
+  loadData: function(data, id) {
+    var r = new this.recordType(data, id);
+    this.loadRecord(r);
+  },
   loadRecord: function(record) {},
   loadForm: function(form, record, panel){
     //the panel parameter is optional, it is up to the
@@ -478,8 +481,9 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
 });
 
 /*
- * This extracts everything that depends on a store
- * is is wacky.
+ * This extracts everything that depends on a store, the events
+ * stuff (of questionable importance), and cleaning "Select one..."
+ * from empty combos on submit.
  */
 SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
   initComponent: function() {
@@ -583,44 +587,9 @@ SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
   }
 });
 
-SWorks.PanelCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
+SWorks.paneledCrudEditorOverrides = {
+  //Call createPanel in your initComponents
   useDialog: true,
-  initComponent: function() {
-    SWorks.PanelCrudEditor.superclass.initComponent.call(this);
-
-    this.createPanel();
-    this.setupForm();
-  },
-
-  setupForm: function() {
-    this.formPanel = this.panel.findByType('form')[0];
-    this.formPanel.border = false;
-    this.formPanel.bodyStyle = "padding:10px";
-    this.form = this.formPanel.form;
-
-    var index = new Ext.ux.data.CollectionIndex(this.form.items,
-      function(o) {
-        return o.dataIndex;
-      }
-    );
-    this.formFields = index.map;
-
-    this.recordUpdateDelegate = this.onRecordUpdate.createDelegate(this, [this.form], true);
-    this.store.on('update', this.recordUpdateDelegate);
-
-    this.relayEvents(this.form, ['beforeaction', 'actionfailed', 'actioncomplete']);
-
-    this.findChildren(this.panel, this.form);
-  },
-  loadRecord: function(record) {
-    if(!this.rendered && this.useDialog) {
-      this.dialog.render(Ext.getBody());
-    }
-
-    if(this.loadForm(this.form, record) && this.useDialog) {
-      this.dialog.show();
-    }
-  },
   createPanel: function() {
     var config = this.initialConfig;
 
@@ -635,7 +604,7 @@ SWorks.PanelCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
         draggable: true,
         collapsible: false,
         defaults: { border: false },
-        title: ('Edit: '+config.store.klass),
+        title: 'Edit',
         layout: 'fit',
         buttons: [{
           text: "Save",
@@ -669,6 +638,39 @@ SWorks.PanelCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
       // TODO disable the save button unless dirty and
       // warn about leaving w/o saving
     }
+
+    this.setupForm();
+  },
+  setupForm: function() {
+    this.formPanel = this.panel.findByType('form')[0];
+    this.formPanel.border = false;
+    this.formPanel.bodyStyle = "padding:10px";
+    this.form = this.formPanel.form;
+
+    var index = new Ext.ux.data.CollectionIndex(this.form.items,
+      function(o) {
+        return o.dataIndex;
+      }
+    );
+    this.formFields = index.map;
+
+    if(this.store) {
+      this.recordUpdateDelegate = this.onRecordUpdate.createDelegate(this, [this.form], true);
+      this.store.on('update', this.recordUpdateDelegate);
+    }
+
+    this.relayEvents(this.form, ['beforeaction', 'actionfailed', 'actioncomplete']);
+
+    this.findChildren(this.panel, this.form);
+  },
+  loadRecord: function(record) {
+    if(!this.rendered && this.useDialog) {
+      this.dialog.render(Ext.getBody());
+    }
+
+    if(this.loadForm(this.form, record) && this.useDialog) {
+      this.dialog.show();
+    }
   },
   // TODO onRender, resize to component's size
   onClickSave: function(trigger, e) {
@@ -692,6 +694,25 @@ SWorks.PanelCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
     if(typeof trigger == 'object' || e.target.type != 'button') {
       this.dialog.hide();
     }
+  }
+};
+
+
+SWorks.PanelCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
+  initComponent: function() {
+    Ext.apply(this, SWorks.paneledCrudEditorOverrides);
+    SWorks.PanelCrudEditor.superclass.initComponent.call(this);
+
+    this.createPanel();
+  }
+});
+
+SWorks.LazyCrudEditor = Ext.extend(SWorks.CrudEditor, {
+  initComponent: function() {
+    Ext.apply(this, SWorks.paneledCrudEditorOverrides);
+    SWorks.LazyCrudEditor.superclass.initComponent.call(this);
+
+    this.createPanel();
   }
 });
 

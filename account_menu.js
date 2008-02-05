@@ -12,7 +12,7 @@ SWorks.CurrentUser = function() {
   });
   this.on('loggedIn', this.load, this);
   this.on('loggedOut', function() { this.setPermissions(null); }, this);
-}
+};
 Ext.extend(SWorks.CurrentUser, Ext.util.Observable, {
   isLoggedIn: function() {
     return this.loggedIn;
@@ -70,13 +70,15 @@ Ext.extend(SWorks.CurrentUser, Ext.util.Observable, {
       } else {
         callback.call(scope, perm, false);
       }
-    }
+    };
     this.on('permissionsChanged', permCheck);
     permCheck(this.permissions);
   }
 });
 SWorks.CurrentUser = new SWorks.CurrentUser();
-SWorks.CurrentUser.setPermissions(permissionsData);
+if(typeof permissionsData != 'undefined') {
+  SWorks.CurrentUser.setPermissions(permissionsData);
+}
 
 SWorks.AccountMenu = Ext.extend(Ext.Panel, {
   loginUrl: URLs.session,
@@ -86,9 +88,12 @@ SWorks.AccountMenu = Ext.extend(Ext.Panel, {
     SWorks.AccountMenu.superclass.initComponent.call(this);
     //This doesn't render yet, so it should be pretty quick
     this.loginWindow = this.createLoginWindow();
-    SWorks.CurrentUser.on('loggedOut', function() {
-      this.loginWindow.show();
-    }, this);
+
+    if(this.loginRequired) {
+      SWorks.CurrentUser.on('loggedOut', function() {
+        this.loginWindow.show();
+      }, this);
+    }
   },
   afterRender : function(ct, position){
     SWorks.AccountMenu.superclass.afterRender.call(this, ct, position);
@@ -202,12 +207,13 @@ SWorks.AccountMenu = Ext.extend(Ext.Panel, {
         handler: function() {
           panel.login();
         }
-      }/*, {
+      }, {
         text: "Cancel",
+        disabled: this.loginRequired,
         handler: function() {
           win.hide();
         }
-      }*/],
+      }],
       keys: [
         { key: 27, fn: function() { win.hide(); }},
         { key: Ext.EventObject.ENTER, fn: function() { panel.login(); }}
@@ -220,10 +226,9 @@ SWorks.AccountMenu = Ext.extend(Ext.Panel, {
       });
       panel.form.reset();
       panel.form.items.item(0).focus();
-      var test = 0;
     });
 
     return win;
   }
-})
+});
 

@@ -2,6 +2,18 @@
 
 Ext.namespace("Ext.ux", "Ext.ux.data", "Ext.ux.tree", "Ext.ux.grid"); //Used by extensions
 
+// Went missing at some point, but it's pretty important to keep it.
+Ext.override(Ext.TabPanel, {
+  showPanel:function(p) {
+    p.render(Ext.getBody());
+    p.doLayout();
+
+    this.add(p);
+    this.setActiveTab(p);
+    p.doLayout();
+  }
+});
+
 // Required by data mirroring
 Ext.override(Ext.util.Observable, {
   resetEvents: function() {
@@ -14,7 +26,7 @@ Ext.override(Ext.util.Observable, {
 });
 
 Ext.onReady(function() {
-  if(CSRFKiller.field) {
+  if(typeof CSRFKiller != 'undefined' && CSRFKiller.field) {
     Ext.Ajax.on('beforerequest', function(conn, options) {
       if(typeof options.params == 'object') {
         //Make the two possibilities easier
@@ -98,7 +110,7 @@ Ext.ux.data.CollectionIndex.prototype = {
   onClear: function() {
     this.map = {};
   }
-}
+};
 
 Ext.override(Ext.data.Store, {
   // Their load records function isn't very extensible,
