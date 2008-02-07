@@ -41,30 +41,31 @@ SWorks.Menu.loadPanel = function(key) {
     t = SWorks.Menu.target = Ext.getCmp(SWorks.Menu.config.tab_panel_id);
     l = SWorks.Menu.layout = t.getLayout();
   }
+  var panel = key.doLayout ? key : SWorks.Menu.panels[key];
+  var previous = l.activeItem;
 
-  t.el.maskLoading();
+  if(!panel || panel != previous) {
+    // Give the mask cpu time to render
+    t.el.maskLoading();
+    setTimeout(function() {
+      if (!panel) {
+        SWorks.Menu.panels[key] = panel = SWorks.Menu.panelFn[key].call();
+      }
 
-  // Give the mask cpu time to render
-  setTimeout(function() {
-    var panel = key.doLayout ? key : SWorks.Menu.panels[key];
-    if (!panel) {
-      SWorks.Menu.panels[key] = panel = SWorks.Menu.panelFn[key].call();
-    }
+      //non-standard, but helpful
+      panel.fireEvent('activate'); 
 
-    //non-standard, but helpful
-    var previous = l.activeItem;
-    panel.fireEvent('activate'); 
+      t.add(panel);
+      l.setActiveItem(panel);
 
-    t.add(panel);
-    l.setActiveItem(panel);
+      //non-standard, but helpful
+      if(previous) {
+        previous.fireEvent('deactivate');
+      }
 
-    //non-standard, but helpful
-    if(previous) {
-      previous.fireEvent('deactivate');
-    }
-
-    t.el.unmask();
- }, 1);
+      t.el.unmask();
+    }, 1);
+  }
 };
 
 /*

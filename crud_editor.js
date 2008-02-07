@@ -698,23 +698,19 @@ SWorks.paneledCrudEditorOverrides = {
 };
 
 
-SWorks.PanelCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
+SWorks.PanelCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, Ext.apply({
   initComponent: function() {
-    Ext.apply(this, SWorks.paneledCrudEditorOverrides);
     SWorks.PanelCrudEditor.superclass.initComponent.call(this);
-
     this.createPanel();
   }
-});
+}, SWorks.paneledCrudEditorOverrides));
 
-SWorks.LazyCrudEditor = Ext.extend(SWorks.CrudEditor, {
+SWorks.LazyCrudEditor = Ext.extend(SWorks.CrudEditor, Ext.apply({
   initComponent: function() {
-    Ext.apply(this, SWorks.paneledCrudEditorOverrides);
     SWorks.LazyCrudEditor.superclass.initComponent.call(this);
-
     this.createPanel();
   }
-});
+}, SWorks.paneledCrudEditorOverrides));
 
 
 SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
