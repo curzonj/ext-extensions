@@ -12,6 +12,61 @@ SWorks.NavigationTree = Ext.extend(SWorks.DynamicTree, {
   }
 });
 
+// This is a helper for registering listeners to load content from the
+// navigation menu. 
+//   key: The menu item's key and the id of your component. You can customize the
+//     menu item's key in app/views/application/_nav.rhtml. By default it is the
+//     text, lowercased, with spaces replaced by dashes.
+//   fn: A function that will return a panel to be used
+SWorks.Menu = {
+  panels: {},
+  panelFn: {}
+}
+SWorks.Menu.register = function (key, fn, scope){ 
+  SWorks.Menu.panelFn[key] = fn;
+  Ext.ComponentMgr.onAvailable(SWorks.Menu.config.navigation_id, function(tree){
+    tree.on('load', function() {
+      var node = tree.getNodeById(key);
+      if (node) {
+        node.on('click', function(){
+          SWorks.Menu.loadPanel(key);
+        });
+      }
+    });
+  });
+};
+SWorks.Menu.loadPanel = function(key) {
+  var t = SWorks.Menu.target, l = SWorks.Menu.layout;
+  if (!t || !l) {
+    t = SWorks.Menu.target = Ext.getCmp(SWorks.Menu.config.tab_panel_id);
+    l = SWorks.Menu.layout = t.getLayout();
+  }
+
+  t.el.maskLoading();
+
+  // Give the mask cpu time to render
+  setTimeout(function() {
+    var panel = key.doLayout ? key : SWorks.Menu.panels[key];
+    if (!panel) {
+      SWorks.Menu.panels[key] = panel = SWorks.Menu.panelFn[key].call();
+    }
+
+    //non-standard, but helpful
+    var previous = l.activeItem;
+    panel.fireEvent('activate'); 
+
+    t.add(panel);
+    l.setActiveItem(panel);
+
+    //non-standard, but helpful
+    if(previous) {
+      previous.fireEvent('deactivate');
+    }
+
+    t.el.unmask();
+ }, 1);
+};
+
 /*
 var StatusBar = function() {
 

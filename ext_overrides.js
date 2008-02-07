@@ -1,8 +1,7 @@
 /*globals Ext, CSRFKiller */
 
-Ext.namespace("Ext.ux", "Ext.ux.data", "Ext.ux.tree", "Ext.ux.grid"); //Used by extensions
+Ext.namespace("SWorks", "Ext.ux", "Ext.ux.data", "Ext.ux.tree", "Ext.ux.grid"); //Used by extensions
 
-// Went missing at some point, but it's pretty important to keep it.
 Ext.override(Ext.TabPanel, {
   showPanel:function(p) {
     p.render(Ext.getBody());
@@ -111,6 +110,60 @@ Ext.ux.data.CollectionIndex.prototype = {
     this.map = {};
   }
 };
+
+// This allows you to override the parseValue function to allow
+// things like '12 ft' -> 144. 'baseChars' would need to be set 
+// appropriately too.
+Ext.override(Ext.form.NumberField, {
+  validateValue : function(value){
+    if(!Ext.form.NumberField.superclass.validateValue.call(this, value)){
+        return false;
+    }
+    if(value.length < 1){
+      return true;
+    }
+    var num = this.parseValue(value);
+    if(isNaN(num)){
+        this.markInvalid(String.format(this.nanText, value));
+        return false;
+    }
+    if(num < this.minValue){
+        this.markInvalid(String.format(this.minText, this.minValue));
+        return false;
+    }
+    if(num > this.maxValue){
+        this.markInvalid(String.format(this.maxText, this.maxValue));
+        return false;
+    }
+    return true;
+  }
+});
+
+Ext.form.NumberField.conversions = [
+  { re:  /(.+)\s*ft?/, multi: 12 }
+];
+Ext.override(Ext.form.NumberField, {
+  baseChars: "0123456789 ft",
+  parseValue: function(value) {
+    var con = self.conversions || Ext.form.NumberField.conversions;
+    var multi = 1;
+    for(var i=0;i<con.length;i++) {
+      var set = con[i];
+      var match = set.re.exec(value)
+      if(match) {
+        value = match[1];
+        multi = set.multi;
+        break;
+      }
+    }
+    value = parseFloat(String(value).replace(this.decimalSeparator, "."));
+    if(isNaN(value)) {
+      return '';
+    } else {
+      return (value * multi);
+    }
+  }
+});
 
 Ext.override(Ext.data.Store, {
   // Their load records function isn't very extensible,
