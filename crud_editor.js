@@ -494,6 +494,10 @@ SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
     this.parameterTemplate = this.store.model + "[{0}]";
     this.daoClass = this.store.klass;
     this.recordType = this.store.recordType;
+
+    this.store.on('metachange', function(grid, meta) {
+      this.recordType = grid.recordType;
+    }, this);
   },
   eventHandler: function(evt, msg) {
     //example = callback: editor.eventHandler('disable', "Sorry, failed");

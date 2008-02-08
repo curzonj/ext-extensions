@@ -235,6 +235,7 @@ Ext.ux.data.PersistentFilters.overrides = {
   },
   purgeFilters: function() {
     this.filterChain = [];
+    this.applyFilters();
   },
   filterBy: function(fn, scope) {
     this.applyFilters();
