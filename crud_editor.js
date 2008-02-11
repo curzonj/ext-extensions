@@ -222,6 +222,14 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
    *
    */
   saveForm: function(form, o){
+    if(!form.isValid()) {
+      if(typeof o.waitMsg == 'undefined' || o.waitMsg) {
+        Ext.MessageBox.alert('Save failed',
+          'Please fill in all the required boxes highlighted in red.');
+      }
+      return;
+    }
+
     // Prevents errors from holding the enter key
     // down too long or bouncing it
     if (form.submitLock) {
@@ -561,10 +569,14 @@ SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
   },
   updateRecord: function(record, result) {
     this.processRecords(result);
-    SWorks.ManagedCrudEditor.superclass.updateRecord.call(this, record, result);
-    if(record.newBeforeSave) {
+    if(record.newRecord) {
+      // Needs to be added before because widgets are listening
+      // for the edit/commit events even on new records, but those
+      // events won't fire unless the record already belongs to
+      // the store.
       this.store.addSorted(record);
     }
+    SWorks.ManagedCrudEditor.superclass.updateRecord.call(this, record, result);
   },
   hideRecord: function(record) {
     this.updateAttribute({
@@ -656,7 +668,7 @@ SWorks.paneledCrudEditorOverrides = {
         return o.dataIndex;
       }
     );
-    this.formFields = index.map;
+    this.form.fields = index.map;
 
     if(this.store) {
       this.recordUpdateDelegate = this.onRecordUpdate.createDelegate(this, [this.form], true);
@@ -768,6 +780,8 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
     panel = this.cachedEditPanel || this.createEditPanel();
     this.cachedEditPanel = null;
 
+    panel.setTitle(this.getTitle(record));
+
     this.loadForm(panel.form, record, panel);
     this.panels[record.id] = panel;
 
@@ -822,6 +836,10 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
     var startTimer = function() {
       panel.autoSaveTask.delay(this.autoSaveInterval);
     };
+
+    panel.form.on('actioncomplete', function(form, action) {
+      panel.setTitle(this.getTitle(form.record));
+    }, this);
 
     panel.form.items.on('add', function(ct, cp) {
       cp.on('change', startTimer, this);

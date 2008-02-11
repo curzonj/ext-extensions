@@ -33,7 +33,9 @@ Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
       }
     }, this);
     p.on('save', function() {
-      this.relation_id = p.form.record.id;
+      if(p.form.record) {
+        this.relation_id = p.form.record.id;
+      }
     }, this);
   },
   filterOnRelation: function(record) {
