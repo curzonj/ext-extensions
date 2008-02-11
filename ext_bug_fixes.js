@@ -110,6 +110,23 @@ Ext.override(Ext.form.TriggerField, {
   }
 });
 
+Ext.override(Ext.CompositeElementLite, {
+    replaceElement : function(el, replacement, domReplace){
+        var index = typeof el == 'number' ? el : this.indexOf(el);
+        if(index !== -1){
+            replacement = Ext.getDom(replacement);
+            if(domReplace){
+                var d = this.elements[index];
+                if (typeof d != 'undefined') {
+                  d.parentNode.insertBefore(replacement, d);
+                  Ext.removeNode(d);
+                }
+            }
+            this.elements.splice(index, 1, replacement);
+        }
+        return this;
+    }
+});
 
 
 Ext.override(Ext.data.GroupingStore, {
