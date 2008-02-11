@@ -28,6 +28,16 @@ SWorks.CrudEditor = function(config) {
 Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
   initComponent: Ext.emptyFn,
   parameterTemplate: "{0}",
+  setupForm: function(form) {
+    var index = new Ext.ux.data.CollectionIndex(form.items,
+      function(o) {
+        return o.dataIndex;
+      }
+    );
+    form.fields = index.map;
+
+    this.relayEvents(form, ['beforeaction', 'actionfailed', 'actioncomplete']);
+  },
 
   /*
    * Parent relation management
@@ -539,6 +549,12 @@ SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
 
     return result;
   },
+  setupForm: function(form) {
+    this.recordUpdateDelegate = this.onRecordUpdate.createDelegate(this, [form], true);
+    this.store.on('update', this.recordUpdateDelegate);
+
+    SWorks.ManagedCrudEditor.superclass.setupForm.call(this, form);
+  },
   onRecordUpdate: function(store, record, type, form) {
     if(form.record &&
        form.record.id == record.id &&
@@ -655,28 +671,12 @@ SWorks.paneledCrudEditorOverrides = {
       // warn about leaving w/o saving
     }
 
-    this.setupForm();
-  },
-  setupForm: function() {
     this.formPanel = this.panel.findByType('form')[0];
     this.formPanel.border = false;
     this.formPanel.bodyStyle = "padding:10px";
     this.form = this.formPanel.form;
 
-    var index = new Ext.ux.data.CollectionIndex(this.form.items,
-      function(o) {
-        return o.dataIndex;
-      }
-    );
-    this.form.fields = index.map;
-
-    if(this.store) {
-      this.recordUpdateDelegate = this.onRecordUpdate.createDelegate(this, [this.form], true);
-      this.store.on('update', this.recordUpdateDelegate);
-    }
-
-    this.relayEvents(this.form, ['beforeaction', 'actionfailed', 'actioncomplete']);
-
+    this.setupForm(this.form);
     this.findChildren(this.panel, this.form);
   },
   loadRecord: function(record) {
@@ -811,12 +811,16 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
       panel.form = formPanel.form;
     }
 
-    this.relayEvents(panel.form, ['beforeaction', 'actionfailed', 'actioncomplete']);
+    this.setupForm(panel.form);
     this.findChildren(panel, panel.form);
 
-    var recordUpdateDelegate = this.onRecordUpdate.createDelegate(this, [panel.form], true);
-    this.store.on('update', recordUpdateDelegate);
+    panel.hidden = true;
+    panel.render(Ext.getBody());
+    panel.doLayout();
 
+    return panel;
+  },
+  configureAutoSave: function(panel) {
     panel.autoSaveTask = new Ext.util.DelayedTask(function() {
       // Make sure we still exist and need to be saved
       if( panel.form &&
@@ -836,11 +840,9 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
     var startTimer = function() {
       panel.autoSaveTask.delay(this.autoSaveInterval);
     };
-
     panel.form.on('actioncomplete', function(form, action) {
       panel.setTitle(this.getTitle(form.record));
     }, this);
-
     panel.form.items.on('add', function(ct, cp) {
       cp.on('change', startTimer, this);
     }, this);
@@ -850,13 +852,6 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
     panel.form.on('actioncomplete', function() {
       this.autoSaveAttempts = 0;
     }, panel.form);
-
-    panel.hidden = true;
-//    panel.render(this.tabPanel.getLayoutTarget());
-    panel.render(Ext.getBody());
-    panel.doLayout();
-
-    return panel;
   },
   formFailure: function(form, action) {
     form.submitLock = false;
