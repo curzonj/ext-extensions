@@ -232,6 +232,8 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
    *
    */
   saveForm: function(form, o){
+    o = o || {};
+
     if(!form.isValid()) {
       if(typeof o.waitMsg == 'undefined' || o.waitMsg) {
         Ext.MessageBox.alert('Save failed',

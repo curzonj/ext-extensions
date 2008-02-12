@@ -140,10 +140,11 @@ Ext.override(Ext.form.NumberField, {
 });
 
 Ext.form.NumberField.conversions = [
-  { re:  /(.+)\s*ft?/, multi: 12 }
+  { re:  /(.+)\s*ft?/, multi: 12 },
+  { re:  /(.+)\s*hr?/, multi: 60 }
 ];
 Ext.override(Ext.form.NumberField, {
-  baseChars: "0123456789 ft",
+  baseChars: "0123456789 fthr",
   parseValue: function(value) {
     var con = self.conversions || Ext.form.NumberField.conversions;
     var multi = 1;

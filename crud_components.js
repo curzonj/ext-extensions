@@ -336,32 +336,40 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
   onClickHideBtn: function() {
     this.confirmMultipleRows(
       "Do you really want to delete <b>all {0} selected items</b>?",
-      "Please select at least on item to delete.",
       this.editor.hideRecord,
       this.editor);
   },
   onClickDeleteBtn: function() {
     this.confirmMultipleRows(
       "Do you really want to delete <b>all {0} selected items</b>?",
-      "Please select at least on item to delete.",
       this.editor.deleteRecord,
       this.editor);
   },
   // Default scope is the crudgrid
-  confirmMultipleRows: function(msg, alt, fn, scope){
+  confirmMultipleRows: function(msg, fn, scope){
     var n = this.getSelections().length;
     if(n > 0) {
       Ext.MessageBox.confirm('Message', String.format(msg, n),
-        function(btn) {
-          if(btn == 'yes') {
-            var list = this.getSelections();
-            for(var i = 0, len = list.length; i < len; i++){
-              fn.call(scope||this, list[i]);
-            }
-          }
-        }, this);	
+        this.onClickConfirmation.createDelegate(this, [fn, scope], true));
     } else {
-      Ext.MessageBox.alert('Message', alt);
+      Ext.MessageBox.alert('Message', "Please select at least one item.");
+    }
+  },
+  confirmSingleRow: function(msg, fn, scope) {
+    var n = this.getSelections().length;
+    if(n == 0) {
+      Ext.MessageBox.confirm('Message', msg,
+        this.onClickConfirmation.createDelegate(this, [fn, scope], true));
+    } else {
+      Ext.MessageBox.alert('Message', "Please select only one item");
+    }
+  },
+  onClickConfirmation: function(btn, empty, fn, scope) {
+    if(btn == 'yes') {
+      var list = this.getSelections();
+      for(var i = 0, len = list.length; i < len; i++){
+        fn.call(scope||this, list[i]);
+      }
     }
   },
   onClickRefresh: function(){
