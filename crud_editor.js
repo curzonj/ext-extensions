@@ -590,6 +590,7 @@ SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
       // for the edit/commit events even on new records, but those
       // events won't fire unless the record already belongs to
       // the store.
+      record.id = record.data.id = result.objectid;
       this.store.addSorted(record);
     }
     SWorks.ManagedCrudEditor.superclass.updateRecord.call(this, record, result);
