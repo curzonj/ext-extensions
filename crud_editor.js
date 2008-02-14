@@ -330,6 +330,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
       // forms that may save a new record without closing; they
       // need to get updates about any fields the server changed
       // on them.
+      record.json = result.data;
       record.beginEdit();
       for(var a in result.data) {
         var value = result.data[a];
