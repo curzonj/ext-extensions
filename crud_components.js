@@ -255,26 +255,26 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
   createOptionsMenu: function(){
     var viewMenuOptions = [], groupByMenuOptions = [];
 
-    if(this.customViews) {
-      var cv = this.customViews;
+    if(this.customFilters) {
+      var cv = this.customFilters;
       for(var i=0;i<cv.length;i++){
         var v = cv[i];
         var options = {
-          group: 'customview',
           checked: (v.isDefault === true),
           text: v.text,
-          checkHandler: function() {
-            var prev = this.store.customViewHander;
-            if(prev) {
-              this.store.removeFilter(prev);
+          filterFn: v.filter,
+          checkHandler: function(item, checked) {
+            if (checked) {
+              this.store.addFilter(item.filterFn);
+            } else {
+              this.store.removeFilter(item.filterFn);
             }
-
-            this.store.customViewHandler = v.filter;
-            this.store.addFilter(v.filter);
-
-            // TODO Modify the title according to v.text
-          }
+          },
+          scope: this
         };
+        if(v.isDefault === true) {
+          this.store.addFilter(v.filter);
+        }
         viewMenuOptions.push(options);
       }
     }
