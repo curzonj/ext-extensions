@@ -278,21 +278,20 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
         viewMenuOptions.push(options);
       }
     }
+    if(viewMenuOptions.length > 0) {
+      viewMenuOptions.push('-');
+    }
 
     return {
       text: "Options",
       iconCls: 'boptions',
       menu: {
-        items: [{
-          text: "Custom View",
-          menu:{items: viewMenuOptions},
-          disabled: (viewMenuOptions.length < 1)
-        },{
+        items: viewMenuOptions.concat([{
           text: 'Refresh',
           handler: this.onClickRefresh,
           scope: this,
           iconCls: 'brefresh'
-        }]
+        }])
       },
       readOnly: true,
       gridOperation: true

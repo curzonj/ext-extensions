@@ -552,8 +552,8 @@ SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
     return result;
   },
   setupForm: function(form) {
-    this.recordUpdateDelegate = this.onRecordUpdate.createDelegate(this, [form], true);
-    this.store.on('update', this.recordUpdateDelegate);
+    form.recordUpdateDelegate = this.onRecordUpdate.createDelegate(this, [form], true);
+    this.store.on('update', form.recordUpdateDelegate);
 
     SWorks.ManagedCrudEditor.superclass.setupForm.call(this, form);
   },
@@ -816,6 +816,7 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
 
     this.setupForm(panel.form);
     this.findChildren(panel, panel.form);
+    this.configureAutoSave(panel);
 
     panel.hidden = true;
     panel.render(Ext.getBody());
@@ -833,7 +834,7 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
       }
     }, this);
     panel.on('destroy', function() {
-      this.store.un('update', recordUpdateDelegate);
+      this.store.un('update', panel.form.recordUpdateDelegate);
 
       if(panel.autoSaveTask) {
         panel.autoSaveTask.cancel();
