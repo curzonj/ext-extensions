@@ -228,15 +228,14 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
      * }]
      *
      * To create event buttons, pass in something like:
-     * btnConfigs: [{
-         text: "Cancel",
-         handler: function() {
-           this.confirmMultipleRows(
-             "Do you really want to cancel <b>all {0} selected materials</b>?",
-             "Please select at least one material to cancel.",
-             this.editor.eventHandler('cancel', 'Failed to cancel material request. Please try again.')
-         }
-     * }]
+    btnConfigs: [{
+      text: "Discard",
+      handler: function() {
+        this.confirmMultipleRows(
+          "Do you really want to discard <b>all {0} selected items</b>?",
+          this.editor.eventHandler('discard', 'Failed to discard items. Please try again.'))
+      }
+    }],
      */
     if(this.btnConfigs) {
       tb.push('-');

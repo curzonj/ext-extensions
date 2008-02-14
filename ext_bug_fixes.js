@@ -110,25 +110,13 @@ Ext.override(Ext.form.TriggerField, {
   }
 });
 
-Ext.override(Ext.CompositeElementLite, {
-    replaceElement : function(el, replacement, domReplace){
-        var index = typeof el == 'number' ? el : this.indexOf(el);
-        if(index !== -1){
-            try {
-              replacement = Ext.getDom(replacement);
-              if(domReplace){
-                    var d = this.elements[index];
-                    d.parentNode.insertBefore(replacement, d);
-                    Ext.removeNode(d);
-
-              }
-              this.elements.splice(index, 1, replacement);
-            } catch(err) {}
-        }
-        return this;
-    }
+Ext.override(Ext.DataView, {
+  // The default implementation is always giving me errors
+  // about updating elements that don't exist
+  onUpdate: function(ds, record) {
+    this.refresh();
+  }
 });
-
 
 Ext.override(Ext.data.GroupingStore, {
    applySort : function(){
