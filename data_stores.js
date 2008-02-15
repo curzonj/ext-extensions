@@ -69,11 +69,17 @@ Ext.override(Ext.data.Store, {
       // If it's attributes have changed, it's filter conditions
       // might have changed
       this.onDataChanged();
+
+      // Anytime you call onDataChanged, you MUST fire datachanged
+      this.fireEvent("datachanged", this);
+
       // Our listeners only care if this record is in our dataset
       // right now. Unlike other events, people will be listening
-      // for changes to this specific record
+      // for changes to this specific record, this will cause a
+      // minor redundant UI update, but it's not bad and we can't
+      // avoid it
       if(this.indexOf(record) != -1) {
-        this.fireEvent('update', store, record, type);
+        this.fireEvent('update', this, record, type);
       }
     }, this);
     source.on('metachange', function(grid, meta) {
@@ -219,6 +225,9 @@ Ext.ux.data.PersistentFilters = function(store) {
 };
 Ext.ux.data.PersistentFilters.overrides = {
   onDataChanged: function() {
+    // Anytime you call onDataChanged, you MUST fire datachanged, otherwise
+    // your data structures tracking the dom elements will be out of sync with
+    // your store you'll start to have visual update artifacts
     this.applyFilters(false);
     this.applySort();
   },
