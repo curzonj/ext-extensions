@@ -743,7 +743,6 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
     this.tabPanel.on('beforeremove', this.onBeforeRemove, this);
 
     this.panels = {};
-    this.cachedEditPanel = this.createEditPanel();
   },
 
   onBeforeRemove: function(ct, panel) {
@@ -781,22 +780,23 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
       }
     } 
 
-    panel = this.cachedEditPanel || this.createEditPanel();
-    this.cachedEditPanel = null;
+    this.tabPanel.el.maskLoading();
 
-    panel.setTitle(this.getTitle(record));
-
-    this.loadForm(panel.form, record, panel);
-    this.panels[record.id] = panel;
-
-    this.tabPanel.add(panel);
-    this.tabPanel.setActiveTab(panel);
-    panel.doLayout();
-
+    // Give the mask cpu time to render
     var editor = this;
-    setTimeout(function(){
-      editor.cachedEditPanel = editor.createEditPanel();
-    }, 2);
+    setTimeout(function() {
+      panel = editor.createEditPanel();
+      panel.setTitle(editor.getTitle(record));
+
+      editor.loadForm(panel.form, record, panel);
+      editor.panels[record.id] = panel;
+
+      editor.tabPanel.add(panel);
+      editor.tabPanel.setActiveTab(panel);
+      panel.doLayout();
+
+      editor.tabPanel.el.unmask();
+    }, 1);
   },
   getPanel: Ext.emptyFn,
   createEditPanel: function() {
