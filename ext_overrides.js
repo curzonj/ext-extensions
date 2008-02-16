@@ -139,12 +139,36 @@ Ext.override(Ext.form.NumberField, {
   }
 });
 
+Ext.form.NumberField.fractionRe = /^\s*(\d+)\s*\/\s*(\d+)\s*$/
 Ext.form.NumberField.conversions = [
-  { re:  /(.+)\s*ft?/, multi: 12 },
-  { re:  /(.+)\s*hr?/, multi: 60 }
+  { re:  /^\s*(.+)\s*ft?\s*$/, multi: 12 },
+  { re:  /^\s*(.+)\s*hr?\s*$/, multi: 60 }
 ];
 Ext.override(Ext.form.NumberField, {
   baseChars: "0123456789 fthr",
+  initEvents : function(){
+    Ext.form.NumberField.superclass.initEvents.call(this);
+    var allowed = this.baseChars+'';
+    if(this.allowDecimals){
+        allowed += this.decimalSeparator;
+        allowed += '/'; // This is the only line added in this function
+    }
+    if(this.allowNegative){
+        allowed += "-";
+    }
+    this.stripCharsRe = new RegExp('[^'+allowed+']', 'gi');
+    var keyPress = function(e){
+        var k = e.getKey();
+        if(!Ext.isIE && (e.isSpecialKey() || k == e.BACKSPACE || k == e.DELETE)){
+            return;
+        }
+        var c = e.getCharCode();
+        if(allowed.indexOf(String.fromCharCode(c)) === -1){
+            e.stopEvent();
+        }
+    };
+    this.el.on("keypress", keyPress, this);
+  },
   parseValue: function(value) {
     var con = self.conversions || Ext.form.NumberField.conversions;
     var multi = 1;
@@ -157,6 +181,15 @@ Ext.override(Ext.form.NumberField, {
         break;
       }
     }
+
+    var fracMatch = Ext.form.NumberField.fractionRe.exec(value)
+    if(fracMatch) {
+      if(!isNaN(fracMatch[1]) && !isNaN(fracMatch[2]) &&
+         (fracMatch[1] != 0) && (fracMatch[2] != 0)) {
+        value = fracMatch[1] / fracMatch[2];
+      }
+    }
+
     value = parseFloat(String(value).replace(this.decimalSeparator, "."));
     if(isNaN(value)) {
       return '';
