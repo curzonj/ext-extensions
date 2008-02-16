@@ -156,6 +156,29 @@ Ext.ux.data.ReloadingStore = function(store) {
     this.createRefreshTask(this.refreshPeriod);
   }, store, {single:true});
 };
+Ext.ux.data.ReloadingStore.scheduleReload = function(store) {
+  // This causes the periodic reloads to not hammer the CPU so hard with UI refreshes
+  // It only reload a store every 5 seconds, although each store only schedules itself
+  // for reload every 5min. Previously all the stores would reload at the sametime and
+  // it would peg the cpu for upto 30sec.
+  if(!this.reloadTask) {
+    var reloadPeriod = 5000;
+    this.reloadQueue = [];
+    this.reloadTask = new Ext.util.DelayedTask(function() {
+      this.reloadTask.delay(reloadPeriod);
+      var store = this.reloadQueue[0];
+      if(!this.disabled && store) {
+        this.reloadQueue = this.reloadQueue.slice(1);
+        store.reload();
+      }
+    }, this);
+    this.reloadTask.delay(reloadPeriod);
+  }
+
+  if(this.reloadQueue.indexOf(store) == -1) {
+    this.reloadQueue.push(store);
+  }
+};
 Ext.ux.data.ReloadingStore.overrides = {
   refreshPeriod: 360000,
   loadIfNeeded: function() {
@@ -195,26 +218,19 @@ Ext.ux.data.ReloadingStore.overrides = {
     //TODO maybe there is a way to not reload the table
     //if there is nothing new
     this.refreshTask = new Ext.util.DelayedTask();
+
     //If it is manually reloaded, we don't need to
     this.on('beforeload',function() {
       this.refreshTask.delay(refreshRate);
     }, this);
+
     this.refreshTask.setRefreshRate = function(newRate) {
       refreshRate = newRate;
       this.delay(refreshRate);
     };
+
     this.refreshTask.delay(refreshRate, function(){
-      //Causes ourselves to re-execute
-      //Although we could save a reference in this scope to the task
-      //and use that instead of going through this, but that causes
-      //some wierd issue where it doesn't use thread local storage and
-      //multiple refreshTask's screw each other
-      this.refreshTask.delay(refreshRate);
-      //reload the data. If we fail, we already rescheduled, if we succeed,
-      //beforeload will delay the next reload
-      if(!Ext.ux.data.ReloadingStore.disableReloading) {
-        this.reload();
-      }
+      Ext.ux.data.ReloadingStore.scheduleReload(this);
     }, this);
     return this.refreshTask;
   }
