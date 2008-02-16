@@ -162,6 +162,13 @@ Ext.override(Ext.form.ComboBox, {
     this.setRawValue('');
     this.lastSelectionText = '';
     this.applyEmptyText();
+  },
+  onEnable: function() {
+    // This is entirely missing
+    Ext.form.ComboBox.superclass.onEnable.apply(this, arguments);
+    if(this.hiddenField) {
+      this.hiddenField.disabled = this.disabled;
+    }
   }
 });
 

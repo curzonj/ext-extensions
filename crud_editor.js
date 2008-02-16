@@ -265,6 +265,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
         scope: o.scope
       };
       delete o.callback;
+      delete o.scope;
     }
 
     form.submit(Ext.apply(o ,{
