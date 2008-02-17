@@ -179,12 +179,8 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
   
     this.colModel.defaultSortable = true;
     this.on('celldblclick', this.onGridCellClicked, this);
-    this.store.on('load',this.restoreSelections, this);
-    this.getSelectionModel().on('selectionchange', this.saveSelections, this);
     this.getSelectionModel().on('selectionchange', this.checkToolbarButtons, this);
     SWorks.CurrentUser.onPermission(this.rwPerm, this.checkToolbarButtons, this);
-
-    // TODO if there is a default custom view, load it
   },
   afterRender: function() {
     SWorks.CrudGridPanel.superclass.afterRender.call(this);
@@ -386,22 +382,6 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
     // select the right record if it exists
     if(this.store.indexOf(r) != -1) {
       this.getSelectionModel().selectRecords([r],false);
-    }
-  },
-  saveSelections: function(sm) {
-    this.savedSelections = [];
-    var selectedRows = sm.getSelections();
-    for (var i=0; i<selectedRows.length; i++) {
-      this.savedSelections.push(selectedRows[i].id);
-    }
-  },
-  restoreSelections: function() {
-    if(this.savedSelections && this.savedSelections.length > 0) {
-      var selectedRows = [];
-      for (var i=0; i<this.savedSelections.length; i++) {
-        selectedRows.push(this.store.getById(this.savedSelections[i]));
-      }
-      this.getSelectionModel().selectRecords(selectedRows,false);
     }
   },
   setParent: function(p) {
