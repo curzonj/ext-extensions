@@ -163,11 +163,19 @@ Ext.override(Ext.form.ComboBox, {
     this.lastSelectionText = '';
     this.applyEmptyText();
   },
+  onDisable: function(){
+    // this.disabled isn't set until AFTER this method is called,
+    // so the default implementation is just wacked
+    Ext.form.ComboBox.superclass.onDisable.apply(this, arguments);
+    if(this.hiddenField){
+      this.hiddenField.disabled = true;
+    }
+  },
   onEnable: function() {
     // This is entirely missing
     Ext.form.ComboBox.superclass.onEnable.apply(this, arguments);
     if(this.hiddenField) {
-      this.hiddenField.disabled = this.disabled;
+      this.hiddenField.disabled = false;
     }
   }
 });
@@ -178,6 +186,9 @@ Ext.override(Ext.data.Store, {
     this.fields = rtype.prototype.fields;
     delete this.snapshot;
     if(meta.sortInfo) {
+      // Only change the sortInfo if it is provided, this
+      // allows the server to choose not to affect the any
+      // sort applied by the user
       this.sortInfo = meta.sortInfo;
     }
     this.modified = [];
