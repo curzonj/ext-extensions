@@ -1,3 +1,5 @@
+/*globals Ext, SWorks */
+
 Ext.override(Ext.dd.DragDrop, {
   // This allows multiple things lock/unlock with a
   // little overlap, and they won't break each other
@@ -27,7 +29,7 @@ Ext.ux.grid.RowReorderDD = function(grid, config) {
   } else {
     grid.on('render', this.lazyInit, this);
   }
-}
+};
 Ext.extend(Ext.ux.grid.RowReorderDD, Ext.dd.DropZone, {
   lazyInit: function() {
     var dom = this.grid.getGridEl().dom;

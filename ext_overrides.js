@@ -139,7 +139,7 @@ Ext.override(Ext.form.NumberField, {
   }
 });
 
-Ext.form.NumberField.fractionRe = /^\s*(\d+)\s*\/\s*(\d+)\s*$/
+Ext.form.NumberField.fractionRe = /^\s*(\d+)\s*\/\s*(\d+)\s*$/;
 Ext.form.NumberField.conversions = [
   { re:  /^\s*(.+)\s*ft?\s*$/, multi: 12 },
   { re:  /^\s*(.+)\s*hr?\s*$/, multi: 60 }
@@ -174,7 +174,7 @@ Ext.override(Ext.form.NumberField, {
     var multi = 1;
     for(var i=0;i<con.length;i++) {
       var set = con[i];
-      var match = set.re.exec(value)
+      var match = set.re.exec(value);
       if(match) {
         value = match[1];
         multi = set.multi;
@@ -182,10 +182,10 @@ Ext.override(Ext.form.NumberField, {
       }
     }
 
-    var fracMatch = Ext.form.NumberField.fractionRe.exec(value)
+    var fracMatch = Ext.form.NumberField.fractionRe.exec(value);
     if(fracMatch) {
       if(!isNaN(fracMatch[1]) && !isNaN(fracMatch[2]) &&
-         (fracMatch[1] != 0) && (fracMatch[2] != 0)) {
+         (fracMatch[1] !== 0) && (fracMatch[2] !== 0)) {
         value = fracMatch[1] / fracMatch[2];
       }
     }

@@ -91,7 +91,7 @@ Ext.ux.DDBulkMultiselect = function(config) {
   delete config.height;
 
   Ext.ux.DDBulkMultiselect.superclass.constructor.call(this, config);
-}
+};
 Ext.extend(Ext.ux.DDBulkMultiselect, Ext.Panel, {
   initComponent: function() {
     Ext.ux.DDBulkMultiselect.superclass.initComponent.call(this);
@@ -141,7 +141,7 @@ Ext.extend(Ext.ux.DDBulkMultiselect, Ext.Panel, {
     // TODO use this to create a proper tree in the source
     var missingParentFilter = function(r) {
       return (!r.data.parent_id || r.data.parent_id === "");
-    }
+    };
 
     // I'm not sure what to query, if this were used without
     // our persistent filters

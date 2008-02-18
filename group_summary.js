@@ -7,6 +7,7 @@
  */
 
 /*globals Ext */
+
 //Taken from http://extjs.com/deploy/dev/examples/grid/GroupSummary.js
 
 Ext.grid.GroupSummary = function(config){
@@ -33,8 +34,7 @@ Ext.extend(Ext.grid.GroupSummary, Ext.util.Observable, {
                 '<div class="x-grid3-summary-row" style="{tstyle}">',
                 '<table class="x-grid3-summary-table" border="0" cellspacing="0" cellpadding="0" style="{tstyle}">',
                     '<tbody><tr>{cells}</tr></tbody>',
-                '</table></div>'
-            );
+                '</table></div>');
             this.rowTpl.disableFormats = true;
         }
         this.rowTpl.compile();
@@ -43,8 +43,7 @@ Ext.extend(Ext.grid.GroupSummary, Ext.util.Observable, {
             this.cellTpl = new Ext.Template(
                 '<td class="x-grid3-col x-grid3-cell x-grid3-td-{id} {css}" style="{style}">',
                 '<div class="x-grid3-cell-inner x-grid3-col-{id}" unselectable="on">{value}</div>',
-                "</td>"
-            );
+                "</td>");
             this.cellTpl.disableFormats = true;
         }
         this.cellTpl.compile();
@@ -70,7 +69,7 @@ Ext.extend(Ext.grid.GroupSummary, Ext.util.Observable, {
             cf = cfg[i];
             p.id = c.id;
             p.style = c.style;
-            p.css = i == 0 ? 'x-grid3-cell-first ' : (i == last ? 'x-grid3-cell-last ' : '');
+            p.css = i === 0 ? 'x-grid3-cell-first ' : (i == last ? 'x-grid3-cell-last ' : '');
             if(cf.summaryType || cf.summaryRenderer){
                 p.value = (cf.summaryRenderer || c.renderer)(o.data[c.name], p, o);
             }else{

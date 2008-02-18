@@ -351,7 +351,7 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
   },
   confirmSingleRow: function(msg, fn, scope) {
     var n = this.getSelections().length;
-    if(n == 0) {
+    if(n === 0) {
       Ext.MessageBox.confirm('Message', msg,
         this.onClickConfirmation.createDelegate(this, [fn, scope], true));
     } else {

@@ -3,7 +3,7 @@
 //required: store, textField; optional: idField, parentIdField, qtipField
 Ext.ux.tree.DataStoreBacking = function(config) {
   Ext.apply(this, config);
-}
+};
 Ext.ux.tree.DataStoreBacking.prototype = {
   idField: 'id',
   parentIdField: 'parent_id',
@@ -149,4 +149,4 @@ Ext.ux.tree.DataStoreBacking.prototype = {
       }
       return new Ext.tree.TreeNode(attr);
   }
-}
+};

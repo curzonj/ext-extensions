@@ -21,7 +21,7 @@ SWorks.NavigationTree = Ext.extend(SWorks.DynamicTree, {
 SWorks.Menu = {
   panels: {},
   panelFn: {}
-}
+};
 SWorks.Menu.register = function (key, fn, scope){ 
   SWorks.Menu.panelFn[key] = fn;
   Ext.ComponentMgr.onAvailable(SWorks.Menu.config.navigation_id, function(tree){

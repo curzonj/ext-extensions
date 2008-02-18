@@ -6,17 +6,18 @@
  * http://extjs.com/license
  */
 
+/*globals Ext */
 
 // Very simple plugin for adding a close context menu to tabs
 
 Ext.ux.TabCloseMenu = function(){
-    var tabs, menu, ctxItem;
+    var tabs, menu, ctxItem, onContextMenu;
     this.init = function(tp){
         tabs = tp;
         tabs.on('contextmenu', onContextMenu);
-    }
+    };
 
-    function onContextMenu(ts, item, e){
+    onContextMenu = function onContextMenu(ts, item, e){
         if(!menu){ // create context menu on first right click
             menu = new Ext.menu.Menu([{
                 id: tabs.id + '-close',
@@ -48,5 +49,5 @@ Ext.ux.TabCloseMenu = function(){
         });
         items.get(tabs.id + '-close-others').setDisabled(disableOthers);
         menu.showAt(e.getPoint());
-    }
+    };
 };
