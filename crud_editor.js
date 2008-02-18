@@ -790,7 +790,10 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
       panel.setTitle(editor.getTitle(record));
 
       editor.loadForm(panel.form, record, panel);
-      editor.panels[record.id] = panel;
+
+      if(!record.newRecord) {
+        editor.panels[record.id] = panel;
+      }
 
       editor.tabPanel.add(panel);
       editor.tabPanel.setActiveTab(panel);
@@ -848,6 +851,7 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
     };
     panel.form.on('actioncomplete', function(form, action) {
       panel.setTitle(this.getTitle(form.record));
+      this.panels[form.record.id] = panel;
     }, this);
     panel.form.items.on('add', function(ct, cp) {
       cp.on('change', startTimer, this);
