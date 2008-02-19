@@ -89,12 +89,13 @@ Ext.ux.tree.DataStoreBacking.prototype = {
     }
   },
   reloadChildren: function(node) {
-    if(node.loading) {
+    if(node.loading === true) {
       return;
+    } else {
+      node.loading = true;
     }
 
     node.childMap = node.childMap || {};
-    node.loading = true;
     node.beginUpdate();
 
     var updated = {};
@@ -112,8 +113,11 @@ Ext.ux.tree.DataStoreBacking.prototype = {
       }
       updated[child.attributes.id] = true;
 
-      // either preload or reload
-      if(this.preloadChildren !== false || node.childNodes.length > 0) {
+      // either preload or reload.
+      // Preloading is currently broken because
+      // we don't have a nice way of telling if it is
+      // a leaf without preloading it anyways
+      if(this.preloadChildren !== false || child.childNodes.length > 0) {
         this.reloadChildren(child);
       }
     }
