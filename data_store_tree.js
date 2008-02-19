@@ -13,59 +13,102 @@ Ext.ux.tree.DataStoreBacking.prototype = {
 
     this.tree.on('beforeexpandnode', this.onBeforeExpandNode, this);
     // TODO Link the tree to the loading mask of the data store
+    this.tree.on('beforeappend', this.onBeforeAppend, this);
+    this.tree.on('beforeremove', this.onBeforeRemove, this);
 
     if(this.keepUpdated !== false) {
-      this.store.on('datachanged', this.onDataStoreChanged, this);
+      this.store.on('load', this.onDataStoreReloaded, this);
       this.store.on('add', this.onDataStoreAdd, this);
       this.store.on('remove', this.onDataStoreRemove, this);
       this.store.on('update', this.onDataStoreUpdate, this);
     }
   },
-  // TODO make these more efficient
+  onBeforeAppend: function(tree, parent, node) {
+    parent.childMap = parent.childMap || {};
+    parent.childMap[node.attributes.record.id] = node;
+  },
+  onBeforeRemove: function(tree, parent, node) {
+    var nodeId = node.attributes.record.id;
+    delete parent.childMap[nodeId];
+  },
   onBeforeExpandNode: function(node, deep, anim) {
     if(!node.childNodes || node.childNodes.length === 0) {
       this.reloadChildren(node);
     }
   },
-  onDataStoreChanged: function() {
+  onDataStoreReloaded: function() {
     var root = this.tree.getRootNode();
     this.reloadChildren(root);
   },
-  onDataStoreAdd: function() {
-    var root = this.tree.getRootNode();
-    this.reloadChildren(root);
+  onDataStoreAdd: function(store, records, index) {
+    for(var i=0; i<records.length; i++) {
+      var record = records[i];
+      for(var id in this.tree.nodeHash) {
+        var node = this.tree.nodeHash[id],
+            parentId = this.extractRecordId(node);
+
+        if(record.data[this.parentIdField] == parentId) {
+          this.createChild(node, record);
+        }
+      }
+    }
   },
-  onDataStoreRemove: function() {
+  onDataStoreRemove: function(store, record, index) {
     var root = this.tree.getRootNode();
-    this.reloadChildren(root);
+    for(var id in this.tree.nodeHash) {
+      var node = this.tree.nodeHash[id],
+          recordId = this.extractRecordId(node);
+
+      if(record.data[this.idField] == recordId) {
+        node.remove();
+        node.destroy();
+      }
+    }
   },
-  onDataStoreUpdate: function() {
-    var root = this.tree.getRootNode();
-    this.reloadChildren(root);
+  onDataStoreUpdate: function(store, record, op) {
+    if(op == Ext.data.Record.EDIT) {
+      var changes = record.getChanges();
+      if(changes[this.parentId] && !record.newBeforeSave) {
+        // if it looks like a re-org, redraw everything
+        var root = this.tree.getRootNode();
+        this.reloadChildren(root);
+      } else {
+        // just update the local node
+        for(var id in this.tree.nodeHash) {
+          var node = this.tree.nodeHash[id],
+              recordId = this.extractRecordId(node);
+
+          if(record.data[this.idField] == recordId) {
+            this.updateNode(node, record);
+            return; // We found what we needed
+          }
+        }
+        // It hasn't been created yet
+        this.onDataStoreAdd(store, [record], null);
+      }
+    }
   },
   reloadChildren: function(node) {
     if(node.loading) {
       return;
     }
 
+    node.childMap = node.childMap || {};
     node.loading = true;
     node.beginUpdate();
 
     var updated = {};
-    var records = this.store.queryBy(
-        this.parentMatch.createDelegate(this, [this.getParentId(node)], true));
-    for(var i=0;i<records.length;i++) {
-      var r = records.items[i];
-      var child = node.findChildBy(this.nodeMatch.createDelegate(this, [r], true));
+    var parentId = this.extractRecordId(node);
+    var records = this.store.queryBy(function(record, id) {
+      return (record.data && record.data[this.parentIdField] == parentId);
+    }, this);
 
+    for(var i=0;i<records.length;i++) {
+      var r = records.items[i], child = node.childMap[r.id]; 
       if(child) {
         this.updateNode(child, r);
       } else {
-        child = this.createNode(r);
-
-        if(child) {
-          node.appendChild(child);
-        }
+        child = this.createChild(node, r);
       }
       updated[child.attributes.id] = true;
 
@@ -106,13 +149,7 @@ Ext.ux.tree.DataStoreBacking.prototype = {
 
     node.loading = false;
   },
-  nodeMatch: function(node, record) {
-    return (node.attributes.record && node.attributes.record.id == record.id);
-  },
-  parentMatch: function(record, id, parentId) {
-    return (record.data && record.data[this.parentIdField] == parentId);
-  },
-  getParentId: function(node) {
+  extractRecordId: function(node) {
     var parentId = null;
     if(node.attributes.record && node.attributes.record.data) {
       parentId = node.attributes.record.data[this.idField];
@@ -131,22 +168,26 @@ Ext.ux.tree.DataStoreBacking.prototype = {
     }
   },
   // Taken from Ext.tree.TreeLoader
-  createNode : function(record){
-      var attr = {
-        text: record.data[this.textField],
-        record: record
-      };
+  createChild : function(parent, record){
+    var attr = {
+      text: record.data[this.textField],
+      record: record
+    };
 
-      if(this.qtipField && record.data[this.qtipField]) {
-        attr.qtip = record.data[this.qtipField];
-      }
-    
-      if(this.baseAttrs){
-          Ext.applyIf(attr, this.baseAttrs);
-      }
-      if(typeof attr.uiProvider == 'string'){
-         attr.uiProvider = this.uiProviders[attr.uiProvider] || eval(attr.uiProvider);
-      }
-      return new Ext.tree.TreeNode(attr);
+    if(this.qtipField && record.data[this.qtipField]) {
+      attr.qtip = record.data[this.qtipField];
+    }
+  
+    if(this.baseAttrs){
+        Ext.applyIf(attr, this.baseAttrs);
+    }
+    if(typeof attr.uiProvider == 'string'){
+       attr.uiProvider = this.uiProviders[attr.uiProvider] || eval(attr.uiProvider);
+    }
+
+    var child = new Ext.tree.TreeNode(attr)
+    parent.appendChild(child);
+
+    return child;
   }
 };
