@@ -237,7 +237,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     if(!form.isValid()) {
       if(typeof o.waitMsg == 'undefined' || o.waitMsg) {
         Ext.MessageBox.alert('Save failed',
-          'Please fill in all the required boxes highlighted in red.');
+          'Please fix all the boxes highlighted in red.');
       }
       return;
     }
@@ -297,7 +297,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
 
     if (action.failureType == 'client' && action.options.waitMsg) {
       Ext.MessageBox.alert('Save failed',
-        'Please fill in all the required boxes highlighted in red.');
+        'Please fill in all the boxes highlighted in red.');
     } else if (action.failureType != 'client' &&
         (!action.result || !action.result.errors)) {
       Ext.MessageBox.alert('Save failed',
@@ -868,7 +868,7 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
 
     if (action.failureType == 'client' && action.options.waitMsg) {
       Ext.MessageBox.alert('Save failed',
-        'Please fill in all the required boxes highlighted in red.');
+        'Please fix all the boxes highlighted in red.');
     } else if (action.failureType != 'client' &&
         (!action.result || !action.result.errors)) {
 
