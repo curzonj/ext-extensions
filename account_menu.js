@@ -1,4 +1,4 @@
-/*globals SWorks, Ext, URLs, permissionsData */
+/*globals SWorks, Ext, URLs */
 
 SWorks.CurrentUser = function() {
   this.url = URLs.current_permissions;
@@ -76,9 +76,6 @@ Ext.extend(SWorks.CurrentUser, Ext.util.Observable, {
   }
 });
 SWorks.CurrentUser = new SWorks.CurrentUser();
-if(typeof permissionsData != 'undefined') {
-  SWorks.CurrentUser.setPermissions(permissionsData);
-}
 
 SWorks.AccountMenu = Ext.extend(Ext.Panel, {
   loginUrl: URLs.session,
