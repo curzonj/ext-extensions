@@ -614,8 +614,9 @@ SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
         if(store && r.id) {
           record = store.getById(r.id);
           if(!record) {
-            record = new store.reader.recordType();
-            record.newRecord = true;
+            record = new store.reader.recordType({}, r.id);
+            store.addSorted(record);
+            record.newBeforeSave = true;
           }
           this.updateRecord(record, {objectid:r.id, data:r});
         }
