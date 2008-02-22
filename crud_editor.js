@@ -741,12 +741,22 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
   initComponent: function() {
     SWorks.TabbedCrudEditor.superclass.initComponent.call(this);
 
-    this.tabPanel.autoDestroy = true;
+    this.tabPanel.autoDestroy = false;
     this.tabPanel.on('beforeremove', this.onBeforeRemove, this);
+    this.tabPanel.on('remove', this.onAfterRemove, this);
 
     this.panels = {};
+    this.availablePanels = [];
   },
-
+  onAfterRemove: function(ct, panel) {
+    for(var a in this.panels) {
+      if (panel == this.panels[a]) {
+        delete this.panels[a];
+      }
+    }
+    panel.autoSaveTask.cancel();
+    this.availablePanels.push(panel);
+  },
   onBeforeRemove: function(ct, panel) {
     if(panel.form && !panel.form.bypassSaveOnClose && panel.form.isDirty()) {
       var closePanelFn = function() {
@@ -787,7 +797,7 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
     // Give the mask cpu time to render
     var editor = this;
     setTimeout(function() {
-      panel = editor.createEditPanel();
+      panel = editor.findAvailablePanel();
       panel.setTitle(editor.getTitle(record));
 
       editor.loadForm(panel.form, record, panel);
@@ -802,6 +812,16 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
 
       editor.tabPanel.el.unmask();
     }, 1);
+  },
+  findAvailablePanel: function() {
+    if (this.availablePanels.length > 0) {
+      var panel = this.availablePanels[0];
+      this.availablePanels = this.availablePanels.slice(1);
+
+      return panel;
+    } else {
+      return this.createEditPanel();
+    }
   },
   getPanel: Ext.emptyFn,
   createEditPanel: function() {
