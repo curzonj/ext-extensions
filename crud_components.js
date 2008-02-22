@@ -589,6 +589,25 @@ Ext.extend(SWorks.CrudTreePanel, Ext.tree.TreePanel, {
 
     this.editor.loadRecord(node.attributes.record);
   },
+  onClickHideBtn: function() {
+    var node = this.getSelection();
+    if(!node) {
+      return;
+    }
+
+    var msg = "Do you really want to hide {0}?";
+    if(node.childNodes.length > 0) {
+      msg = "Do you really want to hide {0} <b>and all it's children</b>?";
+    }
+
+    // TODO make this hide all the children too
+    Ext.MessageBox.confirm("Confirmation", String.format(msg, node.text),
+      function(btn) {
+        if(btn == 'yes') {
+          this.editor.hideRecord(node.attributes.record);
+        }
+      }, this);
+  },
   onClickDeleteBtn: function() {
     var node = this.getSelection();
     if(!node) {
