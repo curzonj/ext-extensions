@@ -740,6 +740,8 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
   maxAttempts: 3,
   initComponent: function() {
     SWorks.TabbedCrudEditor.superclass.initComponent.call(this);
+  
+    this.addEvents(['newpanel']);
 
     this.tabPanel.autoDestroy = false;
     this.tabPanel.on('beforeremove', this.onBeforeRemove, this);
@@ -847,6 +849,8 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
     panel.hidden = true;
     panel.render(Ext.getBody());
     panel.doLayout();
+
+    this.fireEvent('newpanel', panel, panel.form);
 
     return panel;
   },
