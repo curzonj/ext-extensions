@@ -296,3 +296,70 @@ Ext.override(Ext.tree.TreePanel, {
     }
   }
 });
+
+Ext.override(Ext.grid.GroupingView, {
+    doRender : function(cs, rs, ds, startRow, colCount, stripe){
+        if(rs.length < 1){
+            return '';
+        }
+        var groupField = this.getGroupField();
+        var colIndex = this.cm.findColumnIndex(groupField);
+
+        this.enableGrouping = !!groupField;
+
+        if(!this.enableGrouping || this.isUpdating){
+            return Ext.grid.GroupingView.superclass.doRender.apply(
+                    this, arguments);
+        }
+        var gstyle = 'width:'+this.getTotalWidth()+';';
+
+        var gidPrefix = this.grid.getGridEl().id;
+        var cfg = this.cm.config[colIndex];
+        var groupRenderer = cfg.groupRenderer || cfg.renderer;
+        var cls = this.startCollapsed ? 'x-grid-group-collapsed' : '';
+        var prefix = this.showGroupName ?
+                     (cfg.groupName || cfg.header)+': ' : '';
+
+        var groups = [], curGroup, i, len, gid;
+        for(i = 0, len = rs.length; i < len; i++){
+            var rowIndex = startRow + i;
+            var r = rs[i],
+                gvalue = r.data[groupField],
+                g = this.getGroup(gvalue, r, groupRenderer, rowIndex, colIndex, ds);
+            if(!curGroup || curGroup.group != g){
+                // Here is the change
+                // set the gid to be the value so the renderer can change the text and 
+                // preserve the toggle state of the group
+                gid = gidPrefix + '-gp-' + groupField + '-' + gvalue;
+                // If the user opened it, leave it open, otherwise do the default
+                var gcls = this.state[gid] === true ? '' : cls;
+                // End of change
+                curGroup = {
+                    group: g,
+                    gvalue: gvalue,
+                    text: prefix + g,
+                    groupId: gid,
+                    startRow: rowIndex,
+                    rs: [r],
+                    cls: gcls,
+                    style: gstyle
+                };
+                groups.push(curGroup);
+            }else{
+                curGroup.rs.push(r);
+            }
+            r._groupId = gid;
+        }
+
+        var buf = [];
+        for(i = 0, len = groups.length; i < len; i++){
+            var g = groups[i];
+            this.doGroupStart(buf, g, cs, ds, colCount);
+            buf[buf.length] = Ext.grid.GroupingView.superclass.doRender.call(
+                    this, cs, g.rs, ds, g.startRow, colCount, stripe);
+
+            this.doGroupEnd(buf, g, cs, ds, colCount);
+        }
+        return buf.join('');
+    }
+});
