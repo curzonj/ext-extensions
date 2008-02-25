@@ -673,6 +673,22 @@ Ext.util.Format.hourlyRate = function(v){
   return Ext.util.Format.usMoney(v) + " / hour";
 };
 
+SWorks.renderers = {
+  joinFields: function(list) {
+    list = list.splice(0);
+    return function(v, meta, record) {
+      var ret = [];
+      for(var i=0;i<list.length;i++) {
+        var value = record.data[list[i]];
+        if(value && value != '') {
+          ret.push(value);
+        }
+      }
+      return ret.join(', ');
+    }
+  }
+}
+
 SWorks.createFilterField = function(store) {
   var filterRegexArray = null;
 
