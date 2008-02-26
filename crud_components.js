@@ -401,6 +401,12 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
 Ext.override(SWorks.CrudGridPanel, SWorks.commonCrudPanelFunctions);
 
 SWorks.DependentUrlCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
+  initComponent: function() {
+    this.setupEditor(); //Because we may not have our own store
+    this.store.loadIfNeeded = Ext.emptyFn;
+
+    SWorks.DependentUrlCrudGrid.superclass.initComponent.call(this);
+  },
   setParent: function(p) {
     SWorks.DependentUrlCrudGrid.superclass.setParent.call(this, p);
 
@@ -416,9 +422,19 @@ SWorks.DependentUrlCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
   },
   loadGridRecords: function() {
     if(!this.currentRecord.newRecord) {
-      this.store.proxy.conn.url = 
-        String.format(this.store.baseUrl, this.currentRecord.id, this.currentRecord.store.klass);
-      this.store.load();
+      var r = this.currentRecord, s = this.store, url = s.baseUrl;
+      if(!url && s.parentIdColumn) {
+        url = s.url + '?' + s.parentIdColumn + '={0}'
+        if(s.parentTypeColumn) {
+          url = url + '&' + s.parentTypeColumn + '={1}'
+        }
+      }
+      if(url) {
+        s.proxy.conn.url = String.format(url, r.id, r.store.klass);
+        s.load();
+      } else {
+        console.error("This store doesn't have a url");
+      }
     }
   },
   onClickRefresh: function() {
