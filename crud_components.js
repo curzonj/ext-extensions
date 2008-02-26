@@ -417,7 +417,7 @@ SWorks.DependentUrlCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
   loadGridRecords: function() {
     if(!this.currentRecord.newRecord) {
       this.store.proxy.conn.url = 
-        String.format(this.store.baseUrl, this.currentRecord.id);
+        String.format(this.store.baseUrl, this.currentRecord.id, this.currentRecord.store.klass);
       this.store.load();
     }
   },
