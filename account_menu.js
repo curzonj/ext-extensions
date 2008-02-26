@@ -212,7 +212,7 @@ SWorks.AccountMenu = Ext.extend(Ext.Panel, {
         }
       }],
       keys: [
-        { key: 27, fn: function() { win.hide(); }},
+        { key: 27, fn: (this.loginRequired ? Ext.emptyFn : function() { win.hide(); }) },
         { key: Ext.EventObject.ENTER, fn: function() { panel.login(); }}
       ]
     });
