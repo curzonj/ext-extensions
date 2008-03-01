@@ -1,4 +1,4 @@
-if(!console) {
+if(typeof console == 'undefined') {
   console = { firebug: 'dummy' }
   (function() {
     var list = ['error','assert','count','debug','dir','dirxml','group','groupEnd','info','log','profile','profileEnd','time','timeEnd','trace','warn'];
