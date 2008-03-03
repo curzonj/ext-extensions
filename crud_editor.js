@@ -9,7 +9,7 @@ SWorks.CrudEditor = function(config) {
   this.initialConfig = config;
   Ext.apply(this, config);
 
-  this.addEvents([
+  this.addEvents(
     'ready',
     'beforeaction',
     'actionfailed',
@@ -18,7 +18,7 @@ SWorks.CrudEditor = function(config) {
     'load',
     'delete',
     'save'
-  ]);
+  );
 
   SWorks.CrudEditor.superclass.constructor.call(this, config);
 
@@ -741,7 +741,7 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
   initComponent: function() {
     SWorks.TabbedCrudEditor.superclass.initComponent.call(this);
   
-    this.addEvents(['newpanel']);
+    this.addEvents('newpanel');
 
     this.tabPanel.autoDestroy = false;
     this.tabPanel.on('beforeremove', this.onBeforeRemove, this);

@@ -153,8 +153,10 @@ Ext.ux.data.ReloadingStore = function(store) {
   Ext.apply(store, Ext.ux.data.ReloadingStore.overrides);
 
   store.on('beforeload', function() {
-    this.createRefreshTask(this.refreshPeriod);
-  }, store, {single:true});
+    if(!this.refreshTask && !(this.mirrorSource && this.mirrorSource.refreshTask)) {
+      this.createRefreshTask(this.refreshPeriod);
+    }
+  }, store);
 };
 Ext.ux.data.ReloadingStore.scheduleReload = function(store) {
   // This causes the periodic reloads to not hammer the CPU so hard with UI refreshes

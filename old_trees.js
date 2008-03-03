@@ -7,9 +7,7 @@ SWorks.DynamicTree = Ext.extend(Ext.tree.TreePanel, {
 
   initComponent: function(){
     SWorks.DynamicTree.superclass.initComponent.call(this);
-    this.addEvents({
-      load: true
-    });
+    this.addEvents('load');
 
     var root = new Ext.ux.JsonTreeNode({
       id: 'root',
