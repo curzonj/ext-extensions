@@ -77,19 +77,21 @@ SWorks.CustomCombo = Ext.extend(Ext.form.ComboBox, {
     this.syncValue();
   },
   onStoreUpdate: function(store, record, type) {
-    if(!this.hasFocus && type ==  Ext.data.Record.COMMIT &&
-        record[(this.valueField || this.displayField)] == this.value) {
+    if(this.valueField && !this.hasFocus && type ==  Ext.data.Record.COMMIT &&
+        record[this.valueField] == this.value) {
 
       this.syncValue();
     }
   },
   syncValue: function() {
-    if(this.hasFocus) {
-      this.on('blur', function() {
-        this.setValue(this.getValue());
-      }, this, {single: true});
-    } else {
-      this.setValue(this.value);
+    if(this.valueField) {
+      if(this.hasFocus) {
+        this.on('blur', function() {
+          this.setValue(this.getValue());
+        }, this, {single: true});
+      } else {
+        this.setValue(this.value);
+      }
     }
   }
 });
