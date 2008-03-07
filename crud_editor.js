@@ -268,11 +268,31 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
       delete o.scope;
     }
 
+    // This way we know what we sent to the server
+    o.dataSentRecord = new this.store.recordType({});
+    form.updateRecord(o.dataSentRecord);
+
     form.submit(Ext.apply(o ,{
       success: this.formSuccess,
       failure: this.formFailure,
       scope: this
     }));
+  },
+  checkServerChanges: function(form, action) {
+    // The server may not return the same data we sent it,
+    // we need to respect any changes it made. Don't reload
+    // the form with everything sent back from the server because
+    // the user might have made changes. updateOriginalValues marks
+    // that any user changes are still dirty, but only the server
+    // changes need to be updated in the form.
+    var r = action.options.dataSentRecord;
+    var d = action.result.data;
+
+    for(var f in d) {
+      if (form.fields[f] && r.data[f] != d[f]) {
+        form.fields[f].setValue(d[f]);
+      }
+    }
   },
   formSuccess: function(form, action) {
     if(action.result) { //should never be false, but who knows
@@ -282,8 +302,15 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
         record = form.record =
           record.store.getById(action.result.objectid);
       }
+  
+      if(action.result.data) {
+        form.updateOriginalValues(action.result.data);
+      }
 
+      form.isDirty();
+      this.checkServerChanges(form, action);
       this.updateRecord(record, action.result);
+
       if(action.options.cb) {
         action.options.cb.fn.call(action.options.cb.scope, form, action);
       }
@@ -552,19 +579,6 @@ SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
     }
 
     return result;
-  },
-  setupForm: function(form) {
-    form.recordUpdateDelegate = this.onRecordUpdate.createDelegate(this, [form], true);
-    this.store.on('update', form.recordUpdateDelegate);
-
-    SWorks.ManagedCrudEditor.superclass.setupForm.call(this, form);
-  },
-  onRecordUpdate: function(store, record, type, form) {
-    if(form.record &&
-       form.record.id == record.id &&
-       type == Ext.data.Record.EDIT) {
-      form.setValues(record.getChanges());
-    }
   },
   saveForm: function(form, o) {
     this.dealWithEmptyCombos(form);
@@ -855,7 +869,7 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
     return panel;
   },
   configureAutoSave: function(panel) {
-    panel.autoSaveTask = new Ext.util.DelayedTask(function() {
+    panel.autoSaveTask = new Ext.util.DelayedTask(function autoSave() {
       // Make sure we still exist and need to be saved
       if( panel.form &&
           panel.form.el &&

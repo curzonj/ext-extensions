@@ -5,6 +5,8 @@ SWorks.CustomCombo = Ext.extend(Ext.form.ComboBox, {
   mode: 'local',
   typeAhead: true,
   emptyText:'Select one...',
+  // this valueNotFoundText may cause problems, I'm not sure
+  valueNotFoundText: "Item not found",
   selectOnFocus:true,
   forceSelection: true,
   triggerAction: 'all',
@@ -61,6 +63,7 @@ SWorks.CustomCombo = Ext.extend(Ext.form.ComboBox, {
   bindStore: function(store, initial) {
     if(this.store && !initial) {
       this.store.un('update', this.onStoreUpdate, this);
+      this.store.un('remove', this.onStoreRemove, this);
       this.store.un('datachanged', this.onStoreLoad, this);
     }
 
@@ -68,6 +71,7 @@ SWorks.CustomCombo = Ext.extend(Ext.form.ComboBox, {
 
     if(store) {
       this.store.on('update', this.onStoreUpdate, this);
+      this.store.on('remove', this.onStoreRemove, this);
       this.store.on('datachanged', this.onStoreLoad, this);
     }
   },
@@ -75,6 +79,13 @@ SWorks.CustomCombo = Ext.extend(Ext.form.ComboBox, {
   //don't change anything if they are in the middle of selecting something
   onStoreLoad: function() {
     this.syncValue();
+  },
+  onStoreRemove: function(store, record) {
+    if(this.valueField && !this.hasFocus &&
+        record[this.valueField] == this.value) {
+
+      this.syncValue();
+    }
   },
   onStoreUpdate: function(store, record, type) {
     if(this.valueField && !this.hasFocus && type ==  Ext.data.Record.COMMIT &&

@@ -24,6 +24,21 @@ Ext.override(Ext.util.Observable, {
   }
 });
 
+Ext.override(Ext.form.BasicForm, {
+  updateOriginalValues: function(values) {
+    var field;
+    for(var id in values) {
+      if(typeof values[id] != 'function' && (field = this.findField(id))){
+        if (field.constructor == Ext.form.DateField) {
+          field.originalValue = field.parseDate(values[id]);
+        } else {
+          field.originalValue = values[id];
+        }
+      }
+    }
+  }
+});
+
 Ext.onReady(function() {
   if(typeof CSRFKiller != 'undefined' && CSRFKiller.field) {
     Ext.Ajax.on('beforerequest', function(conn, options) {
