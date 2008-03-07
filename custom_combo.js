@@ -114,3 +114,20 @@ SWorks.CustomCombo = Ext.extend(Ext.form.ComboBox, {
   }
 });
 Ext.reg('customcombo', SWorks.CustomCombo);
+
+SWorks.EditableCombo = Ext.extend(SWorks.CustomCombo, {
+  initComponent: function() {
+    SWorks.EditableCombo.superclass.initComponent.call(this);
+    this.addEvents('edit');
+  },
+  afterRender: function() {
+    SWorks.EditableCombo.superclass.afterRender.call(this);
+    var btn = Ext.DomHelper.append(this.wrap, {
+      tag: 'img',
+      src:'../images/application_form_edit.png',
+      style:'position:absolute;cursor:pointer;top:3.5px;margin-left:20px'
+    }, true);
+    btn.on('click', function() { this.fireEvent('edit', this); }, this);
+  }
+});
+Ext.reg('editablecombo', SWorks.EditableCombo);
