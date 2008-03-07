@@ -5,7 +5,7 @@ SWorks.CustomCombo = Ext.extend(Ext.form.ComboBox, {
   mode: 'local',
   typeAhead: true,
   emptyText:'Select one...',
-  // this valueNotFoundText may cause problems, I'm not sure
+  // valueNotFoundText is a problem if not for our custom setValue
   valueNotFoundText: "Item not found",
   selectOnFocus:true,
   forceSelection: true,
@@ -103,6 +103,13 @@ SWorks.CustomCombo = Ext.extend(Ext.form.ComboBox, {
       } else {
         this.setValue(this.value);
       }
+    }
+  },
+  setValue: function(v) {
+    if (v && v !== '') {
+      SWorks.CustomCombo.superclass.setValue.call(this, v);
+    } else {
+      this.clearValue();
     }
   }
 });

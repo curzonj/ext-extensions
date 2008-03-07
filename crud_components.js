@@ -688,6 +688,12 @@ Ext.util.Format.dateMjy = function(value) {
 Ext.util.Format.hourlyRate = function(v){
   return Ext.util.Format.usMoney(v) + " / hour";
 };
+Ext.util.Format.quickTips = function(v,m,r) {
+  if (r.data.quicktip) {
+    m.attr = 'ext:qtip=\''+Ext.util.Format.htmlEncode(r.data.quicktip).replace("\n",'<br/>')+'\'';
+  }
+  return Ext.util.Format.htmlEncode(v);
+};
 
 SWorks.renderers = {
   joinFields: function(list) {
