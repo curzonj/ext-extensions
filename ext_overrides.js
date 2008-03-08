@@ -24,6 +24,15 @@ Ext.override(Ext.util.Observable, {
   }
 });
 
+SWorks.download = function(url) {
+  Ext.DomHelper.append(Ext.getBody(), {
+    src: url,
+    tag: 'iframe',
+    id: Ext.id(),
+    cls: 'x-hidden'
+  });
+}
+
 Ext.override(Ext.form.BasicForm, {
   updateOriginalValues: function(values) {
     var field;
