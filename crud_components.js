@@ -405,6 +405,10 @@ SWorks.DependentUrlCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
     this.setupEditor(); //Because we may not have our own store
     this.store.loadIfNeeded = Ext.emptyFn;
 
+    if(this.store.mirrorSource) {
+      console.error("Dependent Url grids can't use mirrored stores. Bad things will happen");
+    }
+
     SWorks.DependentUrlCrudGrid.superclass.initComponent.call(this);
   },
   setParent: function(p) {
