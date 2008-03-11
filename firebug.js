@@ -1,13 +1,6 @@
-if(typeof console == 'undefined') {
-  console = { firebug: 'dummy' }
-  (function() {
-    var list = ['error','assert','count','debug','dir','dirxml','group','groupEnd','info','log','profile','profileEnd','time','timeEnd','trace','warn'];
-
-    for(var i=0;i<list.length;i++) {
-      var name = list[i];
-      if(!console[name]) {
-        console[name] = function() {};
-      }
-    }
-  })();
+if (! ("console" in window) || !("firebug" in console)) {
+  var names = ["log", "debug", "info", "warn", "error", "assert", "dir", "dirxml", "group", "groupEnd", "time", "timeEnd", "count", "trace", "profile", "profileEnd"];
+  window.console = {};
+  for (var i = 0; i <names.length; ++i) window.console[names[i]] = function() {};
 }
+
