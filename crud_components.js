@@ -218,6 +218,7 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
       tb.push('-');
       tb.push({
         text: 'Edit',
+        readOnly: true, //The editor has it's own readonly handlers
         handler: this.onClickEditBtn,
         scope: this
       });
