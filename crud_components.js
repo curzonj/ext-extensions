@@ -99,11 +99,18 @@ SWorks.commonCrudPanelFunctions = {
       }
     }
   },
+  isReadOnly: function() {
+    var res = !SWorks.CurrentUser.has(this.rwPerm);
+    // TODO check permissions
+    if (this.parent) {
+      res = (res || this.parent.isReadOnly());
+    }
+    return res;
+  },
   tbButtonCheck: function(b) {
     // A button by default is !readOnly and !gridOperation
-    return ( (SWorks.CurrentUser.has(this.rwPerm) &&
-              (this.getSelections().length > 0 ||
-               b.gridOperation === true)) || b.readOnly === true);
+    return ((b.readOnly === true || !this.isReadOnly()) &&
+            (b.gridOperation === true || this.getSelections().length > 0)) ;
   },
   setupEditor: function() {
     if(!this.editor) {
@@ -373,9 +380,7 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
   onGridCellClicked: function(grid, rowIndex, cellIndex, e) {
     var r = this.store.getAt(rowIndex);
     this.setRecordSelection(r);
-    if (SWorks.CurrentUser.has(this.rwPerm)) {
-      this.editRecord(r);
-    }
+    this.editRecord(r);
   },
   setRecordSelection: function(r) {
     // select the right record if it exists

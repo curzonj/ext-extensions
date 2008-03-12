@@ -38,6 +38,14 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
 
     this.relayEvents(form, ['beforeaction', 'actionfailed', 'actioncomplete']);
   },
+  isReadOnly: function(record) {
+    var res = false;
+    // TODO check permissions
+    if (this.parent) {
+      res = (res || this.parent.isReadOnly());
+    }
+    return res;
+  },
 
   /*
    * Parent relation management
@@ -46,12 +54,20 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
   createParentRef: function(form) {
     var listenerDelegate = this.on.createDelegate(this);
     var saveParent = function(o) { this.saveForm(form, o); }.createDelegate(this);
+    var isReadOnly = function() {
+      if(form.record) {
+        return this.isReadOnly(form.record);
+      } else {
+        return true;
+      }
+    }.createDelegate(this);
 
     return {
       form: form,
       daoClass: this.daoClass,
       save: saveParent,
-      on: listenerDelegate
+      on: listenerDelegate,
+      isReadOnly: isReadOnly
     };
   },
   findChildren: function(panel, form) {
@@ -233,6 +249,10 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
    */
   saveForm: function(form, o){
     o = o || {};
+
+    if( this.isReadOnly(form.record) ) {
+      return;
+    }
 
     if(!form.isValid()) {
       if(typeof o.waitMsg == 'undefined' || o.waitMsg) {
@@ -686,6 +706,7 @@ SWorks.paneledCrudEditorOverrides = {
         // TODO focus is broken all over
         this.form.items.item(0).focus();
       }, this);
+      this.dialog.saveBtn = this.dialog.buttons[0];
 
       // TODO disable the save button unless dirty and
       // warn about leaving w/o saving
@@ -705,6 +726,11 @@ SWorks.paneledCrudEditorOverrides = {
     }
 
     if(this.loadForm(this.form, record) && this.useDialog) {
+      if( this.isReadOnly(record) === true ) {
+        this.dialog.saveBtn.disable();
+      } else {
+        this.dialog.saveBtn.enable();
+      }
       this.dialog.show();
     }
   },
@@ -774,7 +800,10 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
     this.availablePanels.push(panel);
   },
   onBeforeRemove: function(ct, panel) {
-    if(panel.form && !panel.form.bypassSaveOnClose && panel.form.isDirty()) {
+    if(panel.form &&
+       !panel.form.bypassSaveOnClose &&
+       panel.form.isDirty() &&
+       !this.isReadOnly(panel.form.record)) {
       var closePanelFn = function() {
         panel.form.bypassSaveOnClose = true;
         ct.remove(panel);  
