@@ -844,6 +844,7 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
     setTimeout(function() {
       panel = editor.findAvailablePanel();
       panel.setTitle(editor.getTitle(record));
+      panel.form.bypassSaveOnClose = false;
 
       editor.loadForm(panel.form, record, panel);
 
