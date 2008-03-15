@@ -158,27 +158,7 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
     this.addEvents('load', 'beforeload');
 
     this.setupEditor();
-
-    if(this.store.loadIfNeeded) {
-      this.store.loadIfNeeded();
-    }
-
-    if(this.store.groupBy) {
-      this.view = new Ext.grid.GroupingView(Ext.apply({
-        forceFit:true,
-        enableNoGroups: true,
-        hideGroupedColumn: true,
-        groupTextTpl: '{text} ({[values.rs.length]} {[values.rs.length > 1 ? "Items" : "Item"]})'
-      }, this.viewConfig));
-    } else {
-      this.view = new Ext.grid.GridView(Ext.apply({
-        forceFit:true
-      }));
-    }
-
-    if(this.parentIdColumn) {
-      this.store.checkParentColumns(this.parentIdColumn);
-    }
+    this.setupStore();
 
     this.elements += ',tbar';
     this.topToolbar = this.createToolbar();
@@ -187,6 +167,33 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
     this.on('celldblclick', this.onGridCellClicked, this);
     this.getSelectionModel().on('selectionchange', this.checkToolbarButtons, this);
     SWorks.CurrentUser.onPermission(this.rwPerm, this.checkToolbarButtons, this);
+  },
+  setupStore: function() {
+    if(this.store.loadIfNeeded) {
+      this.store.loadIfNeeded();
+    }
+
+    if(this.parentIdColumn) {
+      this.store.checkParentColumns(this.parentIdColumn);
+    }
+  },
+  getView: function() {
+    if(!this.view) {
+      if(this.store.groupBy) {
+        this.view = new Ext.grid.GroupingView(Ext.apply({
+          forceFit:true,
+          enableNoGroups: true,
+          hideGroupedColumn: true,
+          groupTextTpl: '{text} ({[values.rs.length]} {[values.rs.length > 1 ? "Items" : "Item"]})'
+        }, this.viewConfig));
+      } else {
+        this.view = new Ext.grid.GridView(Ext.apply({
+          forceFit:true
+        }, this.viewConfig));
+      }
+    }
+
+    return this.view;
   },
   afterRender: function() {
     SWorks.CrudGridPanel.superclass.afterRender.call(this);
@@ -255,9 +262,7 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
       return new Ext.Toolbar(tb);
     }
   },
-  createOptionsMenu: function(){
-    var viewMenuOptions = [], groupByMenuOptions = [];
-
+  buildFilterList: function(menuArr) {
     if(this.customFilters) {
       var cv = this.customFilters;
       for(var i=0;i<cv.length;i++){
@@ -278,9 +283,14 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
         if(v.isDefault === true) {
           this.store.addFilter(v.filter);
         }
-        viewMenuOptions.push(options);
+        menuArr.push(options);
       }
     }
+  },
+  createOptionsMenu: function(){
+    var viewMenuOptions = [], groupByMenuOptions = [];
+
+    this.buildFilterList(viewMenuOptions);
     if(viewMenuOptions.length > 0) {
       viewMenuOptions.push('-');
     }
@@ -406,16 +416,87 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
 });
 Ext.override(SWorks.CrudGridPanel, SWorks.commonCrudPanelFunctions);
 
-SWorks.DependentUrlCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
-  initComponent: function() {
-    this.setupEditor(); //Because we may not have our own store
-    this.store.loadIfNeeded = Ext.emptyFn;
+SWorks.SearchCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
+  page_size: 100,
 
+  initComponent: function() {
+    SWorks.SearchCrudGrid.superclass.initComponent.call(this);
+
+    this.elements += ',bbar';
+    this.bottomToolbar = new Ext.PagingToolbar({
+      pageSize: this.page_size,
+      store: this.store,
+      displayInfo: true,
+      displayMsg: 'Displaying items {0} - {1} of {2}',
+      emptyMsg: "No items to display"
+    });
+
+    this.loadQuery();
+  },
+  setupStore: function() {
     if(this.store.mirrorSource) {
       console.error("Dependent Url grids can't use mirrored stores. Bad things will happen");
     }
 
-    SWorks.DependentUrlCrudGrid.superclass.initComponent.call(this);
+    this.store.loadIfNeeded = Ext.emptyFn;
+    this.store.baseUrl = this.store.baseUrl || (this.store.url+'/search');
+    this.querySet = [];
+  },
+  loadQuery: function() {
+    this.store.proxy.conn.url = this.store.baseUrl;
+    var qs = this.querySet, query = [];
+
+    for (var i in qs) if (typeof qs[i] == 'string') {
+      query.push(qs[i]);
+    }
+    if (query.length > 0) {
+      query = query.join(' AND ');
+    } else {
+      query = 'id:*';
+    }
+
+    this.store.baseParams = { q: query };
+    this.store.load({
+      params: { start: 0, limit: this.page_size }
+    });
+  },
+  buildFilterList: function(menuArr) {
+    if(this.customFilters) {
+      var cv = this.customFilters;
+      for(var i=0;i<cv.length;i++){
+        var v = cv[i];
+        var options = {
+          checked: (v.isDefault === true),
+          text: v.text,
+          query: v.query,
+          getQuery: v.getQuery,
+          checkHandler: function(item, checked) {
+            if (checked) {
+              this.querySet[item.text] = item.query || item.getQuery.call(this);
+            } else {
+              delete this.querySet[item.text];
+            }
+
+            this.loadQuery();
+          },
+          scope: this
+        };
+        if (v.isDefault === true) {
+          this.querySet[v.text] = v.query || v.getQuery();
+        }
+        menuArr.push(options);
+      }
+    }
+  },
+});
+
+SWorks.DependentUrlCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
+  setupStore: function() {
+    if(this.store.mirrorSource) {
+      console.error("Dependent Url grids can't use mirrored stores. Bad things will happen");
+    }
+
+    this.store.loadIfNeeded = Ext.emptyFn;
   },
   setParent: function(p) {
     SWorks.DependentUrlCrudGrid.superclass.setParent.call(this, p);
