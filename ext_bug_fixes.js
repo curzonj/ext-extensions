@@ -146,6 +146,7 @@ Ext.override(Ext.LoadMask, {
   onLoad: function() {
     this.el.unmask();
     if(this.removeMask) {
+      this.disabled = true;
       this.destroy();
     }
   }

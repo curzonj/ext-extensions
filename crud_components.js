@@ -5,7 +5,7 @@ ds = Ext.StoreMgr;
 SWorks.CrudStore = function(config) {
   // From JsonStore
   Ext.applyIf(config, {
-    sortInfo: { field: 'id', direction: 'ASC' },
+//    sortInfo: { field: 'id', direction: 'ASC' },
     proxy: !config.data ? new Ext.data.HttpProxy({
       method: "GET",
       url: config.url
@@ -195,12 +195,17 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
 
     return this.view;
   },
+  loadMask: { removeMask: true },
   afterRender: function() {
     SWorks.CrudGridPanel.superclass.afterRender.call(this);
 
     //The buttons don't exist until they are rendered, so
     //we catch them right here
     this.checkToolbarButtons();
+
+    if(this.store.proxy.activeRequest && this.loadMask) {
+      this.loadMask.show();
+    }
   },
   addToolbarSearch: function(tbArr) {
     tbArr.push(new Ext.Toolbar.TextItem("Quicksearch"));
@@ -211,8 +216,8 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
 
     if (this.searchAndRefresh !== false) {
       tb.push(this.createOptionsMenu());
-      this.addToolbarSearch(tb);
       tb.push('-');
+      this.addToolbarSearch(tb);
       if(this.editor) {
         tb.push('-');
       }
@@ -421,6 +426,7 @@ Ext.override(SWorks.CrudGridPanel, SWorks.commonCrudPanelFunctions);
 
 SWorks.SearchCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
   page_size: 100,
+  loadMask: true,
 
   initComponent: function() {
     SWorks.SearchCrudGrid.superclass.initComponent.call(this);
@@ -438,9 +444,15 @@ SWorks.SearchCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
   },
   setupStore: function() {
     if(this.store.mirrorSource) {
-      console.error("Dependent Url grids can't use mirrored stores. Bad things will happen");
+      console.error("Dependent Url grids can't use mirrored stores. Bad things will happen: "+this.store.url);
+    }
+    if(this.store.refreshTask) {
+      var task = this.store.refreshTask;
+      delete this.store.refreshTask;
+      task.cancel();
     }
 
+    this.store.groupOnSort = true;
     this.store.loadIfNeeded = Ext.emptyFn;
     this.store.baseUrl = this.store.baseUrl || (this.store.url+'/search');
     this.querySet = [];
@@ -467,7 +479,8 @@ SWorks.SearchCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
     tbArr.push(new Ext.Toolbar.TextItem("Adv Search"));
 
     var searchFn, searchField = new Ext.form.TextField({
-      size: 30,
+      size: 30, // Something is replacing this with 20, but if it is
+                // missing, the field is tiny
       value: '',
       listeners: {
         'specialkey': function(item, e) {
@@ -528,6 +541,16 @@ SWorks.SearchCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
       }
     }
   },
+  editRecord: function(r) {
+    var e = this.editor;
+    if(e) {
+      e.fetchRecord(r.id, {
+        callback: function(record) {
+          e.loadRecord(record);
+        }
+      });
+    }
+  }
 });
 
 SWorks.DependentUrlCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
@@ -560,8 +583,12 @@ SWorks.DependentUrlCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
           url = url + '&' + s.parentTypeColumn + '={1}'
         }
       }
+
       if(url) {
-        s.proxy.conn.url = String.format(url, r.id, r.store.klass);
+        var klass = (typeof r.store == 'object') ? r.store.klass : ( r.data.klass ||
+                     ((this.parent && typeof this.parent.store == 'object') ? this.parent.store.klass : ''));
+
+        s.proxy.conn.url = String.format(url, r.id, klass);
         s.load();
       } else {
         console.error("This store doesn't have a url");
@@ -893,12 +920,7 @@ SWorks.createFilterField = function(store) {
   };
 
   var searchField = new Ext.form.TextField({
-    tag: 'input',
-    type: 'text',
     size: 30,
-    hideTrigger: true,
-    typeAhead:false,
-    disableKeyFilter:true,
     value: ''
   });
 

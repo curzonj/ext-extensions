@@ -221,9 +221,11 @@ Ext.ux.data.ReloadingStore.overrides = {
     //if there is nothing new
     this.refreshTask = new Ext.util.DelayedTask();
 
-    //If it is manually reloaded, we don't need to
     this.on('beforeload',function() {
-      this.refreshTask.delay(refreshRate);
+      if(this.refreshTask) {
+        // Someone might remove it
+        this.refreshTask.delay(refreshRate);
+      }
     }, this);
 
     this.refreshTask.setRefreshRate = function(newRate) {
