@@ -202,14 +202,17 @@ Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
     //we catch them right here
     this.checkToolbarButtons();
   },
+  addToolbarSearch: function(tbArr) {
+    tbArr.push(new Ext.Toolbar.TextItem("Quicksearch"));
+    tbArr.push(SWorks.createFilterField(this.store));
+  },
   createToolbar: function(){
     var tb = [];
 
     if (this.searchAndRefresh !== false) {
       tb.push(this.createOptionsMenu());
+      this.addToolbarSearch(tb);
       tb.push('-');
-      tb.push(new Ext.Toolbar.TextItem("Quicksearch"));
-      tb.push(SWorks.createFilterField(this.store));
       if(this.editor) {
         tb.push('-');
       }
@@ -458,6 +461,43 @@ SWorks.SearchCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
     this.store.baseParams = { q: query };
     this.store.load({
       params: { start: 0, limit: this.page_size }
+    });
+  },
+  addToolbarSearch: function(tbArr) {
+    tbArr.push(new Ext.Toolbar.TextItem("Adv Search"));
+
+    var searchFn, searchField = new Ext.form.TextField({
+      size: 30,
+      value: '',
+      listeners: {
+        'specialkey': function(item, e) {
+          var key = e.getKey();
+          if (key == Ext.EventObject.ENTER) {
+            searchFn.call(this);
+          }
+        },
+        scope: this
+      }
+    });
+
+    searchFn = function() {
+      var str = searchField.getValue().trim();
+
+      if (str === '') {
+        delete this.querySet['search'];
+      } else {
+        this.querySet['search'] = str;
+      }
+      this.loadQuery();
+    };
+
+    tbArr.push(searchField);
+    tbArr.push({
+      text: '>',
+      gridOperation: true,
+      readOnly: true,
+      handler: searchFn,
+      scope: this
     });
   },
   buildFilterList: function(menuArr) {
