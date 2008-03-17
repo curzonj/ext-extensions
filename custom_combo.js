@@ -158,10 +158,47 @@ SWorks.SearchCombo = Ext.extend(Ext.form.ComboBox, {
     qData.query = this.displayField + ':' + qData.query + '*';
   },
 
+  findRecord: function(prop, value) {
+    var r = SWorks.SearchCombo.superclass.findRecord.call(this, prop, value);
+    if (!r) {
+    } else {
+      return r;
+    }
+  },
+
   // copy the beforeBlur features
-  setValue: function(v) {
+  setValue : function(v, stopLoop) {
     if (v && v !== '') {
-      SWorks.SearchCombo.superclass.setValue.call(this, v);
+      var text = v;
+      if(this.valueField){
+          var r = this.findRecord(this.valueField, v);
+          if(r){
+              text = r.data[this.displayField];
+          } else {
+            var prop = this.valueField;
+
+            if(!stopLoop) {
+              this.store.load({
+                params: { q: prop+':'+v },
+                add: true,
+                scope: this,
+                callback: function(rArr, opts, succ) {
+                  this.setValue(v, true);
+                }
+              });
+            }
+
+            if(this.valueNotFoundText !== undefined){
+              text = this.valueNotFoundText;
+            }
+          }
+      }
+      this.lastSelectionText = text;
+      if(this.hiddenField){
+          this.hiddenField.value = v;
+      }
+      Ext.form.ComboBox.superclass.setValue.call(this, text);
+      this.value = v;
     } else {
       this.clearValue();
     }
