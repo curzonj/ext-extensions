@@ -131,3 +131,40 @@ SWorks.EditableCombo = Ext.extend(SWorks.CustomCombo, {
   }
 });
 Ext.reg('editablecombo', SWorks.EditableCombo);
+
+SWorks.SearchCombo = Ext.extend(Ext.form.ComboBox, {
+  // select only the displayField and valueFields 
+  // use a querySet
+  typeAhead: false,
+  allowBlank: true,
+  emptyText: 'Select one...',
+  // valueNotFoundText is a problem if not for our custom setValue
+  valueNotFoundText: "Item not found",
+  selectOnFocus:true,
+  forceSelection: true,
+  lazyInit: false,
+  loadingText: 'Searching...',
+  queryParam: 'q',
+  pageSize: 0,
+
+  initComponent: function() {
+    SWorks.SearchCombo.superclass.initComponent.call(this);
+    this.on('beforequery', this.mangleQuery, this);
+    this.store.baseParams = this.store.baseParams || {};
+    this.store.baseParams.select = [ this.displayField, this.valueField ].join(',');
+  },
+
+  mangleQuery: function(qData) {
+    qData.query = this.displayField + ':' + qData.query + '*';
+  },
+
+  // copy the beforeBlur features
+  setValue: function(v) {
+    if (v && v !== '') {
+      SWorks.SearchCombo.superclass.setValue.call(this, v);
+    } else {
+      this.clearValue();
+    }
+  }
+});
+Ext.reg('searchcombo', SWorks.SearchCombo);

@@ -1,86 +1,5 @@
 /*globals SWorks, Ext, ds */
 
-ds = Ext.StoreMgr;
-
-SWorks.CrudStore = function(config) {
-  // From JsonStore
-  Ext.applyIf(config, {
-//    sortInfo: { field: 'id', direction: 'ASC' },
-    proxy: !config.data ? new Ext.data.HttpProxy({
-      method: "GET",
-      url: config.url
-    }) : undefined,
-    reader: new Ext.data.JsonReader(config, config.fields)
-  });
-
-  SWorks.CrudStore.superclass.constructor.call(this, config);
-
-  Ext.ux.data.LoadAttempts(this);
-  Ext.ux.data.ReloadingStore(this);
-  Ext.ux.data.PersistentFilters(this);
-};
-Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
-  linkToParent: function(p, idCol) {
-    this.checkParentColumns(idCol);
-
-    p.on('load', function(form, record) {
-      if(!p.form || p.form == form) {
-        //This deals with polymorphic relations
-        this.relation_id = p.form.record.id;
-        this.relation_type = p.store.klass; // New records do have a store
-
-        this.addFilter(this.parentFilter, this);
-      }
-    }, this);
-    p.on('save', function() {
-      if(p.form.record) {
-        this.relation_id = p.form.record.id;
-      }
-    }, this);
-  },
-  filterOnRelation: function(record) {
-    //This deals with polymorphic relations
-    this.relation_id = record.data.id;
-    this.relation_type = record.data.klass || (record.store ? record.store.klass : null);
-
-    this.addFilter(this.parentFilter, this);
-  },
-  findRelations: function(record) {
-    //Searches everything. Quite the hack.
-    return this.snapshot.filterBy(this.parentFilter, {
-      relation_id: record.data.id,
-      relation_type: record.data.type || record.store.klass,
-      parentIdColumn: this.parentIdColumn,
-      parentTypeColumn: this.parentTypeColumn
-    });
-  },
-  checkParentColumns: function(idCol) {
-    if(idCol) {
-      this.parentIdColumn = idCol;
-
-      var column = idCol.replace(/id/, "type");
-      var value = (this.recordType.prototype.fields.keys.indexOf(column) != -1);
-
-      if(value) {
-        this.parentTypeColumn = idCol.replace(/id/, "type");
-      } else {
-        this.parentTypeColumn = null;
-      }
-    }
-  },
-  parentFilter: function(record){
-    var idMatch = (record.data[this.parentIdColumn] == this.relation_id);
-    var typeMatch = true;
-
-    //Provides automatic filtering on polymophic relations
-    if(this.parentTypeColumn) {
-      typeMatch = (record.data[this.parentTypeColumn] == this.relation_type);
-    }
-
-    return (idMatch && typeMatch);
-  }
-});
-
 // To be included into classes and used there, not to be used
 // directly.
 SWorks.commonCrudPanelFunctions = {
@@ -440,40 +359,11 @@ SWorks.SearchCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
       emptyMsg: "No items to display"
     });
 
-    this.loadQuery();
+    this.store.load();
   },
   setupStore: function() {
-    if(this.store.mirrorSource) {
-      console.error("Dependent Url grids can't use mirrored stores. Bad things will happen: "+this.store.url);
-    }
-    if(this.store.refreshTask) {
-      var task = this.store.refreshTask;
-      delete this.store.refreshTask;
-      task.cancel();
-    }
-
-    this.store.groupOnSort = true;
-    this.store.loadIfNeeded = Ext.emptyFn;
-    this.store.baseUrl = this.store.baseUrl || (this.store.url+'/search');
-    this.querySet = [];
-  },
-  loadQuery: function() {
-    this.store.proxy.conn.url = this.store.baseUrl;
-    var qs = this.querySet, query = [];
-
-    for (var i in qs) if (typeof qs[i] == 'string') {
-      query.push(qs[i]);
-    }
-    if (query.length > 0) {
-      query = query.join(' AND ');
-    } else {
-      query = 'id:*';
-    }
-
-    this.store.baseParams = { q: query };
-    this.store.load({
-      params: { start: 0, limit: this.page_size }
-    });
+    this.store.baseParams = this.store.baseParams || {};
+    this.store.baseParams['limit'] = this.page_size;
   },
   addToolbarSearch: function(tbArr) {
     tbArr.push(new Ext.Toolbar.TextItem("Adv Search"));
@@ -497,11 +387,11 @@ SWorks.SearchCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
       var str = searchField.getValue().trim();
 
       if (str === '') {
-        delete this.querySet['search'];
+        this.store.removeFilter('search');
       } else {
-        this.querySet['search'] = str;
+        this.store.addFilter('search', str);
       }
-      this.loadQuery();
+      this.store.load();
     };
 
     tbArr.push(searchField);
@@ -525,17 +415,17 @@ SWorks.SearchCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
           getQuery: v.getQuery,
           checkHandler: function(item, checked) {
             if (checked) {
-              this.querySet[item.text] = item.query || item.getQuery.call(this);
+              this.store.addFilter(item.text, (item.query || item.getQuery.call(this)));
             } else {
-              delete this.querySet[item.text];
+              this.store.removeFilter(item.text);
             }
 
-            this.loadQuery();
+            this.store.load();
           },
           scope: this
         };
         if (v.isDefault === true) {
-          this.querySet[v.text] = v.query || v.getQuery();
+          this.store.addFilter(v.text, (v.query || v.getQuery()));
         }
         menuArr.push(options);
       }

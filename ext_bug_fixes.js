@@ -152,6 +152,29 @@ Ext.override(Ext.LoadMask, {
   }
 });
 
+Ext.override(Ext.PagingToolbar, {
+  onLoad : function(store, r, o){
+    if(!this.rendered){
+      this.dsLoaded = [store, r, o];
+      return;
+    }
+    
+    // Fixed just this line. caused UI problems if start wasn't in the params
+    this.cursor = o.params ? (o.params[this.paramNames.start] || 0) : 0;
+
+    var d = this.getPageData(), ap = d.activePage, ps = d.pages;
+
+    this.afterTextEl.el.innerHTML = String.format(this.afterPageText, d.pages);
+    this.field.dom.value = ap;
+    this.first.setDisabled(ap == 1);
+    this.prev.setDisabled(ap == 1);
+    this.next.setDisabled(ap == ps);
+    this.last.setDisabled(ap == ps);
+    this.loading.enable();
+    this.updateInfo();
+  }
+});
+
 Ext.override(Ext.form.ComboBox, {
   clearValue : function(){
     if(this.hiddenField){

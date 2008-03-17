@@ -558,11 +558,13 @@ SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
   initComponent: function() {
     SWorks.ManagedCrudEditor.superclass.initComponent.call(this);
 
-    this.createUrl = this.store.url;
-    this.restUrl = this.store.url + '/{0}';
-    this.parameterTemplate = this.store.model + "[{0}]";
-    this.daoClass = this.store.klass;
-    this.recordType = this.store.recordType;
+    Ext.applyIf(this, {
+      createUrl: this.store.url,
+      restUrl: this.store.url + '/{0}',
+      parameterTemplate: this.store.model + "[{0}]",
+      daoClass: this.store.klass,
+      recordType: this.store.recordType
+    });
 
     this.store.on('metachange', function(grid, meta) {
       this.recordType = grid.recordType;

@@ -348,3 +348,151 @@ Ext.ux.data.PersistentFilters.overrides = {
     }
   }
 };
+
+ds = Ext.StoreMgr;
+
+SWorks.CrudStore = function(config) {
+  this.initialConfig = config;
+
+  // From JsonStore
+  Ext.applyIf(config, {
+    proxy: !config.data ? new Ext.data.HttpProxy({
+      method: "GET",
+      url: config.url
+    }) : undefined,
+    reader: new Ext.data.JsonReader(config, config.fields)
+  });
+
+  SWorks.CrudStore.superclass.constructor.call(this, config);
+
+  Ext.ux.data.LoadAttempts(this);
+  Ext.ux.data.ReloadingStore(this);
+  Ext.ux.data.PersistentFilters(this);
+};
+Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
+  remoteSort: false,
+
+  linkToParent: function(p, idCol) {
+    this.checkParentColumns(idCol);
+
+    p.on('load', function(form, record) {
+      if(!p.form || p.form == form) {
+        //This deals with polymorphic relations
+        this.relation_id = p.form.record.id;
+        this.relation_type = p.store.klass; // New records don't have a store
+
+        this.addFilter(this.parentFilter, this);
+      }
+    }, this);
+    p.on('save', function() {
+      if(p.form.record) {
+        this.relation_id = p.form.record.id;
+      }
+    }, this);
+  },
+  filterOnRelation: function(record) {
+    //This deals with polymorphic relations
+    this.relation_id = record.data.id;
+    this.relation_type = record.data.klass || (record.store ? record.store.klass : null);
+
+    this.addFilter(this.parentFilter, this);
+  },
+  findRelations: function(record) {
+    //Searches everything. Quite the hack.
+    return this.snapshot.filterBy(this.parentFilter, {
+      relation_id: record.data.id,
+      relation_type: record.data.type || record.store.klass,
+      parentIdColumn: this.parentIdColumn,
+      parentTypeColumn: this.parentTypeColumn
+    });
+  },
+  checkParentColumns: function(idCol) {
+    if(idCol) {
+      this.parentIdColumn = idCol;
+
+      var column = idCol.replace(/id/, "type");
+      var value = (this.recordType.prototype.fields.keys.indexOf(column) != -1);
+
+      if(value) {
+        this.parentTypeColumn = idCol.replace(/id/, "type");
+      } else {
+        this.parentTypeColumn = null;
+      }
+    }
+  },
+  parentFilter: function(record){
+    var idMatch = (record.data[this.parentIdColumn] == this.relation_id);
+    var typeMatch = true;
+
+    //Provides automatic filtering on polymophic relations
+    if(this.parentTypeColumn) {
+      typeMatch = (record.data[this.parentTypeColumn] == this.relation_type);
+    }
+
+    return (idMatch && typeMatch);
+  }
+});
+
+SWorks.SearchStore = function(dupstore, config) {
+  if (typeof config == 'undefined' && typeof dupstore.getModifiedRecords == 'undefined') {
+    config = dupstore;
+  } else if (typeof dupstore.getModifiedRecords == 'function') {
+    config = config || {};
+    Ext.applyIf(config, dupstore.initialConfig || {
+      url: dupstore.proxy.conn.url,
+      root: dupstore.reader.meta.root,
+      totalProperty: dupstore.reader.meta.totalProperty,
+      id: dupstore.reader.meta.id,
+      fields: dupstore.reader.meta.fields
+    });
+  }
+
+  Ext.applyIf(config, {
+    proxy: new Ext.data.HttpProxy({
+      method: "GET",
+      url: config.url
+    }),
+    reader: new Ext.data.JsonReader(config, config.fields)
+  });
+
+  SWorks.SearchStore.superclass.constructor.call(this, config);
+
+  this.querySet = {};
+
+  Ext.ux.data.LoadAttempts(this);
+}
+Ext.extend(SWorks.SearchStore, Ext.data.GroupingStore, {
+  queryParam: 'q',
+  allQuery: 'id:*',
+  mode: 'remote',
+  remoteSort: true,
+  groupOnSort: true,
+
+  addFilter: function(name, query) {
+    this.querySet[name] = query;
+  },
+
+  removeFilter: function(name) {
+    delete this.querySet[name];
+  },
+
+  load: function(options) {
+    options = options || {}
+    options.params = options.params || {};
+    var query = options.params[this.queryParam];
+    var qs = this.querySet, queryList = (typeof query == 'undefined') ? [] : [ query ];
+
+    for (var i in qs) if (typeof qs[i] == 'string') {
+      queryList.push(qs[i]);
+    }
+    if (queryList.length > 0) {
+      query = queryList.join(' AND ');
+    } else {
+      query = 'id:*';
+    }
+
+    options.params[this.queryParam] = query;
+    SWorks.SearchStore.superclass.load.call(this, options);
+  }
+});
+
