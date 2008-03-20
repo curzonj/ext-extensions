@@ -6,8 +6,6 @@
  * http://extjs.com/license
  */
 
-/*globals Ext */
-
 //Taken from http://extjs.com/deploy/dev/examples/grid/GroupSummary.js
 
 Ext.grid.GroupSummary = function(config){

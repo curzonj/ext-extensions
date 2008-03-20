@@ -1,4 +1,4 @@
-/*globals Ext, CSRFKiller */
+/*globals Ext, CSRFKiller, SWorks */
 
 Ext.namespace("SWorks", "Ext.ux", "Ext.ux.data", "Ext.ux.tree", "Ext.ux.grid"); //Used by extensions
 
@@ -31,7 +31,7 @@ SWorks.download = function(url) {
     id: Ext.id(),
     cls: 'x-hidden'
   });
-}
+};
 
 Ext.override(Ext.form.BasicForm, {
   updateOriginalValues: function(values) {
@@ -377,12 +377,12 @@ Ext.override(Ext.grid.GroupingView, {
 
         var buf = [];
         for(i = 0, len = groups.length; i < len; i++){
-            var g = groups[i];
-            this.doGroupStart(buf, g, cs, ds, colCount);
+            var g3 = groups[i];
+            this.doGroupStart(buf, g3, cs, ds, colCount);
             buf[buf.length] = Ext.grid.GroupingView.superclass.doRender.call(
-                    this, cs, g.rs, ds, g.startRow, colCount, stripe);
+                    this, cs, g3.rs, ds, g3.startRow, colCount, stripe);
 
-            this.doGroupEnd(buf, g, cs, ds, colCount);
+            this.doGroupEnd(buf, g3, cs, ds, colCount);
         }
         return buf.join('');
     }

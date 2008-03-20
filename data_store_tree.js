@@ -189,7 +189,7 @@ Ext.ux.tree.DataStoreBacking.prototype = {
        attr.uiProvider = this.uiProviders[attr.uiProvider] || eval(attr.uiProvider);
     }
 
-    var child = new Ext.tree.TreeNode(attr)
+    var child = new Ext.tree.TreeNode(attr);
     parent.appendChild(child);
 
     return child;

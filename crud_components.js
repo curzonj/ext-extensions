@@ -363,7 +363,9 @@ SWorks.SearchCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
   },
   setupStore: function() {
     this.store.baseParams = this.store.baseParams || {};
-    this.store.baseParams['limit'] = this.page_size;
+    this.store.baseParams.limit = this.page_size;
+
+    SWorks.SearchCrudGrid.superclass.setupStore.call(this);
   },
   addToolbarSearch: function(tbArr) {
     tbArr.push(new Ext.Toolbar.TextItem("Adv Search"));
@@ -446,10 +448,12 @@ SWorks.SearchCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
 SWorks.DependentUrlCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
   setupStore: function() {
     if(this.store.mirrorSource) {
-      console.error("Dependent Url grids can't use mirrored stores. Bad things will happen");
+      console.error("Dependent Url grids can't use cloned/mirrored stores. Bad things will happen");
     }
 
-    this.store.loadIfNeeded = Ext.emptyFn;
+    delete this.store.loadIfNeeded;
+
+    SWorks.DependentUrlCrudGrid.superclass.setupStore.call(this);
   },
   setParent: function(p) {
     SWorks.DependentUrlCrudGrid.superclass.setParent.call(this, p);
@@ -468,9 +472,9 @@ SWorks.DependentUrlCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
     if(!this.currentRecord.newRecord) {
       var r = this.currentRecord, s = this.store, url = s.baseUrl;
       if(!url && s.parentIdColumn) {
-        url = s.url + '?' + s.parentIdColumn + '={0}'
+        url = s.url + '?' + s.parentIdColumn + '={0}';
         if(s.parentTypeColumn) {
-          url = url + '&' + s.parentTypeColumn + '={1}'
+          url = url + '&' + s.parentTypeColumn + '={1}';
         }
       }
 
@@ -750,14 +754,14 @@ SWorks.renderers = {
       var ret = [];
       for(var i=0;i<list.length;i++) {
         var value = record.data[list[i]];
-        if(value && value != '') {
+        if(value && value !== '') {
           ret.push(value);
         }
       }
       return ret.join(', ');
-    }
+    };
   }
-}
+};
 
 SWorks.createFilterField = function(store) {
   var filterRegexArray = null;

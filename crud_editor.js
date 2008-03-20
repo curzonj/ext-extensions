@@ -17,8 +17,7 @@ SWorks.CrudEditor = function(config) {
     'beforeload',
     'load',
     'delete',
-    'save'
-  );
+    'save');
 
   SWorks.CrudEditor.superclass.constructor.call(this, config);
 
@@ -327,6 +326,13 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
         form.updateOriginalValues(action.result.data);
       }
 
+      if(record.newRecord) {
+        // The action object will disappear so 
+        // we don't need to clean this up. The actioncomplete
+        // listeners will fire after we return
+        action.newBeforeSave = true;
+      }
+
       form.isDirty();
       this.checkServerChanges(form, action);
       this.updateRecord(record, action.result);
@@ -558,13 +564,11 @@ SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
   initComponent: function() {
     SWorks.ManagedCrudEditor.superclass.initComponent.call(this);
 
-    Ext.applyIf(this, {
-      createUrl: this.store.url,
-      restUrl: this.store.url + '/{0}',
-      parameterTemplate: this.store.model + "[{0}]",
-      daoClass: this.store.klass,
-      recordType: this.store.recordType
-    });
+    this.createUrl = this.store.url;
+    this.restUrl = this.store.url + '/{0}';
+    this.parameterTemplate = this.store.model + "[{0}]";
+    this.daoClass = this.store.klass;
+    this.recordType = this.store.recordType;
 
     this.store.on('metachange', function(grid, meta) {
       this.recordType = grid.recordType;

@@ -1,29 +1,27 @@
-/*globals Ext */
+/*globals Ext, SWorks, ds */
 
 // Add cloning and mirroring ability
 Ext.override(Ext.data.Store, {
-  clone: function clone(keep_filters, mirror_data) {
+  clone: function clone(keepFilters, legacy) {
+    if(typeof legacy != 'undefined') {
+      console.error('Legacy usage of Ext.data.Store.clone(), please fix.');
+      return;
+    }
+
     // Never mess with a dirty data store
     if (this.modified.length > 0) {
+      console.error('Tried to clone a dirty data store.');
       return;
     }
 
     var newObj = {};
     Ext.apply(newObj, this);
-    newObj.resetEvents();
     delete newObj.clones;
 
-    if(mirror_data !== false) {
-      newObj.mirror(this);
-    } else {
-      //We start out with the same instance of data, and load()
-      //just clears the items from the data collection and puts
-      //new ones in. This gives us our own records and our own
-      //instance of data.
-      newObj.initData();
-    }
+    newObj.resetEvents();
+    newObj.mirror(this);
 
-    if(!keep_filters) {
+    if(!keepFilters) {
       newObj.filterChain = [];
     }
 
@@ -351,7 +349,14 @@ Ext.ux.data.PersistentFilters.overrides = {
 
 ds = Ext.StoreMgr;
 
-SWorks.CrudStore = function(config) {
+SWorks.CrudStore = function(config, custom) {
+  if (typeof config == 'string') {
+    var clone = Ext.StoreMgr.get(config);
+    custom = custom || {};
+
+    config = Ext.apply(custom, clone.initialConfig);
+  }
+
   this.initialConfig = config;
 
   // From JsonStore
@@ -460,7 +465,7 @@ SWorks.SearchStore = function(dupstore, config) {
   this.querySet = {};
 
   Ext.ux.data.LoadAttempts(this);
-}
+};
 Ext.extend(SWorks.SearchStore, Ext.data.GroupingStore, {
   queryParam: 'q',
   allQuery: 'id:*',
@@ -477,7 +482,7 @@ Ext.extend(SWorks.SearchStore, Ext.data.GroupingStore, {
   },
 
   load: function(options) {
-    options = options || {}
+    options = options || {};
     options.params = options.params || {};
     var query = options.params[this.queryParam];
     var qs = this.querySet, queryList = (typeof query == 'undefined') ? [] : [ query ];
