@@ -479,6 +479,7 @@ Ext.extend(SWorks.SearchStore, Ext.data.GroupingStore, {
   mode: 'remote',
   remoteSort: true,
   groupOnSort: true,
+  groupField: false,
 
   addFilter: function(name, query) {
     this.querySet[name] = query;

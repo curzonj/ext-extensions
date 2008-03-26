@@ -51,23 +51,7 @@ SWorks.commonCrudPanelFunctions = {
   }
 };
 
-/* SWorks.CrudGridPanel
- */
-SWorks.CrudGridPanel = function(config) {
-/*  Ext.applyIf(config, {
-    loadMask: {
-      // Just mask the grid the first time,
-      // after that we have data to show until
-      // the load returns
-      removeMask: true
-    }
-  }); */
-
-
-  SWorks.CrudGridPanel.superclass.constructor.call(this, config);
-};
-// The crudgrid is not currently compatable with inline editing
-Ext.extend(SWorks.CrudGridPanel, Ext.grid.GridPanel, {
+SWorks.CrudGridPanel = Ext.extend(Ext.grid.GridPanel, {
   autoSizeColumns: true,
   minColumnWidth: 5,
 
@@ -348,16 +332,17 @@ SWorks.SearchCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
   loadMask: true,
 
   initComponent: function() {
-    SWorks.SearchCrudGrid.superclass.initComponent.call(this);
-
-    this.elements += ',bbar';
-    this.bottomToolbar = new Ext.PagingToolbar({
-      pageSize: this.page_size,
-      store: this.store,
-      displayInfo: true,
-      displayMsg: 'Displaying items {0} - {1} of {2}',
-      emptyMsg: "No items to display"
+    Ext.applyIf(this, {
+      bbar: new Ext.PagingToolbar({
+        pageSize: this.page_size,
+        store: this.store,
+        displayInfo: true,
+        displayMsg: 'Displaying items {0} - {1} of {2}',
+        emptyMsg: "No items to display"
+      })
     });
+
+    SWorks.SearchCrudGrid.superclass.initComponent.call(this);
 
     this.store.load();
   },
