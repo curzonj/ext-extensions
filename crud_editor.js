@@ -379,11 +379,8 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
         record.newRecord = false;
         record.newBeforeSave = true;
       }
-   
-      // We use the edit mechnism on new records to deal with
-      // forms that may save a new record without closing; they
-      // need to get updates about any fields the server changed
-      // on them.
+  
+      // By using edit, widgets can update the UI if a related record changes 
       record.json = result.data;
       record.beginEdit();
       for(var a in result.data) {
@@ -629,15 +626,11 @@ SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
   },
   updateRecord: function(record, result) {
     this.processRecords(result);
-    if(record.newRecord) {
-      // Needs to be added before because widgets are listening
-      // for the edit/commit events even on new records, but those
-      // events won't fire unless the record already belongs to
-      // the store.
+    SWorks.ManagedCrudEditor.superclass.updateRecord.call(this, record, result);
+    if(record.newBeforeSave) {
       record.id = record.data.id = result.objectid;
       this.store.addSorted(record);
     }
-    SWorks.ManagedCrudEditor.superclass.updateRecord.call(this, record, result);
   },
   hideRecord: function(record) {
     this.updateAttribute({
@@ -659,6 +652,7 @@ SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
             record.newBeforeSave = true;
           }
           this.updateRecord(record, {objectid:r.id, data:r});
+          SWorks.ManagedCrudEditor.superclass.updateRecord.call(this, record, {objectid:r.id, data:r});
         }
       }
     }

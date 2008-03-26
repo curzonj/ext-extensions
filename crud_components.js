@@ -366,6 +366,16 @@ SWorks.SearchCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
     this.store.baseParams = this.store.baseParams || {};
     this.store.baseParams.limit = this.page_size;
 
+    this.editor.on('save', function(r) {
+      // The record doesn't have the data we need for
+      // the grid. So if they save a new record, we
+      // need to ask the server for a new list because
+      // they expect it to be there.
+      if( r.newBeforeSave ) {
+        this.store.reload();
+      }
+    }, this);
+
     SWorks.SearchCrudGrid.superclass.setupStore.call(this);
   },
   addToolbarSearch: function(tbArr) {
