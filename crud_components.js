@@ -67,6 +67,21 @@ SWorks.CrudGridPanel = Ext.extend(Ext.grid.GridPanel, {
     this.topToolbar = this.createToolbar();
   
     this.colModel.defaultSortable = true;
+    this.on('afterrender', function() {
+      this.container.on('afterlayout', function() {
+        if(this.savedScrollPos && this.view) {
+          this.view.scroller.scrollTo('top', this.savedScrollPos);
+        }
+      }, this);
+    }, this);
+    this.on('bodyscroll', function(y, x) {
+      this.savedScrollPos = x;
+    });
+    this.on('show', function() {
+      if(this.savedScrollPos && this.view) {
+        this.view.scroller.scrollTo('top', this.savedScrollPos);
+      }
+    });
     this.on('celldblclick', this.onGridCellClicked, this);
     this.getSelectionModel().on('selectionchange', this.checkToolbarButtons, this);
     SWorks.CurrentUser.onPermission(this.rwPerm, this.checkToolbarButtons, this);
@@ -242,11 +257,12 @@ SWorks.CrudGridPanel = Ext.extend(Ext.grid.GridPanel, {
       this.fireEvent('load', this, record, this.dialog);
     }
   },
+
   grabCurrentRecordRow: function() {
     //This makes changes, so it isn't just a getter
     var sel = this.getSelections();
     var r = sel[0]; 
-    this.setRecordSelection(r);
+ //   this.setRecordSelection(r);
 
     return r;
   },
