@@ -727,8 +727,10 @@ SWorks.paneledCrudEditorOverrides = {
 
     if(this.loadForm(this.form, record) && this.useDialog) {
       if( this.isReadOnly(record) === true ) {
+        this.formPanel.el.addClass('read-only');
         this.dialog.saveBtn.disable();
       } else {
+        this.formPanel.el.removeClass('read-only');
         this.dialog.saveBtn.enable();
       }
       this.dialog.show();
@@ -845,6 +847,13 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
       panel = editor.findAvailablePanel();
       panel.setTitle(editor.getTitle(record));
       panel.form.bypassSaveOnClose = false;
+
+      var formPanel = panel.findByType('form')[0];
+      if( editor.isReadOnly(record) === true ) {
+        formPanel.el.addClass('read-only');
+      } else {
+        formPanel.el.removeClass('read-only');
+      }
 
       editor.loadForm(panel.form, record, panel);
 

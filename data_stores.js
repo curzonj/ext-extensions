@@ -354,7 +354,7 @@ SWorks.CrudStore = function(config, custom) {
     var clone = Ext.StoreMgr.get(config);
     custom = custom || {};
 
-    config = Ext.apply(custom, clone.initialConfig);
+    config = Ext.applyIf(custom, clone.initialConfig);
   }
 
   this.initialConfig = config;
@@ -438,25 +438,12 @@ Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
   }
 });
 
-SWorks.SearchStore = function(dupstore, config) {
-  if (typeof config == 'undefined' && typeof dupstore == 'object' &&
-      typeof dupstore.getModifiedRecords == 'undefined') {
-    config = dupstore;
-  } else {
-    if (typeof dupstore == 'string') {
-      dupstore = Ext.StoreMgr.get(dupstore);
-    }
-   
-    if (typeof dupstore.getModifiedRecords == 'function') {
-      config = config || {};
-      Ext.applyIf(config, dupstore.initialConfig || {
-        url: dupstore.proxy.conn.url,
-        root: dupstore.reader.meta.root,
-        totalProperty: dupstore.reader.meta.totalProperty,
-        id: dupstore.reader.meta.id,
-        fields: dupstore.reader.meta.fields
-      });
-    }
+SWorks.SearchStore = function(config, custom) {
+  if (typeof config == 'string') {
+    var clone = Ext.StoreMgr.get(config);
+    custom = custom || {};
+
+    config = Ext.applyIf(custom, clone.initialConfig);
   }
 
   Ext.applyIf(config, {

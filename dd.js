@@ -99,7 +99,7 @@ Ext.extend(Ext.ux.grid.RowReorderDD, Ext.dd.DropZone, {
       var oldIndex = data.rowIndex;
       var newIndex = n.rowIndex + (((r.bottom - y) <= (r.bottom-r.top)/2) ? 1 : 0);
     
-      this.onRowChange.call(this.scope || this.grid, oldIndex, newIndex);
+      this.onRowChange(oldIndex, newIndex);
     }
 
     return false;

@@ -230,3 +230,26 @@ Ext.override(Ext.data.Store, {
     this.fireEvent("add", this, records, index);
   }
 });
+
+Ext.override(Ext.Container, {
+    remove : function(comp, autoDestroy){
+        var c = this.getComponent(comp);
+        if(c && this.fireEvent('beforeremove', this, c) !== false){
+            this.items.remove(c);
+            delete c.ownerCt;
+            if(autoDestroy === true || (autoDestroy !== false && this.autoDestroy)){
+                c.destroy();
+            } else {
+                // By default, if you don't destroy the component it gets removed but the markup is left in place and unhidden cause render issues with other components.
+                c.hide();
+            }
+            if(this.layout && this.layout.activeItem == c){
+                delete this.layout.activeItem;
+            }
+            this.fireEvent('remove', this, c);
+        }
+        return c;
+    }
+});
+
+

@@ -467,10 +467,14 @@ SWorks.DependentUrlCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
     SWorks.DependentUrlCrudGrid.superclass.setupStore.call(this);
   },
   setParent: function(p) {
-    SWorks.DependentUrlCrudGrid.superclass.setParent.call(this, p);
+    this.parent = p;
+    if(this.editor) {
+      this.editor.setParent(p);
+    }
 
     p.on('load', function(form, record) {
       if(form == p.form) {
+        this.checkToolbarButtons();
         this.loadRecord(record);
       }
     }, this);
@@ -480,7 +484,9 @@ SWorks.DependentUrlCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
     this.loadGridRecords();
   },
   loadGridRecords: function() {
-    if(!this.currentRecord.newRecord) {
+    if(this.currentRecord.newRecord) {
+      this.store.removeAll();
+    } else {
       var r = this.currentRecord, s = this.store, url = s.baseUrl;
       if(!url && s.parentIdColumn) {
         url = s.url + '?' + s.parentIdColumn + '={0}';
