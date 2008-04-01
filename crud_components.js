@@ -56,15 +56,14 @@ SWorks.CrudGridPanel = Ext.extend(Ext.grid.GridPanel, {
   minColumnWidth: 5,
 
   initComponent: function() {
+    this.tbar = this.createToolbar();
+
     SWorks.CrudGridPanel.superclass.initComponent.call(this);
 
     this.addEvents('load', 'beforeload');
 
     this.setupEditor();
     this.setupStore();
-
-    this.elements += ',tbar';
-    this.topToolbar = this.createToolbar();
   
     this.colModel.defaultSortable = true;
     this.on('afterrender', function() {
@@ -508,7 +507,7 @@ SWorks.DependentUrlCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
   },
   onClickRefresh: function() {
     var p = this.parent;
-    if(p.form.newRecord || p.form.isDirty()) {
+    if(p && (p.form.newRecord || p.form.isDirty())) {
       p.save({
         callback: this.loadGridRecords,
         scope: this
@@ -570,6 +569,8 @@ Ext.extend(SWorks.CrudTreePanel, Ext.tree.TreePanel, {
   border: false,
 
   initComponent: function() {
+    this.tbar = this.createToolbar();
+
     SWorks.CrudTreePanel.superclass.initComponent.call(this);
 
     this.setupEditor();
@@ -579,9 +580,6 @@ Ext.extend(SWorks.CrudTreePanel, Ext.tree.TreePanel, {
     }
 
     var mySorter = new Ext.tree.TreeSorter(this, {folderSort: true});
-
-    this.elements += ',tbar';
-    this.topToolbar = this.createToolbar();
 
     this.on('dblclick', this.onDblClickNode, this);
     SWorks.CurrentUser.onPermission(this.rwPerm, this.checkToolbarButtons, this);
@@ -718,67 +716,6 @@ Ext.extend(SWorks.CrudTreePanel, Ext.tree.TreePanel, {
 });
 Ext.override(SWorks.CrudTreePanel, SWorks.commonCrudPanelFunctions);
 
-/* **********************
- * Utility/helper methods and minor related Ext extensions
- *
- * **********************
- */
-
-SWorks.getVtypeRegexFn = function(mask) {
-  return function(value) {
-    return mask.test(value);
-  };
-};
-
-Ext.form.VTypes.phoneNumberText = "Phone number is invalid";
-Ext.form.VTypes.phoneNumberMask = /[1234567890\-\ ]/;
-Ext.form.VTypes.phoneNumber = function(value) {
-  var ph = value.replace(/\D/g, "");
-  if(ph.length < 10) {
-    return "Area code is required.";
-  } else {
-    return true;
-  }
-};
-
-Ext.form.VTypes.zipCodeText = "Zip code is invalid";
-Ext.form.VTypes.zipCodeMask = /[1234567890\-]/;
-Ext.form.VTypes.zipCode = SWorks.getVtypeRegexFn(/^\d{5}(?:-\d{4})?$/);
-
-Ext.util.Format.yesNo = function(value){  
-  return value ? "Yes" :  "No";
-};
-Ext.util.Format.csvArray = function(value){  
-  return ((value && value.join) ? value.join(", ") : "");
-};
-Ext.util.Format.dateMjy = function(value) {
-  return Date.parseDate(value, 'Y/m/d H:i:s').format("M j Y");
-};
-Ext.util.Format.hourlyRate = function(v){
-  return Ext.util.Format.usMoney(v) + " / hour";
-};
-Ext.util.Format.quickTips = function(v,m,r) {
-  if (r.data.quicktip) {
-    m.attr = 'ext:qtip=\''+Ext.util.Format.htmlEncode(r.data.quicktip).replace("\n",'<br/>')+'\'';
-  }
-  return Ext.util.Format.htmlEncode(v);
-};
-
-SWorks.renderers = {
-  joinFields: function(list) {
-    list = list.splice(0);
-    return function(v, meta, record) {
-      var ret = [];
-      for(var i=0;i<list.length;i++) {
-        var value = record.data[list[i]];
-        if(value && value !== '') {
-          ret.push(value);
-        }
-      }
-      return ret.join(', ');
-    };
-  }
-};
 
 SWorks.createFilterField = function(store) {
   var filterRegexArray = null;

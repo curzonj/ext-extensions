@@ -1,7 +1,5 @@
 /*globals Ext, CSRFKiller, SWorks */
 
-Ext.namespace("SWorks", "Ext.ux", "Ext.ux.data", "Ext.ux.tree", "Ext.ux.grid"); //Used by extensions
-
 Ext.override(Ext.TabPanel, {
   showPanel:function(p) {
     p.render(Ext.getBody());
@@ -24,15 +22,6 @@ Ext.override(Ext.util.Observable, {
   }
 });
 
-SWorks.download = function(url) {
-  Ext.DomHelper.append(Ext.getBody(), {
-    src: url,
-    tag: 'iframe',
-    id: Ext.id(),
-    cls: 'x-hidden'
-  });
-};
-
 Ext.override(Ext.form.BasicForm, {
   updateOriginalValues: function(values) {
     var field;
@@ -45,23 +34,6 @@ Ext.override(Ext.form.BasicForm, {
         }
       }
     }
-  }
-});
-
-Ext.onReady(function() {
-  if(typeof CSRFKiller != 'undefined' && CSRFKiller.field) {
-    Ext.Ajax.on('beforerequest', function(conn, options) {
-      if(typeof options.params == 'object') {
-        //Make the two possibilities easier
-        options.params = Ext.urlEncode(options.params);
-      } 
-
-      if(options.params && typeof options.params == "string") {
-        options.params = options.params+'&'+CSRFKiller.field+'='+CSRFKiller.token;
-      } else if(typeof options.params == 'undefined' && options.form) {
-        options.params = CSRFKiller.field+'='+CSRFKiller.token;
-      }
-    });
   }
 });
 
@@ -85,191 +57,6 @@ Ext.override(Ext.Element, {
     }
   }
 });
-
-Ext.ux.data.CollectionIndex = function(coll, name, fn) {
-  if(typeof name == 'function') {
-    fn = name;
-    name = null;
-  }
-
-  this.collection = coll;
-  this.mapFn = fn;
-  this.map = {};
-
-  if(name) {
-    coll.maps = coll.maps || {};
-    coll.maps[name] = this.map;
-  }
-
-  coll.on('add', this.onAdd, this);
-  coll.on('replace', this.onReplace, this);
-  coll.on('remove', this.onRemove, this);
-  coll.on('clear', this.onClear, this);
-
-  this.refreshIndex();
-};
-
-Ext.ux.data.CollectionIndex.prototype = {
-  onAdd: function(index, o, key) { this.index(o); },
-  onReplace: function(key, old, o) { this.index(o); },
-  index: function(o) {
-    var key = this.mapFn(o);
-    if(key) {
-      this.map[key] = o;
-    }
-  },
-  refreshIndex: function() {
-    this.collection.each(function(item) {
-      this.index(item);
-    }, this);
-  },
-
-  onRemove: function(o, key) {
-    key = this.mapFn(o);
-    if(key) {
-      delete this.map[key];
-    }
-  },
-  onClear: function() {
-    this.map = {};
-  }
-};
-
-// This allows you to override the parseValue function to allow
-// things like '12 ft' -> 144. 'baseChars' would need to be set 
-// appropriately too.
-Ext.override(Ext.form.NumberField, {
-  validateValue : function(value){
-    if(!Ext.form.NumberField.superclass.validateValue.call(this, value)){
-        return false;
-    }
-    if(value.length < 1){
-      return true;
-    }
-    var num = this.parseValue(value);
-    if(isNaN(num)){
-        this.markInvalid(String.format(this.nanText, value));
-        return false;
-    }
-    if(num < this.minValue){
-        this.markInvalid(String.format(this.minText, this.minValue));
-        return false;
-    }
-    if(num > this.maxValue){
-        this.markInvalid(String.format(this.maxText, this.maxValue));
-        return false;
-    }
-    return true;
-  }
-});
-
-Ext.form.NumberField.fractionRe = /^\s*(\d+)\s*\/\s*(\d+)\s*$/;
-Ext.form.NumberField.conversions = [
-  { re:  /^\s*(.+)\s*ft?\s*$/, multi: 12 },
-  { re:  /^\s*(.+)\s*hr?\s*$/, multi: 60 }
-];
-Ext.override(Ext.form.NumberField, {
-  baseChars: "0123456789 fthr",
-  initEvents : function(){
-    Ext.form.NumberField.superclass.initEvents.call(this);
-    var allowed = this.baseChars+'';
-    if(this.allowDecimals){
-        allowed += this.decimalSeparator;
-        allowed += '/'; // This is the only line added in this function
-    }
-    if(this.allowNegative){
-        allowed += "-";
-    }
-    this.stripCharsRe = new RegExp('[^'+allowed+']', 'gi');
-    var keyPress = function(e){
-        var k = e.getKey();
-        if(!Ext.isIE && (e.isSpecialKey() || k == e.BACKSPACE || k == e.DELETE)){
-            return;
-        }
-        var c = e.getCharCode();
-        if(allowed.indexOf(String.fromCharCode(c)) === -1){
-            e.stopEvent();
-        }
-    };
-    this.el.on("keypress", keyPress, this);
-  },
-  parseValue: function(value) {
-    var con = self.conversions || Ext.form.NumberField.conversions;
-    var multi = 1;
-    for(var i=0;i<con.length;i++) {
-      var set = con[i];
-      var match = set.re.exec(value);
-      if(match) {
-        value = match[1];
-        multi = set.multi;
-        break;
-      }
-    }
-
-    var fracMatch = Ext.form.NumberField.fractionRe.exec(value);
-    if(fracMatch) {
-      if(!isNaN(fracMatch[1]) && !isNaN(fracMatch[2]) &&
-         (fracMatch[1] !== 0) && (fracMatch[2] !== 0)) {
-        value = fracMatch[1] / fracMatch[2];
-      }
-    }
-
-    value = parseFloat(String(value).replace(this.decimalSeparator, "."));
-    if(isNaN(value)) {
-      return '';
-    } else {
-      return (value * multi);
-    }
-  }
-});
-
-Ext.override(Ext.data.Store, {
-  // Their load records function isn't very extensible,
-  // so I had to copy it in here
-  loadRecords : function(o, options, success){
-    if(!o || success === false){
-        if(success !== false){
-            this.fireEvent("load", this, [], options);
-        }
-        if(options.callback){
-            options.callback.call(options.scope || this, [], options, false);
-        }
-        return;
-    }
-    var r = o.records, t = o.totalRecords || r.length;
-    if(!options || options.add !== true){
-        if(this.pruneModifiedRecords){
-            this.modified = [];
-        }
-        for(var i = 0, len = r.length; i < len; i++){
-            r[i].join(this);
-        }
-        if(this.snapshot){
-            this.data = this.snapshot;
-            delete this.snapshot;
-        }
-        this.data.clear();
-        this.data.addAll(r);
-        this.totalLength = t;
-
-        this.onDataChanged(); //This line added
-
-        this.fireEvent("datachanged", this);
-    }else{
-        this.totalLength = Math.max(t, this.data.length+r.length);
-        this.add(r);
-    }
-
-    this.fireEvent("load", this, r, options);
-    if(options.callback){
-        options.callback.call(options.scope || this, r, options, true);
-    }
-  },
-  onDataChanged: function() {
-    this.applySort();
-  }
-});
-
 
 Ext.override(Ext.tree.TreeNodeUI, {
   onDblClick : function(e){
