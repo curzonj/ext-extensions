@@ -1,3 +1,5 @@
+/*globals SWorks, Ext */
+
 SWorks.download = function(url) {
   Ext.DomHelper.append(Ext.getBody(), {
     src: url,

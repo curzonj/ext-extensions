@@ -52,9 +52,6 @@ SWorks.Menu.loadPanel = function(key) {
         SWorks.Menu.panels[key] = panel = SWorks.Menu.panelFn[key].call();
       }
 
-      //non-standard, but helpful
-      panel.fireEvent('activate'); 
-
       t.add(panel);
       l.setActiveItem(panel);
 
@@ -64,6 +61,11 @@ SWorks.Menu.loadPanel = function(key) {
       }
 
       t.el.unmask();
+
+      // non-standard, but helpful, after the mask because
+      // it causes visual artifacts, this gives widgets the chance
+      // to fix them
+      panel.fireEvent('activate'); 
     }, 1);
   }
 };

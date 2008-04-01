@@ -1,23 +1,9 @@
-SWorks.GridScrollSaver = function() {}
-SWorks.GridScrollSaver.prototype = {
-  init: function(comp) {
-    comp.on('afterrender', function() {
-      comp.container.on('afterlayout', function() {
-        if(comp.savedScrollPos && comp.view) {
-          comp.view.scroller.scrollTo('top', comp.savedScrollPos);
-        }
-      }, comp);
-    }, comp);
-    comp.on('bodyscroll', function(y, x) {
-      comp.savedScrollPos = x;
-    });
-    comp.on('show', function() {
-      if(comp.savedScrollPos && comp.view) {
-        comp.view.scroller.scrollTo('top', comp.savedScrollPos);
-      }
-    });
-  }
-}
+/*globals SWorks, Ext */
+
+Ext.override(Ext.grid.GridView, {
+  // By default it scrolls to the top
+  onLoad: Ext.emptyFn,
+});
 
 SWorks.CustomGrid = Ext.extend(Ext.grid.GridPanel, {
   autoSizeColumns: true,
@@ -50,3 +36,26 @@ SWorks.CustomGrid = Ext.extend(Ext.grid.GridPanel, {
     return this.view;
   }
 });
+
+SWorks.GridScrollSaver = function() {}
+SWorks.GridScrollSaver.prototype = {
+  init: function(grid) {
+    // Called in the scope of the grid
+    var returnToSavedPosition = function() {
+      if(this.savedScrollPos && this.view && 
+         this.ownerCt.layout.activeItem == this) {
+        this.view.scroller.scrollTo('top', this.savedScrollPos);
+      }
+    };
+
+    grid.on('bodyscroll', function(y, x) { grid.savedScrollPos = x; });
+
+    grid.on('show',     returnToSavedPosition, grid);
+    grid.on('activate', returnToSavedPosition, grid);
+
+    grid.on('render', function() {
+      grid.ownerCt.on('afterlayout', returnToSavedPosition, grid);
+      grid.view.on('refresh',        returnToSavedPosition, grid);
+    });
+  },
+};

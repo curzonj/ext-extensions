@@ -1,4 +1,4 @@
-/*globals SWorks, Ext, ds */
+/*globals SWorks, Ext */
 
 SWorks.CrudController = function(overrides) {
   Ext.apply(this, overrides);
@@ -15,8 +15,9 @@ Ext.extend(SWorks.CrudController, Ext.util.Observable, {
       this.editor = new SWorks.EditorDialog(this.editor, this);
     }
 
-    if(this.component.topToolbar && this.toolbarBuilder !== false) {
-      new (this.toolbarBuilder || SWorks.CrudToolbarBuilder)(this.component.topToolbar, this);
+    if(this.component.topToolbar && this.toolbarMgr !== false) {
+      this.tbMgr = new (this.toolbarMgr || SWorks.CrudToolbarMgr)(this.component.topToolbar, this);
+      this.component.topToolbar = this.tbMgr.getToolbar();
     }
 
     /* TODO 
@@ -34,6 +35,19 @@ Ext.extend(SWorks.CrudController, Ext.util.Observable, {
 
   initEvents: function(c) {
 
+  },
+
+  setParent: function(p) {
+    this.parent = p;
+  },
+
+  isReadOnly: function() {
+    var res = !SWorks.CurrentUser.has(this.rwPerm);
+    // TODO check permissions
+    if (this.parent) {
+      res = (res || this.parent.isReadOnly());
+    }
+    return res;
   },
 
   getCurrentRecord: function() {

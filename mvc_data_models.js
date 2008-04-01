@@ -1,6 +1,8 @@
+/*globals SWorks, Ext */
+
 SWorks.DataModel = function(overrides) {
   Ext.apply(this, overrides);
-}
+};
 Ext.extend(SWorks.DataModel, Ext.util.Observable, {
 
   newRecord: function(data, initRecord) {
@@ -60,7 +62,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     }
 
     return result;
-  }
+  },
 
   saveRecord: function(o) {
     // Options: record, callback
@@ -191,7 +193,25 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       var msg = ((result && result.errors) ? (result.errors.base || options.errmsg) : options.errmsg);
       Ext.MessageBox.alert('Operation failed', msg);
     }
-  },
+  }
 
 
+});
+
+SWorks.StoreDataModel = function(store, overrides) {
+  Ext.apply(this, {
+    store: store,
+    createUrl: store.url,
+    restUrl: store.url + '/{0}',
+    parameterTemplate: store.model + "[{0}]",
+    daoClass: store.klass,
+    recordType: store.recordType
+  });
+
+  SWorks.StoreDataModel.superclass.constructor.call(overrides);
+}
+Ext.extend(SWorks.StoreDataModel, SWorks.DataModel, {
+  reload: function() {
+    this.store.reload();
+  }
 });

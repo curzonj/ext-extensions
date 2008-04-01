@@ -1,4 +1,4 @@
-/*globals SWorks, Ext, ds */
+/*globals SWorks, Ext */
 
 // To be included into classes and used there, not to be used
 // directly.
