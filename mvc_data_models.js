@@ -2,68 +2,16 @@
 
 SWorks.DataModel = function(overrides) {
   Ext.apply(this, overrides);
+
+  SWorks.DataModel.superclass.constructor.call(this);
+
+  this.addEvents('beforeload', 'load', 'delete', 'save');
 };
 Ext.extend(SWorks.DataModel, Ext.util.Observable, {
-
-  newRecord: function(data, initRecord) {
-    var record = new this.recordType(data || {});
-    record.id = 'new';
-    record.newRecord = true;
-
-    if(initRecord !== false) {
-      var keys = record.fields.keys;
-      for(var i = 0, len = keys.length; i < len; i++){
-        if(typeof record.data[keys[i]] == "undefined") {
-          record.data[keys[i]] = "";
-        }
-      }
-
-      this.initializeRecord(record);
-    }
-
-    return record;
-  },
-
-  deleteRecord: function(record, cb, scope){
-    this.deleteRecordById(record.id, cb, scope);
-  },
-  deleteRecordById: function(id, cb, scope){
-    // TODO add a retry mechanism, use the spinner. The reason
-    // the msgBox doesn't work is because this method is called
-    // seperately for each record to delete
-    if(this.restUrl) {
-      Ext.Ajax.request({
-        cb: {
-          fn: cb,
-          scope: scope || this
-        },
-        deleting_id: id,
-        url: String.format(this.restUrl, id),
-        method: "DELETE",
-        callback: this.onDeleteById,
-        scope: this
-      });
-    }
-  },
-  onDeleteById: function(options, success, response) {
-    var result = null, id = options.deleting_id;
-    if(success) {
-      result =  Ext.decode(response.responseText);
-    }
-
-    if (success && result.success) {
-      if(options.cb.fn) {
-        options.cb.fn.call(options.cb.scope);
-      }
-      this.fireEvent('delete', id);
-    } else {
-      var msg = (result && result.msg ? result.msg : "Failed to delete the record. Please try again.");
-      Ext.MessageBox.alert('Delete failed', msg);
-    }
-
-    return result;
-  },
-
+  /*
+   * Updating and saving records
+   *
+   */
   saveRecord: function(o) {
     // Options: record, callback
     if(o.record && !o.record.data) {
@@ -193,9 +141,312 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       var msg = ((result && result.errors) ? (result.errors.base || options.errmsg) : options.errmsg);
       Ext.MessageBox.alert('Operation failed', msg);
     }
+  },
+
+  /*
+   * Save from a form
+   *
+   */
+  saveForm: function(form, o){
+    o = o || {};
+
+    if(!form.isValid()) {
+      if(typeof o.waitMsg == 'undefined' || o.waitMsg) {
+        Ext.MessageBox.alert('Save failed',
+          'Please fix all the boxes highlighted in red.');
+      }
+      return;
+    }
+
+    // Prevents errors from holding the enter key
+    // down too long or bouncing it
+    if (form.submitLock) {
+      return;
+    }
+    form.submitLock = true;
+
+    var record = form.record;
+    o = this.setUpdateOrCreate(record, o);
+    if(typeof o.waitMsg == 'undefined') {
+      o.waitMsg = o.waitMsg || "Saving record...";
+    }
+
+    if(this.parent) {
+      Ext.applyIf(o.params, this.getParentRelAttrs(record));
+    }
+
+    if(o.callback) {
+      o.cb = {
+        fn: o.callback,
+        scope: o.scope
+      };
+      delete o.callback;
+      delete o.scope;
+    }
+
+    // This way we know what we sent to the server
+    o.dataSentRecord = new this.store.recordType({});
+    form.updateRecord(o.dataSentRecord);
+
+    form.submit(Ext.apply(o ,{
+      success: this.formSuccess,
+      failure: this.formFailure,
+      scope: this
+    }));
+  },
+  checkServerChanges: function(form, action) {
+    // The server may not return the same data we sent it,
+    // we need to respect any changes it made. Don't reload
+    // the form with everything sent back from the server because
+    // the user might have made changes. updateOriginalValues marks
+    // that any user changes are still dirty, but only the server
+    // changes need to be updated in the form.
+    var r = action.options.dataSentRecord;
+    var d = action.result.data;
+
+    for(var f in d) {
+      if (form.fields[f] && r.data[f] != d[f]) {
+        form.fields[f].setValue(d[f]);
+      }
+    }
+  },
+  formSuccess: function(form, action) {
+    if(action.result) { //should never be false, but who knows
+      // Reload our record because it might be too old
+      var record = form.record;
+      if(!record.newRecord && record.store) {
+        record = form.record =
+          record.store.getById(action.result.objectid);
+      }
+  
+      if(action.result.data) {
+        form.updateOriginalValues(action.result.data);
+      }
+
+      if(record.newRecord) {
+        // The action object will disappear so 
+        // we don't need to clean this up. The actioncomplete
+        // listeners will fire after we return
+        action.newBeforeSave = true;
+      }
+
+      form.isDirty();
+      this.checkServerChanges(form, action);
+      this.updateRecord(record, action.result);
+
+      if(action.options.cb) {
+        action.options.cb.fn.call(action.options.cb.scope, form, action);
+      }
+      this.fireEvent('save', form.record, action.result);
+      form.record.newBeforeSave = false;
+    }
+
+    form.submitLock = false;
+  },
+  formFailure: function(form, action) {
+
+    if (action.failureType == 'client' && action.options.waitMsg) {
+      Ext.MessageBox.alert('Save failed',
+        'Please fill in all the boxes highlighted in red.');
+    } else if (action.failureType != 'client' &&
+        (!action.result || !action.result.errors)) {
+      Ext.MessageBox.alert('Save failed',
+        'Failed to save the record. Please try again.');
+    } else if (action.result && action.result.errors &&
+        action.result.errors.base) {
+      Ext.MessageBox.alert('Save failed', action.result.errors.base);
+    }
+    // else, Ext will display our validation errors from JsonController.
+    // Read http://extjs.com/deploy/ext/docs/output/Ext.form.TextField.html#config-msgTarget
+    // for more information about your options for styling error messages.
+    // We should however keep the styling consistant across all our modules
+    
+    form.submitLock = false;
+  },
+  updateRecord: function(record, result) {
+    if( result.hidden ) {
+      if ( !record.newRecord &&
+           record.store &&
+           record.store.getById(record.id) )  {
+        record.store.remove(record);
+      }
+    } else {
+      if(record.newRecord) {
+        record.id = result.objectid;
+        record.newRecord = false;
+        record.newBeforeSave = true;
+      }
+  
+      // By using edit, widgets can update the UI if a related record changes 
+      record.json = result.data;
+      record.beginEdit();
+      for(var a in result.data) {
+        var value = result.data[a];
+
+        if(typeof value == 'object') {
+          //record.set only takes non-objects
+          record.data[a] = value;
+        } else {
+          record.set(a, value);
+        }
+      }
+      record.endEdit();
+
+      record.commit();
+    }
+  },
+
+  /*
+   * Load records
+   *
+   */
+  loadData: function(data, id) {
+    var r = new this.recordType(data, id);
+    this.loadRecord(r);
+  },
+  loadRecord: function(record) {},
+  loadForm: function(form, record, panel){
+    //the panel parameter is optional, it is up to the
+    //implementation to pass it or not
+    // TODO needs handle record locking
+    form.record = record;
+
+    if(this.fireEvent('beforeload', form, record, panel) !== false) {
+
+      this.onLoadForm(form, record, panel);
+      this.fireEvent('load', form, record, panel);
+
+      return true;
+    } else {
+      return false;
+    }
+  },
+  onLoadForm: function(form, record, panel) {
+    form.trackResetOnLoad = true;
+    form.loadRecord(record);
+    form.clearInvalid();
+  },
+  fetchRecord: function(id, o) {
+    o.cb = {
+      fn: o.callback,
+      scope: o.scope
+    };
+    o.errmsg = o.errmsg || "Failed to load the record. Please try again.";
+
+    Ext.MessageBox.wait("Loading Record...");
+
+    Ext.Ajax.request(Ext.apply(o, {
+      url: String.format(this.restUrl, id),
+      callback: function(options, success, response) {
+        Ext.MessageBox.updateProgress(1);
+        Ext.MessageBox.hide();
+
+        var result = null;
+        if(success) {
+          result =  Ext.decode(response.responseText);
+        }
+
+        if (success && result.id == id) {
+          var record = new this.recordType(result, id);
+
+          options.cb.fn.call(options.cb.scope || this, record);
+        } else {
+          var msg = (result ? (result.error || options.errmsg) : options.errmsg);
+          Ext.MessageBox.alert('Load record failed', msg);
+        }
+      },
+      scope: this
+    }));
+  },
+
+  /*
+   * Create new records
+   *
+   */
+  newRecord: function(data, initRecord) {
+    var record = new this.recordType(data || {});
+    record.id = 'new';
+    record.newRecord = true;
+
+    if(initRecord !== false) {
+      var keys = record.fields.keys;
+      for(var i = 0, len = keys.length; i < len; i++){
+        if(typeof record.data[keys[i]] == "undefined") {
+          record.data[keys[i]] = "";
+        }
+      }
+
+      this.initializeRecord(record);
+    }
+
+    return record;
+  },
+  createRecord: function(){
+    //This doesn't load it into the dataStore because that should
+    //reflect saved objects, this only exists in the form. The
+    //record will be added into the dataStore if it is saved.
+    var args = arguments;
+    var fn = function() {
+      var record = this.newRecord.apply(this, args);
+      this.loadRecord(record);
+    };
+
+    if(this.parent && this.parent.form &&
+       this.parent.form.record.newRecord) {
+
+      this.parent.save({
+        callback: fn,
+        scope: this
+      });
+    } else {
+      fn.call(this);
+    }
+  },
+  initializeRecord: function(record) {},
+
+  /*
+   * Delete existing Records
+   *
+   */
+  deleteRecord: function(record, cb, scope){
+    this.deleteRecordById(record.id, cb, scope);
+  },
+  deleteRecordById: function(id, cb, scope){
+    // TODO add a retry mechanism, use the spinner. The reason
+    // the msgBox doesn't work is because this method is called
+    // seperately for each record to delete
+    if(this.restUrl) {
+      Ext.Ajax.request({
+        cb: {
+          fn: cb,
+          scope: scope || this
+        },
+        deleting_id: id,
+        url: String.format(this.restUrl, id),
+        method: "DELETE",
+        callback: this.onDeleteById,
+        scope: this
+      });
+    }
+  },
+  onDeleteById: function(options, success, response) {
+    var result = null, id = options.deleting_id;
+    if(success) {
+      result =  Ext.decode(response.responseText);
+    }
+
+    if (success && result.success) {
+      if(options.cb.fn) {
+        options.cb.fn.call(options.cb.scope);
+      }
+      this.fireEvent('delete', id);
+    } else {
+      var msg = (result && result.msg ? result.msg : "Failed to delete the record. Please try again.");
+      Ext.MessageBox.alert('Delete failed', msg);
+    }
+
+    return result;
   }
-
-
 });
 
 SWorks.StoreDataModel = function(store, overrides) {
@@ -208,10 +459,29 @@ SWorks.StoreDataModel = function(store, overrides) {
     recordType: store.recordType
   });
 
-  SWorks.StoreDataModel.superclass.constructor.call(overrides);
+  SWorks.StoreDataModel.superclass.constructor.call(this, overrides);
 }
 Ext.extend(SWorks.StoreDataModel, SWorks.DataModel, {
   reload: function() {
     this.store.reload();
-  }
+  },
+  updateRecord: function(record, result) {
+    SWorks.StoreDataModel.superclass.updateRecord.call(this, record, result);
+    if(record.newBeforeSave) {
+      record.id = record.data.id = result.objectid;
+      this.store.addSorted(record);
+    }
+  },
+  onDeleteById: function(options, success, response) {
+    var result = SWorks.StoreDataModel.superclass.onDeleteById.apply(this, arguments);
+    if(success && result.success) {
+      var id = options.deleting_id;
+      var record = this.store.getById(id);
+      if(record) {
+        this.store.remove(record);
+      }
+    }
+
+    return result;
+  },
 });

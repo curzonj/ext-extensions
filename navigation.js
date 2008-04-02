@@ -49,6 +49,10 @@ SWorks.Menu.loadPanel = function(key) {
     t.el.maskLoading();
     setTimeout(function() {
       if (!panel) {
+        // TODO help enforce testability by only accepting classes to instanciate
+        // and not some blackbox method
+        // SWorks.Menu.panels[key] = panel = new SWorks.Menu.panelFn[key]();
+        
         SWorks.Menu.panels[key] = panel = SWorks.Menu.panelFn[key].call();
       }
 

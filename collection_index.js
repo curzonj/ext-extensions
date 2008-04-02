@@ -46,3 +46,18 @@ Ext.ux.data.CollectionIndex.prototype = {
     this.map = {};
   }
 };
+
+Ext.override(Ext.FormPanel, {
+  createForm_without_collection_index: Ext.FormPanel.prototype.createForm,
+  createForm: function() {
+    var form = this.createForm_without_collection_index();
+    var index = new Ext.ux.data.CollectionIndex(form.items,
+      function(o) {
+        return o.dataIndex;
+      }
+    );
+    form.fields = index.map;
+
+    return form;
+  }
+});
