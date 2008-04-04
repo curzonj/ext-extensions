@@ -1,11 +1,28 @@
+/*globals Ext, SWorks */
 
-SWorks.EditorDialog = function(config, controller) {
-  this.controller = controller;
-  this.dataModel = controller.dataModel;
+SWorks.EditorFactory = {
+  create: function(config, controller) {
+    if (typeof config.loadRecord != 'function') {
+      if(config instanceof Array) {
+        config = { items: config };
+      } else if (typeof config.xtype == 'string') {
+        config = {
+          items: [
+            config
+          ]
+        };
+      }
 
-  SWorks.EditorDialog.superclass.constructor.call(this, config);
-}
-Ext.extend(SWorks.EditorDialog, Ext.Window, {
+      config = new SWorks.DialogEditor(config);
+    }
+
+    config.controller = controller;
+
+    return config;
+  }
+};
+
+SWorks.DialogEditor = Ext.extend(Ext.Window, {
   width: 500,
   height: 300,
   autoCreate: true,
@@ -35,7 +52,7 @@ Ext.extend(SWorks.EditorDialog, Ext.Window, {
       ]
     });
 
-    SWorks.EditorDialog.superclass.initComponent.call(this);
+    SWorks.DialogEditor.superclass.initComponent.call(this);
 
     this.formPanel = this.findByType('form')[0];
     this.formPanel.border = false;
@@ -43,12 +60,18 @@ Ext.extend(SWorks.EditorDialog, Ext.Window, {
     this.form = this.formPanel.form;
   },
 
+  afterRender: function(ct) {
+    SWorks.DialogEditor.superclass.afterRender.call(this, ct);
+    
+    this.controller.initForm(this.form);
+  },
+
   loadRecord: function(record) {
     if(!this.rendered) {
       this.render(Ext.getBody());
     }
 
-    if(this.dataModel.loadForm(this.form, record)) {
+    if(this.controller.dataModel.loadForm(this.form, record)) {
       var saveBtn = this.buttons[0];
 
       if( this.controller.isReadOnly(record) === true ) {
@@ -61,6 +84,7 @@ Ext.extend(SWorks.EditorDialog, Ext.Window, {
       this.show();
     }
 
+    return this.form;
   },
 
   onClickSave: function(trigger, e) {

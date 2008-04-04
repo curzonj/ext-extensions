@@ -1,28 +1,38 @@
 /*globals SWorks, Ext */
 
 SWorks.BaseController = function(overrides) {
+  this.forms = new Ext.util.MixedCollection();
+  this.addEvents( 'ready',
+                  'beforeaction', 'actionfailed', 'actioncomplete',
+                  'beforeload', 'load', 'delete', 'save');
+
   Ext.apply(this, overrides);
-}
+};
 Ext.extend(SWorks.BaseController, Ext.util.Observable, {
   init: function(comp) {
     this.component = comp;
     comp.controller = this;
 
-    if(comp.store && !this.dataModel) {
-      this.dataModel = new SWorks.StoreDataModel(comp.store);
+    if (!(this.dataModel instanceof SWorks.DataModel)) {
+      this.dataModel = this.dataModel || {};
+      Ext.applyIf(this.dataModel, {
+        store: comp.store,
+        foreignKey: comp.foreignKey
+      });
+
+      this.dataModel = new SWorks.StoreDataModel(this.dataModel);
+      this.relayEvents(this.dataModel, ['beforeload', 'load', 'delete', 'save']);
     }
 
     if(comp.editor) {
-      this.editor = comp.editor;
+      this.editor = SWorks.EditorFactory.create(comp.editor, this);
       delete comp.editor;
-
-      if (!this.editor.doLayout) {
-        this.editor = new SWorks.EditorDialog(this.editor, this);
-      }
     }
 
     if(this.component.topToolbar && this.toolbarMgr !== false) {
-      this.toolbarMgr = new (this.toolbarMgr || SWorks.CrudToolbarMgr)(this.component.topToolbar, this);
+      var Type = this.toolbarMgr || SWorks.CrudToolbarMgr;
+      this.toolbarMgr = new Type(this.component.topToolbar, this);
+
       this.component.topToolbar = this.toolbarMgr.getToolbar();
     }
 
@@ -53,16 +63,6 @@ Ext.extend(SWorks.BaseController, Ext.util.Observable, {
     return res;
   },
 
-  loadRecord: function() {
-    var form = this.editor.getRenderedForm();
-
-    // What about my panel 3rd arg?
-    if(this.dataModel.loadForm(form, record)) {
-      this.editor. ??
-
-    }
-  },
-
   saveForm: function(form, o) {
     if( this.isReadOnly(form.record) ) {
       return;
@@ -71,12 +71,26 @@ Ext.extend(SWorks.BaseController, Ext.util.Observable, {
     this.dataModel.saveForm(form, o);
   },
 
-  createRecord: function() {
-    var r = this.dataModel.newRecord();
-    this.editRecord(r);
+  initForm: function(form) {
+    if (!this.forms.contains(form)) {
+      this.forms.add(form);
+
+      this.relayEvents(form, ['beforeaction', 'actionfailed', 'actioncomplete']);
+      var index = new Ext.ux.data.CollectionIndex(form.items,
+        function(o) {
+          return o.dataIndex;
+        }
+      );
+      form.fields = index.map;
+    }
   },
 
-  editRecord: function(record) {
+  createRecord: function() {
+    var r = this.dataModel.newRecord();
+    this.loadRecord(r);
+  },
+
+  loadRecord: function(record) {
     this.editor.loadRecord(record);
   }
 

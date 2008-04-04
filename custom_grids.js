@@ -10,6 +10,8 @@ SWorks.CustomGrid = Ext.extend(Ext.grid.GridPanel, {
   minColumnWidth: 5,
 
   initComponent: function() {
+    this.sm = new Ext.grid.RowSelectionModel({singleSelect:true});
+
     SWorks.CustomGrid.superclass.initComponent.call(this);
 
     this.colModel.defaultSortable = true;

@@ -449,7 +449,9 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
   }
 });
 
-SWorks.StoreDataModel = function(store, overrides) {
+SWorks.StoreDataModel = function(overrides) {
+  var store = overrides.store;
+
   Ext.apply(this, {
     store: store,
     createUrl: store.url,

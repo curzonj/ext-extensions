@@ -62,15 +62,15 @@ SWorks.CrudToolbarMgr.prototype = {
 
   setupHandlers: function(b) {
     if (typeof b == 'object') {
+      var handlerName = ('onClick' + b.text + 'Btn'),
+          detectedHandler = this.controller[handlerName] || this[handlerName];
+
       if (b.text == 'Options' && typeof b.handler == 'undefined') {
         this.buildOptionsMenu(b);
       } else if (typeof b.text == 'string' &&
                  typeof b.handler == 'undefined' &&
-                 typeof this['onClick' + b.text + 'Btn'] == 'function') {
-        Ext.applyIf(b, {
-          handler: this['onClick' + b.text + 'Btn'],
-          scope: this
-        });
+                 typeof detectedHandler == 'function') {
+        b.handler = detectedHandler;
       }
 
       if (typeof b.text == 'string' &&
@@ -81,21 +81,50 @@ SWorks.CrudToolbarMgr.prototype = {
     }
   },
 
+  /*
+   * Default behaviors
+   *
+   * !! These run in the scope of the controller !!
+   *
+   */ 
   onClickAddBtn: function() {
-    this.controller.createRecord();
+    this.createRecord();
   },
 
   onClickEditBtn: function() {
     var r = this.controller.getCurrentRecord();
-    this.controller.editRecord(r);
+    this.loadRecord(r);
   },
 
   onClickRefresh: function() {
-    this.controller.dataModel.reload();
+    this.dataModel.reload();
   },
 
+  onClickDeleteBtn: function() {
+    var r = this.getCurrentRecord();
+    var name = r.data.display_name || 'this item';
+
+    Ext.MessageBox.confirm('Confirm', 'Do you really want to delete '+name+'?', function(btn) {
+      if (btn == 'yes') {
+        this.dataModel.deleteRecord(r);
+      }
+    }, this);
+  },
+
+  onClickHideBtn: function() {
+    var r = this.getCurrentRecord();
+    var name = r.data.display_name || 'this item';
+
+    Ext.MessageBox.confirm('Confirm', 'Do you really want to hide '+name+'?', function(btn) {
+      if (btn == 'yes') {
+        this.dataModel.hideRecord(r);
+      }
+    }, this);
+  },
+  // End default behaviors
+
   onCustomFilterChecked: function(item, checked, filter) {
-    var store = this.controller.dataModel;
+    var store = this.controller.dataModel.store;
 
     if (checked) {
       store.addFilter(filter.filter);
@@ -135,6 +164,10 @@ SWorks.CrudToolbarMgr.prototype = {
           text: v.text,
           checkedHandler: this.onCustomFilterChecked.createDelegate(this, [v], true)
         });
+
+        if (v.isDefault === true) {
+          this.onCustomFilterChecked(null, true, v);
+        }
       }
 
       return filterItems;
