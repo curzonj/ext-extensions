@@ -8,15 +8,20 @@ Ext.ux.HistoryMgr = (function() {
   };
   var firstLocation;
   Ext.extend(PrivateClass, Ext.util.Observable, {
-    track: function(name, data) {
-      dhtmlHistory.add(name, data);
+    track: function(name, loc, data) {
+      document.title = name;
+      if (typeof loc != 'string') {
+        data = loc;
+        loc = name;
+      }
+      dhtmlHistory.add(loc, data);
     },
     currentLocation: function() {
       return dhtmlHistory.getCurrentLocation();
     },
-    setInitialLocation: function(name) {
-      firstLocation = name;
-      this.fireEvent('initial', name);
+    setInitialLocation: function(loc) {
+      firstLocation = loc;
+      this.fireEvent('initial', loc);
     },
     getInitialLocation: function() {
       return firstLocation;
