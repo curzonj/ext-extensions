@@ -1,7 +1,6 @@
-/*globals SWorks, Ext, URLs */
+/*globals SWorks, Ext */
 
 SWorks.CurrentUser = function() {
-  this.url = URLs.current_permissions;
   this.permissions = {};
   this.loggedIn = false;
 
@@ -14,12 +13,16 @@ SWorks.CurrentUser = function() {
   this.on('loggedOut', function() { this.setPermissions(null); }, this);
 };
 Ext.extend(SWorks.CurrentUser, Ext.util.Observable, {
+  setUrls: function(hash) {
+    this.permissionsUrl = hash.permissions;
+    this.logoutUrl = hash.logout;
+  },
   isLoggedIn: function() {
     return this.loggedIn;
   },
   logout: function(cb, scope) {
     Ext.Ajax.request({
-      url: URLs.logout,
+      url: this.logoutUrl,
       callback: function(options, success, response) {
         if(success) {
           SWorks.CurrentUser.fireEvent('loggedOut');
@@ -48,7 +51,7 @@ Ext.extend(SWorks.CurrentUser, Ext.util.Observable, {
   },
   load: function() {
     Ext.Ajax.request({
-      url: this.url,
+      url: this.permissionsUrl,
       success: function(response) {
         try {
           var result = Ext.decode(response.responseText);
@@ -78,9 +81,6 @@ Ext.extend(SWorks.CurrentUser, Ext.util.Observable, {
 SWorks.CurrentUser = new SWorks.CurrentUser();
 
 SWorks.AccountMenu = Ext.extend(Ext.Panel, {
-  loginUrl: URLs.session,
-  menuUrl: URLs.account_menu,
-
   initComponent: function() {
     SWorks.AccountMenu.superclass.initComponent.call(this);
     //This doesn't render yet, so it should be pretty quick
@@ -180,7 +180,7 @@ SWorks.AccountMenu = Ext.extend(Ext.Panel, {
           win.keyMap.disable();
 
           panel.form.submit({
-            url: url,
+            url: this.loginUrl,
             waitMsg: 'Please wait...',
             success: function(form, action) {
               win.submitLock = false;

@@ -99,12 +99,12 @@ SWorks.CrudToolbarMgr.prototype = {
   },
 
   onClickEditBtn: function() {
-    var r = this.controller.getCurrentRecord();
+    var r = this.getCurrentRecord();
     this.loadRecord(r);
   },
 
   onClickRefresh: function() {
-    this.controller.dataModel.reload();
+    this.dataModel.reload();
   },
 
   onClickDeleteBtn: function() {
@@ -149,7 +149,7 @@ SWorks.CrudToolbarMgr.prototype = {
       text: 'Refresh',
       iconCls: 'brefresh',
       handler: this.onClickRefresh,
-      scope: this
+      scope: this.controller
     });
 
     Ext.applyIf(btn, {

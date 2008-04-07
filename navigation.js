@@ -1,17 +1,5 @@
 /*globals SWorks, Ext, URLs */
 
-// TODO Reorganize this file with application.js
-SWorks.NavigationTree = Ext.extend(SWorks.DynamicTree, {
-  url: URLs.navigation,
-
-  initComponent: function() {
-    SWorks.NavigationTree.superclass.initComponent.call(this);
-
-    SWorks.CurrentUser.on('loggedIn', this.load, this);
-    SWorks.CurrentUser.on('loggedOut', this.load, this);
-  }
-});
-
 // This is a helper for registering listeners to load content from the
 // navigation menu. 
 //   key: The menu item's key and the id of your component. You can customize the
