@@ -22,6 +22,24 @@ SWorks.Menu = {
   panels: {},
   panelFn: {}
 };
+SWorks.Menu.registerClass = function (key, Klass){ 
+  console.assert(typeof Klass.prototype.doLayout == 'function', Klass);
+
+  SWorks.Menu.panelFn[key] = function() {
+    return new Klass();
+  };
+
+  Ext.ComponentMgr.onAvailable(SWorks.Menu.config.navigation_id, function(tree){
+    tree.on('load', function() {
+      var node = tree.getNodeById(key);
+      if (node) {
+        node.on('click', function(){
+          SWorks.Menu.loadPanel(key);
+        });
+      }
+    });
+  });
+};
 SWorks.Menu.register = function (key, fn, scope){ 
   SWorks.Menu.panelFn[key] = fn;
   Ext.ComponentMgr.onAvailable(SWorks.Menu.config.navigation_id, function(tree){
@@ -53,7 +71,7 @@ SWorks.Menu.loadPanel = function(key) {
         // and not some blackbox method
         // SWorks.Menu.panels[key] = panel = new SWorks.Menu.panelFn[key]();
         
-        SWorks.Menu.panels[key] = panel = SWorks.Menu.panelFn[key].call();
+        SWorks.Menu.panels[key] = panel = SWorks.Menu.panelFn[key].call(window);
       }
 
       t.add(panel);

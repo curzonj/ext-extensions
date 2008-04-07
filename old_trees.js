@@ -14,11 +14,6 @@ SWorks.DynamicTree = Ext.extend(Ext.tree.TreePanel, {
       text: 'Root Node (invisible)'
     });
     this.setRootNode(root);
-    if (this.initialData) {
-      this.setChildren(this.initialData);
-    } else if (this.url) {
-      this.load();
-    }
   },
   setChildren: function(children) {
     var root = this.getRootNode();

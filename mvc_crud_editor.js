@@ -1,27 +1,5 @@
 /*globals Ext, SWorks */
 
-SWorks.EditorFactory = {
-  create: function(config, controller) {
-    if (typeof config.loadRecord != 'function') {
-      if(config instanceof Array) {
-        config = { items: config };
-      } else if (typeof config.xtype == 'string') {
-        config = {
-          items: [
-            config
-          ]
-        };
-      }
-
-      config = new SWorks.DialogEditor(config);
-    }
-
-    config.controller = controller;
-
-    return config;
-  }
-};
-
 SWorks.DialogEditor = Ext.extend(Ext.Window, {
   width: 500,
   height: 300,

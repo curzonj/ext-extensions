@@ -1,39 +1,28 @@
 /*globals SWorks, Ext */
 
-SWorks.BaseController = function(overrides) {
+SWorks.BaseController = function() {
   this.forms = new Ext.util.MixedCollection();
   this.addEvents( 'ready',
                   'beforeaction', 'actionfailed', 'actioncomplete',
                   'beforeload', 'load', 'delete', 'save');
-
-  Ext.apply(this, overrides);
 };
 Ext.extend(SWorks.BaseController, Ext.util.Observable, {
+  dataModelClass: SWorks.StoreDataModel,
+  toolbarMgrClass: SWorks.CrudToolbarMgr,
+  editorClass: SWorks.DialogEditor,
+
   init: function(comp) {
     this.component = comp;
     comp.controller = this;
 
-    if (!(this.dataModel instanceof SWorks.DataModel)) {
-      this.dataModel = this.dataModel || {};
-      Ext.applyIf(this.dataModel, {
-        store: comp.store,
-        foreignKey: comp.foreignKey
-      });
+    this.dataModel = this.buildDataModel(comp);
 
-      this.dataModel = new SWorks.StoreDataModel(this.dataModel);
-      this.relayEvents(this.dataModel, ['beforeload', 'load', 'delete', 'save']);
-    }
+    this.editor = this.buildEditor(comp);
+    this.editor.controller = this;
 
-    if(comp.editor) {
-      this.editor = SWorks.EditorFactory.create(comp.editor, this);
-      delete comp.editor;
-    }
-
-    if(this.component.topToolbar && this.toolbarMgr !== false) {
-      var Type = this.toolbarMgr || SWorks.CrudToolbarMgr;
-      this.toolbarMgr = new Type(this.component.topToolbar, this);
-
-      this.component.topToolbar = this.toolbarMgr.getToolbar();
+    if(comp.topToolbar) {
+      this.toolbarMgr = new this.toolbarMgrClass(comp.topToolbar, this);
+      comp.topToolbar = this.toolbarMgr.getToolbar();
     }
 
     /* TODO 
@@ -42,6 +31,37 @@ Ext.extend(SWorks.BaseController, Ext.util.Observable, {
      */ 
 
     comp.on('render', this.onRender, this);
+  },
+
+  buildEditor: function(comp) {
+    var config = comp.editor;
+
+    if (typeof config.loadRecord != 'function') {
+      if(config instanceof Array) {
+        config = { items: config };
+      } else if (config.xtype == 'form') {
+        config = {
+          items: [
+            config
+          ]
+        };
+      }
+
+      config = new this.editorClass(config);
+      delete comp.editor;
+    }
+
+    return config;
+  },
+
+  buildDataModel: function(comp) {
+    var dm = new this.dataModelClass({
+      store: comp.store,
+      foreignKey: comp.foreignKey
+    });
+    this.relayEvents(dm, ['beforeload', 'load', 'delete', 'save']);
+
+    return dm;
   },
 
   onRender: function(comp) {

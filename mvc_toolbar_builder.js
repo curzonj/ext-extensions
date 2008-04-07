@@ -11,6 +11,7 @@ SWorks.CrudToolbarMgr = function(tbar, controller) {
   for(var i=0;i<this.tbar.buttons.length;i++) {
     var b = this.tbar.buttons[i];
 
+    this.hookFilter(b);
     this.setupHandlers(b);
     this.setPermissions(b);
   }
@@ -23,7 +24,7 @@ SWorks.CrudToolbarMgr.prototype = {
 
   checkToolbarButtons: function() {
     for(var i = 0; i < this.tbar.items.items.length; i++){
-      var b = this.topToolbar.items.items[i];
+      var b = this.tbar.items.items[i];
       if(b.type == "button") {
         if(this.tbButtonCheck(b)) {
           b.enable();
@@ -44,6 +45,12 @@ SWorks.CrudToolbarMgr.prototype = {
 
   getToolbar: function() {
     return this.tbar;
+  },
+
+  hookFilter: function(b) {
+    if (b.xtype == 'filter' && typeof b.store == 'undefined') {
+      b.store = this.controller.component.store;
+    }
   },
 
   setPermissions: function(b) {
@@ -97,7 +104,7 @@ SWorks.CrudToolbarMgr.prototype = {
   },
 
   onClickRefresh: function() {
-    this.dataModel.reload();
+    this.controller.dataModel.reload();
   },
 
   onClickDeleteBtn: function() {
@@ -124,7 +131,7 @@ SWorks.CrudToolbarMgr.prototype = {
   // End default behaviors
 
   onCustomFilterChecked: function(item, checked, filter) {
-    var store = this.controller.dataModel.store;
+    var store = this.controller.component.store;
 
     if (checked) {
       store.addFilter(filter.filter);
@@ -134,7 +141,7 @@ SWorks.CrudToolbarMgr.prototype = {
   },
 
   buildOptionsMenu: function(btn) {
-    var list = this.buildFilterList(this.controller.customFilters) || [];
+    var list = this.buildFilterList(this.controller.component.customFilters) || [];
     if (list.length > 0) {
       list.push('-');
     }
