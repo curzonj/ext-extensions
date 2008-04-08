@@ -180,7 +180,7 @@ SWorks.AccountMenu = Ext.extend(Ext.Panel, {
           win.keyMap.disable();
 
           panel.form.submit({
-            url: this.loginUrl,
+            url: url,
             waitMsg: 'Please wait...',
             success: function(form, action) {
               win.submitLock = false;

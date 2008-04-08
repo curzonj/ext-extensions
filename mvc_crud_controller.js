@@ -70,16 +70,22 @@ Ext.extend(SWorks.BaseController, Ext.util.Observable, {
 
   initEvents: Ext.emptyFn,
 
-  setParent: function(p) {
-    this.parent = p;
+  getParent: function() {
+    if(typeof this.parent == 'undefined') {
+      this.parent = this.component.findParentBy(function(c) {
+        return (typeof c.controller != 'undefined');
+      });
+    }
+
+    return this.parent;
   },
 
   isReadOnly: function() {
     var res = !SWorks.CurrentUser.has(this.rwPerm);
     // TODO check permissions
-    if (this.parent) {
+/*    if (this.parent) {
       res = (res || this.parent.isReadOnly());
-    }
+    } */
     return res;
   },
 
@@ -121,7 +127,61 @@ SWorks.GridController = Ext.extend(SWorks.BaseController, {
   onRender: function(comp) {
     SWorks.GridController.superclass.onRender.call(this);
 
+    if(comp.foreignKey && this.getParent()) {
+      this.checkParentColumns(comp.foreignKey);
+      this.linkToParent();
+    }
     this.component.store.load();
+  },
+
+  checkParentColumns: function(idCol) {
+    if(idCol) {
+      this.parentIdColumn = idCol;
+
+      var column = idCol.replace(/id/, "type");
+      var value = (this.dataModel.recordType.prototype.fields.keys.indexOf(column) != -1);
+
+      if(value) {
+        this.parentTypeColumn = idCol.replace(/id/, "type");
+      } else {
+        this.parentTypeColumn = null;
+      }
+    }
+  },
+  linkToParent: function() {
+    var p = this.getParent();
+
+    p.controller.on('load', function(form, record) {
+      if(!p.form || p.form == form) {
+        this.setRecordRelation(p.form.record);
+        this.component.store.addFilter(this.parentFilter, this);
+      }
+    }, this);
+    p.controller.on('save', function(record) {
+      if (record == p.form.record) {
+        this.setRecordRelation(p.form.record);
+      }
+    }, this);
+  },
+
+  setRecordRelation: function(r) {
+    if(r) {
+      this.parentFilter.relation_id = r.id;
+      //This deals with polymorphic relations
+      this.parentFilter.relation_type = r.store ? (r.store.klass || r.data.model) : r.data.model;
+    }
+  },
+
+  parentFilter: function(record){
+    var idMatch = (record.data[this.parentIdColumn] == this.parentFilter.relation_id);
+    var typeMatch = true;
+
+    //Provides automatic filtering on polymophic relations
+    if(this.parentTypeColumn) {
+      typeMatch = (record.data[this.parentTypeColumn] == this.parentFilter.relation_type);
+    }
+
+    return (idMatch && typeMatch);
   },
 
   initEvents: function(c) {

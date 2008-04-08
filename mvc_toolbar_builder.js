@@ -54,7 +54,12 @@ SWorks.CrudToolbarMgr.prototype = {
   },
 
   setPermissions: function(b) {
-    if (b.text == 'Add') {
+    if (b.text == 'Refresh') {
+      Ext.applyIf(b, {
+        gridOperation: true,
+        readOnly: true
+      });
+    } else if (b.text == 'Add') {
       Ext.applyIf(b, {
         gridOperation: true,
         readOnly: false
@@ -103,7 +108,7 @@ SWorks.CrudToolbarMgr.prototype = {
     this.loadRecord(r);
   },
 
-  onClickRefresh: function() {
+  onClickRefreshBtn: function() {
     this.dataModel.reload();
   },
 
@@ -148,7 +153,7 @@ SWorks.CrudToolbarMgr.prototype = {
     list.push({
       text: 'Refresh',
       iconCls: 'brefresh',
-      handler: this.onClickRefresh,
+      handler: this.onClickRefreshBtn,
       scope: this.controller
     });
 

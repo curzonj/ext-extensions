@@ -9,7 +9,6 @@ SWorks.DialogEditor = Ext.extend(Ext.Window, {
   resizable: true,
   draggable: true,
   collapsible: false,
-  defaults: { border: false },
   title: 'Edit',
   layout: 'fit',
 

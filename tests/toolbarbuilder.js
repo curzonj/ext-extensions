@@ -1,4 +1,3 @@
-
 function testSetHandlersAndPermissions() {
   /* Should:
    *   find the handler on the controller
@@ -21,13 +20,14 @@ function testSetHandlersAndPermissions() {
 
   var existingScope = 'existing scope';
   var existingStore = 'already have one';
-  var options, add, edit, search1, search2, hide, deleteBtn, test;
+  var options, refresh, add, edit, search1, search2, hide, deleteBtn, test;
   var tbConfig = [
     options = { text: 'Options'}, '-',
     'Preset search',
     search1 = { xtype: 'filter', store: existingStore }, '-',
     'Quicksearch',
     search2 = { xtype: 'filter' }, '-',
+    refresh = { text: 'Refresh' },
     add = { text: 'Add', scope: existingScope },
     edit = { text: 'Edit' },
     hide = { text: 'Hide' },
@@ -44,8 +44,8 @@ function testSetHandlersAndPermissions() {
   for(var i=0;i<options.menu.length;i++){
     var mitem = options.menu[i];
     if(mitem.text == "Refresh") {
-      assert('refresh handler', mitem.handler === tbarMgr.onClickRefresh);
-      assert('refresh scope', mitem.scope === tbarMgr);
+      assert('refresh menu item handler', mitem.handler === tbarMgr.onClickRefreshBtn);
+      assert('refresh menu item scope', mitem.scope === mockController);
     }
   }
   assert('options gridop', options.gridOperation === true);
@@ -53,6 +53,11 @@ function testSetHandlersAndPermissions() {
 
   assert('existing store replaced', search1.store === existingStore);
   assert('store not detected', search2.store === detectedGridStore);
+
+  assert('refresh gridop', refresh.gridOperation === true);
+  assert('refresh ro', refresh.readOnly === true);
+  assert('refresh handler', refresh.handler === tbarMgr.onClickRefreshBtn);
+  assert('refresh scope', refresh.scope === mockController);
 
   assert('add gridop', add.gridOperation === true);
   assert('add ro', add.readOnly === false);
@@ -85,7 +90,7 @@ function testOnClickEditBtn() {
   var mockControl = new MockControl();
   var appController = mockControl.createMock(SWorks.GridController);
   appController.expects().getCurrentRecord().andReturn(record);
-  appController.expects(record).loadRecord();
+  appController.expects().loadRecord(record);
 
   var tbarMgr = new SWorks.CrudToolbarMgr([{ text: 'Edit' }], appController);
   var newTbar = tbarMgr.getToolbar();

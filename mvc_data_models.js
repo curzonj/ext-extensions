@@ -408,6 +408,13 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
    * Delete existing Records
    *
    */
+  hideRecord: function(record) {
+    this.updateAttribute({
+      record: record,
+      field: 'hidden',
+      value: true
+    });
+  },
   deleteRecord: function(record, cb, scope){
     this.deleteRecordById(record.id, cb, scope);
   },
