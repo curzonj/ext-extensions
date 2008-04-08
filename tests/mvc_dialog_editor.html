@@ -1,0 +1,41 @@
+<!-- Standard Code -->
+
+<html><head>
+    
+<script type="text/javascript" src="../../ext/adapter/ext/ext-base.js"></script>
+<script type="text/javascript" src="../../ext/ext-all-debug.js"></script>
+<script type="text/javascript" src="../../jsunit/app/jsUnitCore.js"></script>
+<script type="text/javascript" src="jsmock.js"></script>
+<script type="text/javascript" src="helpers.js"></script>
+
+<!-- End Standard Code -->
+
+<script type="text/javascript" src="../mvc_crud_controller.js"></script>
+<script type="text/javascript" src="../mvc_crud_editor.js"></script>
+
+</head><body><script type="text/javascript">
+
+function setUpPage() {
+  JSMock.extend(this);
+  replaceAjaxRequest();
+
+  setUpPageStatus = 'complete'; 
+}
+
+function testAfterRender() {
+  appController = createMock(SWorks.GridController);
+  appController.expects().initForm(TypeOf.isA(Ext.form.BasicForm));
+
+  var editor = new SWorks.DialogEditor({
+    controller: appController,
+    items: {
+      xtype: 'form',
+      items: {
+        xtype: 'hidden'
+      }
+    }
+  });
+  editor.show();
+}
+
+</script></body></html>

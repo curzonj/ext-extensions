@@ -1,3 +1,5 @@
+Ext.namespace('Ext.ux.data');
+
 Ext.ux.data.CollectionIndex = function(coll, name, fn) {
   if(typeof name == 'function') {
     fn = name;

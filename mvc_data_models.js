@@ -23,6 +23,16 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
 
     this.postToRecord(o.record.id, o);
   },
+  sendEvent: function(record, eventName, failedMsg){
+    this.postToRecord(record.id, {
+      errmsg: failedMsg,
+      record: record,
+      params: {
+        'event': eventName,
+        '_method': 'put'
+      }
+    });
+  },
   updateAttribute: function(options) {
     /* options:
      *   id: id of the record you want to update
@@ -165,14 +175,18 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     }
     form.submitLock = true;
 
+    this.dealWithEmptyCombos(form);
+
     var record = form.record;
     o = this.setUpdateOrCreate(record, o);
     if(typeof o.waitMsg == 'undefined') {
       o.waitMsg = o.waitMsg || "Saving record...";
     }
 
-    if(this.parent) {
-      Ext.applyIf(o.params, this.getParentRelAttrs(record));
+    if(this.foreignKey && this.controller &&
+       this.controller.getParent()) {
+      var p = this.controller.getParent();
+      Ext.applyIf(o.params, this.getParentRelAttrs(p.form.record));
     }
 
     if(o.callback) {
@@ -193,6 +207,30 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       failure: this.formFailure,
       scope: this
     }));
+  },
+  dealWithEmptyCombos: function(form) {
+    var el = form.el.dom.elements;
+    for(var i=0;i<el.length;i++) {
+      var value = el[i].value;
+      if(el[i].value == "Select one..." && el[i].name) {
+        el[i].value = "";
+      }
+    }
+  },
+  getParentRelAttrs: function(r) {
+    var values = {};
+    
+    var idField = String.format(this.parameterTemplate, this.foreignKey);
+    values[idField] = r.id;
+
+    var typeColumn = this.foreignKey.replace(/id/, "type");
+    if (this.recordType.prototype.fields.keys.indexOf(typeColumn) != -1) {
+      var typeField = String.format(this.parameterTemplate, typeColumn);
+
+      values[typeField] = r.store ? (r.store.klass || r.data.model) : r.data.model
+    }
+
+    return values;
   },
   checkServerChanges: function(form, action) {
     // The server may not return the same data we sent it,
@@ -381,27 +419,6 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
 
     return record;
   },
-  createRecord: function(){
-    //This doesn't load it into the dataStore because that should
-    //reflect saved objects, this only exists in the form. The
-    //record will be added into the dataStore if it is saved.
-    var args = arguments;
-    var fn = function() {
-      var record = this.newRecord.apply(this, args);
-      this.loadRecord(record);
-    };
-
-    if(this.parent && this.parent.form &&
-       this.parent.form.record.newRecord) {
-
-      this.parent.save({
-        callback: fn,
-        scope: this
-      });
-    } else {
-      fn.call(this);
-    }
-  },
   initializeRecord: function(record) {},
 
   /*
@@ -464,7 +481,6 @@ SWorks.StoreDataModel = function(overrides) {
     createUrl: store.url,
     restUrl: store.url + '/{0}',
     parameterTemplate: store.model + "[{0}]",
-    daoClass: store.klass,
     recordType: store.recordType
   });
 

@@ -1,5 +1,7 @@
 /*globals SWorks, Ext */
 
+Ext.namespace("SWorks");
+
 SWorks.BaseController = function() {
   this.forms = new Ext.util.MixedCollection();
   this.addEvents( 'ready',
@@ -56,6 +58,7 @@ Ext.extend(SWorks.BaseController, Ext.util.Observable, {
 
   buildDataModel: function(comp) {
     var dm = new this.dataModelClass({
+      controller: this,
       store: comp.store,
       foreignKey: comp.foreignKey
     });
@@ -98,11 +101,13 @@ Ext.extend(SWorks.BaseController, Ext.util.Observable, {
   },
 
   initForm: function(form) {
+
     if (!this.forms.contains(form)) {
       this.forms.add(form);
 
       this.relayEvents(form, ['beforeaction', 'actionfailed', 'actioncomplete']);
-      var index = new Ext.ux.data.CollectionIndex(form.items,
+
+      var index = new Ext.ux.data.CollectionIndex(form.items, 'dataIndex',
         function(o) {
           return o.dataIndex;
         }
@@ -112,8 +117,19 @@ Ext.extend(SWorks.BaseController, Ext.util.Observable, {
   },
 
   createRecord: function() {
-    var r = this.dataModel.newRecord();
-    this.loadRecord(r);
+    var p = this.getParent();
+
+    if (this.component.foreignKey && p &&
+        p.form.isDirty()) {
+
+      p.controller.saveForm(p.form, {
+        callback: this.createRecord,
+        scope: this
+      });
+    } else {
+      var r = this.dataModel.newRecord();
+      this.loadRecord(r);
+    }
   },
 
   loadRecord: function(record) {
@@ -168,8 +184,21 @@ SWorks.GridController = Ext.extend(SWorks.BaseController, {
     if(r) {
       this.parentFilter.relation_id = r.id;
       //This deals with polymorphic relations
-      this.parentFilter.relation_type = r.store ? (r.store.klass || r.data.model) : r.data.model;
+      this.parentFilter.relation_type = this.getParentRecordModel(r);
     }
+  },
+
+  getParentRecord: function() {
+    this.getParent() ? this.getParent().form.record : null;
+  },
+
+  getParentRecordModel: function(r) {
+    var p = this.getParent();
+    r = r || this.getParentRecord();
+
+    return (typeof r.store == 'object') ? r.store.klass :
+              ( r.data.klass || ( (p && typeof p.store == 'object') ?
+                 p.store.klass : ''));
   },
 
   parentFilter: function(record){

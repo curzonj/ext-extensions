@@ -1,5 +1,7 @@
 /*globals SWorks, Ext */
 
+Ext.namespace('SWorks');
+
 SWorks.CrudToolbarMgr = function(tbar, controller) {
   this.controller = controller;
   if ( tbar instanceof Array ) {

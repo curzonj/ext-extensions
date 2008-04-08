@@ -1,3 +1,27 @@
+<!-- Standard Code -->
+
+<html><head>
+
+<script type="text/javascript" src="../../ext/adapter/ext/ext-base.js"></script>
+<script type="text/javascript" src="../../ext/ext-all-debug.js"></script>
+<script type="text/javascript" src="../../jsunit/app/jsUnitCore.js"></script>
+<script type="text/javascript" src="jsmock.js"></script>
+<script type="text/javascript" src="helpers.js"></script>
+
+<!-- End Standard Code -->
+
+<script type="text/javascript" src="../mvc_crud_controller.js"></script>
+<script type="text/javascript" src="../mvc_toolbar_builder.js"></script>
+
+</head><body><script type="text/javascript">
+
+function setUpPage() {
+  JSMock.extend(this);
+  replaceAjaxRequest();
+
+  setUpPageStatus = 'complete'; 
+}
+
 function testSetHandlersAndPermissions() {
   /* Should:
    *   find the handler on the controller
@@ -9,7 +33,7 @@ function testSetHandlersAndPermissions() {
     addFilter: function() {},
     removeFilter: function() {}
   };
-  var mockController = {
+  var dummyController = {
     component: {
       store: detectedGridStore
     },
@@ -35,7 +59,7 @@ function testSetHandlersAndPermissions() {
     test = { text: 'Test' }
   ];
 
-  var tbarMgr = new SWorks.CrudToolbarMgr(tbConfig, mockController);
+  var tbarMgr = new SWorks.CrudToolbarMgr(tbConfig, dummyController);
   var newTbar = tbarMgr.getToolbar();
   assertNotUndefined(newTbar);
 
@@ -45,7 +69,7 @@ function testSetHandlersAndPermissions() {
     var mitem = options.menu[i];
     if(mitem.text == "Refresh") {
       assert('refresh menu item handler', mitem.handler === tbarMgr.onClickRefreshBtn);
-      assert('refresh menu item scope', mitem.scope === mockController);
+      assert('refresh menu item scope', mitem.scope === dummyController);
     }
   }
   assert('options gridop', options.gridOperation === true);
@@ -57,7 +81,7 @@ function testSetHandlersAndPermissions() {
   assert('refresh gridop', refresh.gridOperation === true);
   assert('refresh ro', refresh.readOnly === true);
   assert('refresh handler', refresh.handler === tbarMgr.onClickRefreshBtn);
-  assert('refresh scope', refresh.scope === mockController);
+  assert('refresh scope', refresh.scope === dummyController);
 
   assert('add gridop', add.gridOperation === true);
   assert('add ro', add.readOnly === false);
@@ -72,23 +96,20 @@ function testSetHandlersAndPermissions() {
 
   assert('hide gridop', typeof hide.gridOperation === 'undefined');
   assert('hide ro', typeof hide.readOnly === 'undefined');
-  assert('hide handler', hide.handler === mockController.onClickHideBtn);
-  assert('hide scope', hide.scope === mockController);
+  assert('hide handler', hide.handler === dummyController.onClickHideBtn);
+  assert('hide scope', hide.scope === dummyController);
 
   assert('deleteBtn', deleteBtn.handler === tbarMgr.onClickDeleteBtn);
-  assert('deleteBtn', deleteBtn.scope === mockController);
+  assert('deleteBtn', deleteBtn.scope === dummyController);
 
-  assert('outside handler', test.handler === mockController.onClickTestBtn);
-  assert('outside scope', test.scope === mockController);
+  assert('outside handler', test.handler === dummyController.onClickTestBtn);
+  assert('outside scope', test.scope === dummyController);
 }
 
 function testOnClickEditBtn() {
-  inform('running onClickEditBtn');
-
   var record = {};
 
-  var mockControl = new MockControl();
-  var appController = mockControl.createMock(SWorks.GridController);
+  var appController = createMock(SWorks.GridController);
   appController.expects().getCurrentRecord().andReturn(record);
   appController.expects().loadRecord(record);
 
@@ -98,6 +119,7 @@ function testOnClickEditBtn() {
 
   btn.handler.call(btn.scope);
 
-  mockControl.verify();
+  verifyMocks();
 }
 
+</script></body></html>

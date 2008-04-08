@@ -56,8 +56,13 @@ SWorks.GridScrollSaver.prototype = {
     grid.on('activate', returnToSavedPosition, grid);
 
     grid.on('render', function() {
-      grid.ownerCt.on('afterlayout', returnToSavedPosition, grid);
       grid.view.on('refresh',        returnToSavedPosition, grid);
+
+      if(grid.ownerCt) {
+        grid.ownerCt.on('afterlayout', returnToSavedPosition, grid);
+      } else {
+        grid.on('afterlayout', returnToSavedPosition, grid);
+      }
     });
   },
 };
