@@ -344,7 +344,6 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     var r = new this.recordType(data, id);
     this.loadRecord(r);
   },
-  loadRecord: function(record) {},
   loadForm: function(form, record, panel){
     //the panel parameter is optional, it is up to the
     //implementation to pass it or not

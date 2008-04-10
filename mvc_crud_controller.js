@@ -26,11 +26,6 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
       comp.topToolbar = this.toolbarMgr.getToolbar();
     }
 
-    /* TODO 
-     *   parent management
-     *   grid.loadRecord?
-     */ 
-
     comp.on('render', this.onRender, this);
   },
 
