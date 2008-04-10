@@ -2,22 +2,21 @@
 
 Ext.namespace("SWorks");
 
-SWorks.BaseController = function() {
+SWorks.AbstractController = function() {
   this.forms = new Ext.util.MixedCollection();
   this.addEvents( 'ready',
                   'beforeaction', 'actionfailed', 'actioncomplete',
                   'beforeload', 'load', 'delete', 'save');
 };
-Ext.extend(SWorks.BaseController, Ext.util.Observable, {
-  dataModelClass: SWorks.StoreDataModel,
+Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
   toolbarMgrClass: SWorks.CrudToolbarMgr,
-  editorClass: SWorks.DialogEditor,
 
   init: function(comp) {
     this.component = comp;
     comp.controller = this;
 
     this.dataModel = this.buildDataModel(comp);
+    this.relayEvents(this.dataModel, ['beforeload', 'load', 'delete', 'save']);
 
     this.editor = this.buildEditor(comp);
     this.editor.controller = this;
@@ -49,38 +48,15 @@ Ext.extend(SWorks.BaseController, Ext.util.Observable, {
         };
       }
 
-      config = new this.editorClass(config);
+      config = new SWorks.DialogEditor(config);
       delete comp.editor;
     }
 
     return config;
   },
 
-  buildDataModel: function(comp) {
-    var dm = new this.dataModelClass({
-      controller: this,
-      store: comp.store,
-      foreignKey: comp.foreignKey
-    });
-    this.relayEvents(dm, ['beforeload', 'load', 'delete', 'save']);
-
-    return dm;
-  },
-
   onRender: function(comp) {
-    this.initEvents(this.component);
-  },
-
-  initEvents: Ext.emptyFn,
-
-  getParent: function() {
-    if(typeof this.parent == 'undefined') {
-      this.parent = this.component.findParentBy(function(c) {
-        return (typeof c.controller != 'undefined');
-      });
-    }
-
-    return this.parent;
+    this.findParentComponent();
   },
 
   isReadOnly: function() {
@@ -116,106 +92,68 @@ Ext.extend(SWorks.BaseController, Ext.util.Observable, {
     }
   },
 
+  saveIfNeeded: function(childId, o) {
+    var form = this.forms.get(childId);
+    if(form && form.isDirty()) {
+      this.saveform(form, o);
+    } else if (o.callback) {
+      o.callback.call(o.scope);
+    }
+  },
+
   createRecord: function() {
-    var p = this.getParent();
+    var f = function() {
+      var r = this.dataModel.newRecord();
 
-    if (this.component.foreignKey && p &&
-        p.form.isDirty()) {
+      this.setDefaults(r);
+      this.loadRecord(r);
+    };
 
-      p.controller.saveForm(p.form, {
+    if (this.parent) {
+      this.parent.saveIfNeeded(this.childId, {
         callback: this.createRecord,
         scope: this
       });
     } else {
-      var r = this.dataModel.newRecord();
-      this.loadRecord(r);
+      f.call(this);
     }
   },
+  setDefaults: Ext.emptyFn,
 
   loadRecord: function(record) {
     this.editor.loadRecord(record);
-  }
+  },
 
+  findParentComponent: function() {
+    var pcomp = this.component.findParentBy(function(c) {
+      return (typeof c.controller != 'undefined');
+    });
+
+    if(pcomp) {
+      this.childId = pcomp.form.id;
+      this.parent = pcomp.controller;
+    }
+  }
 });
 
-SWorks.GridController = Ext.extend(SWorks.BaseController, {
+SWorks.GridController = Ext.extend(SWorks.AbstractController, {
+
+  buildDataModel: function(comp) {
+    return new SWorks.StoreDataModel({
+      controller: this,
+      store: comp.store,
+      foreignKey: comp.foreignKey
+    });
+  },
 
   onRender: function(comp) {
-    SWorks.GridController.superclass.onRender.call(this);
+    SWorks.GridController.superclass.onRender.call(this, comp);
 
-    if(comp.foreignKey && this.getParent()) {
-      this.checkParentColumns(comp.foreignKey);
-      this.linkToParent();
+    if(this.parent) {
+      this.dataModel.linkToParent(this.parent, this.childId);
+    } else {
+      comp.store.load();
     }
-    this.component.store.load();
-  },
-
-  checkParentColumns: function(idCol) {
-    if(idCol) {
-      this.parentIdColumn = idCol;
-
-      var column = idCol.replace(/id/, "type");
-      var value = (this.dataModel.recordType.prototype.fields.keys.indexOf(column) != -1);
-
-      if(value) {
-        this.parentTypeColumn = idCol.replace(/id/, "type");
-      } else {
-        this.parentTypeColumn = null;
-      }
-    }
-  },
-  linkToParent: function() {
-    var p = this.getParent();
-
-    p.controller.on('load', function(form, record) {
-      if(!p.form || p.form == form) {
-        this.setRecordRelation(p.form.record);
-        this.component.store.addFilter(this.parentFilter, this);
-      }
-    }, this);
-    p.controller.on('save', function(record) {
-      if (record == p.form.record) {
-        this.setRecordRelation(p.form.record);
-      }
-    }, this);
-  },
-
-  setRecordRelation: function(r) {
-    if(r) {
-      this.parentFilter.relation_id = r.id;
-      //This deals with polymorphic relations
-      this.parentFilter.relation_type = this.getParentRecordModel(r);
-    }
-  },
-
-  getParentRecord: function() {
-    this.getParent() ? this.getParent().form.record : null;
-  },
-
-  getParentRecordModel: function(r) {
-    var p = this.getParent();
-    r = r || this.getParentRecord();
-
-    return (typeof r.store == 'object') ? r.store.klass :
-              ( r.data.klass || ( (p && typeof p.store == 'object') ?
-                 p.store.klass : ''));
-  },
-
-  parentFilter: function(record){
-    var idMatch = (record.data[this.parentIdColumn] == this.parentFilter.relation_id);
-    var typeMatch = true;
-
-    //Provides automatic filtering on polymophic relations
-    if(this.parentTypeColumn) {
-      typeMatch = (record.data[this.parentTypeColumn] == this.parentFilter.relation_type);
-    }
-
-    return (idMatch && typeMatch);
-  },
-
-  initEvents: function(c) {
-    SWorks.GridController.superclass.initEvents.call(this);
-
   },
 
   getCurrentRecord: function() {
@@ -229,7 +167,6 @@ SWorks.GridController = Ext.extend(SWorks.BaseController, {
       return node.attributes.record;
     } */ 
   }
-
 });
 
 

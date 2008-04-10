@@ -11,12 +11,14 @@
 <!-- End Standard Code -->
 
 <script type="text/javascript" src="../collection_index.js"></script>
+<script type="text/javascript" src="../mvc_crud_editor.js"></script>
+<script type="text/javascript" src="../mvc_data_models.js"></script>
 <script type="text/javascript" src="../mvc_crud_controller.js"></script>
 
 </head><body><script type="text/javascript">
 
 function testInitForm() {
-  var controller = new SWorks.BaseController();
+  var controller = new SWorks.AbstractController();
   var form = new Ext.form.BasicForm();
 
   // should index the fields
@@ -31,6 +33,39 @@ function testInitForm() {
   assertEventRelay(form, controller, 'beforeaction');
   assertEventRelay(form, controller, 'actionfailed');
   assertEventRelay(form, controller, 'actioncomplete');
+}
+
+function testCreate() {
+  var mc = new MockControl();
+  
+  var record = {};
+  var controller = new SWorks.AbstractController();
+  var d = controller.dataModel = mc.createMock(SWorks.DataModel);
+  d.expects().newRecord().andReturn(record);
+  var e = controller.editor = mc.createMock(SWorks.DialogEditor.prototype);
+  e.expects().loadRecord(record);
+
+  controller.setDefaults = function(r) {
+    r.defaults = true;
+  };
+
+  controller.createRecord();
+
+  assert('defaults set', record.defaults);
+
+  mc.verify();
+}
+
+function testCreateWithParent() {
+  var mc = new MockControl();
+
+  var controller = new SWorks.AbstractController();
+  controller.childId = "I'm a child";
+
+  controller.parent = mc.createMock(SWorks.AbstractController);
+  controller.parent.expects().saveIfNeeded(controller.childId, TypeOf.isA(Object));
+
+  controller.createRecord();
 }
 
 </script></body></html>

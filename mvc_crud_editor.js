@@ -1,5 +1,7 @@
 /*globals Ext, SWorks */
 
+Ext.namespace('SWorks');
+
 SWorks.DialogEditor = Ext.extend(Ext.Window, {
   width: 500,
   height: 300,

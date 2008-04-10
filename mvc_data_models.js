@@ -1,5 +1,7 @@
 /*globals SWorks, Ext */
 
+Ext.namespace('SWorks');
+
 SWorks.DataModel = function(overrides) {
   Ext.apply(this, overrides);
 
@@ -227,7 +229,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     if (this.recordType.prototype.fields.keys.indexOf(typeColumn) != -1) {
       var typeField = String.format(this.parameterTemplate, typeColumn);
 
-      values[typeField] = r.store ? (r.store.klass || r.data.model) : r.data.model
+      values[typeField] = r.store ? (r.store.klass || r.data.klass) : r.data.klass;
     }
 
     return values;
@@ -413,13 +415,10 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
           record.data[keys[i]] = "";
         }
       }
-
-      this.initializeRecord(record);
     }
 
     return record;
   },
-  initializeRecord: function(record) {},
 
   /*
    * Delete existing Records
@@ -470,6 +469,11 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     }
 
     return result;
+  },
+
+  linkToParent: function(parent, childId) {
+    this.parentController = parent;
+    this.childId = childId;
   }
 });
 
@@ -485,6 +489,8 @@ SWorks.StoreDataModel = function(overrides) {
   });
 
   SWorks.StoreDataModel.superclass.constructor.call(this, overrides);
+
+  this.checkForeignKey();
 }
 Ext.extend(SWorks.StoreDataModel, SWorks.DataModel, {
   reload: function() {
@@ -509,4 +515,96 @@ Ext.extend(SWorks.StoreDataModel, SWorks.DataModel, {
 
     return result;
   },
+
+  loadRecord: function(record) {
+    if(this.fireEvent('beforeload', this, record) !== false) {
+      this.loadedFromRecord = record;
+      this.onLoadFromRecord(record);
+      this.fireEvent('load', this, record);
+    }
+  },
+
+  onLoadFromRecord: function(record) {
+    this.store.addFilter(this.recordFilter, this);
+  },
+
+  linkToParent: function(parent, childId) {
+    SWorks.StoreDataModel.superclass.linkToParent.apply(this, arguments);
+
+    if (this.foreignKey) {
+      parent.on('load', function(form, record) {
+        if(p.form && p.form.id == this.childId) {
+          this.currentParentRecord = p.form.record;
+          this.loadFromRecord(record);
+        }
+      }, this);
+    }
+  },
+
+  checkForeignKey: function() {
+    if(this.foreignKey) {
+      var column = this.foreignKey.replace(/id/, "type");
+      var value = (this.recordType.prototype.fields.keys.indexOf(column) != -1);
+
+      if(value) {
+        this.foreignTypeKey = column
+      }
+    }
+  },
+
+  recordFilter: function(record) {
+    var r = this.loadedFromRecord,
+        typeMatch = true,
+        idMatch = (record.data[this.foreignKey] == r.id);
+
+    //Provides automatic filtering on polymophic relations
+    if(this.foreignTypeKey) {
+      var recordType = (r.store && r.store.klass) ? r.store.klass : r.data.klass;
+      typeMatch = (record.data[this.foreignTypeKey] == recordType);
+    }
+
+    return (idMatch && typeMatch);
+  }
+});
+
+SWorks.URLLoadingDataModel = function(overrides) {
+  var store = overrides.store;
+
+  if(store.mirrorSource) {
+    console.error("URL loading can't use cloned/mirrored stores. Bad things will happen");
+  }
+
+  SWorks.URLLoadingDataModel.superclass.constructor.call(this, overrides);
+}
+Ext.extend(SWorks.URLLoadingDataModel, SWorks.StoreDataModel, {
+  reload: function() {
+    if(this.loadedFromRecord && 
+       this.loadedFromRecord.newRecord) {
+      this.store.removeAll();
+    } else {
+      this.store.reload();
+    }
+  },
+  onLoadFromRecord: function(record) {
+    if(this.loadedFromRecord.newRecord) {
+      this.store.removeAll();
+    } else {
+      var r = this.loadedFromRecord, s = this.store, url = s.baseUrl;
+      if(!url && this.foreignKey) {
+        url = s.url + '?' + this.foreignKey + '={0}';
+        if(this.foreignTypeKey) {
+          url = url + '&' + this.foreignTypeKey + '={1}';
+        }
+      }
+
+      if(url) {
+        var recordType = (r.store && r.store.klass) ? r.store.klass : r.data.klass;
+
+        s.proxy.conn.url = String.format(url, r.id, recordType);
+        s.load();
+      } else {
+        console.error("This store doesn't have a url");
+      }
+    }
+  }
 });

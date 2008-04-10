@@ -13,6 +13,12 @@ SWorks.Menu = {
 SWorks.Menu.registerClass = function (key, Klass){ 
   console.assert(typeof Klass.prototype.doLayout == 'function', Klass);
 
+  if(!SWorks.Menu.config) {
+    // TODO find a better way to register classes and still be able
+    // to use the class files in testing with the app overhead
+    return;
+  }
+
   SWorks.Menu.panelFn[key] = function() {
     return new Klass();
   };

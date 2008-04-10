@@ -1,0 +1,68 @@
+<!-- Standard Code -->
+
+<html><head>
+    
+<script type="text/javascript" src="../../ext/adapter/ext/ext-base.js"></script>
+<script type="text/javascript" src="../../ext/ext-all-debug.js"></script>
+<script type="text/javascript" src="../../jsunit/app/jsUnitCore.js"></script>
+<script type="text/javascript" src="jsmock.js"></script>
+<script type="text/javascript" src="helpers.js"></script>
+
+<!-- End Standard Code -->
+
+<script type="text/javascript" src="../collection_index.js"></script>
+<script type="text/javascript" src="../mvc_data_models.js"></script>
+<script type="text/javascript" src="../mvc_crud_controller.js"></script>
+
+</head><body><script type="text/javascript">
+
+function testSaveFormNotValid() {
+  var mc = new MockControl();
+
+  var dm = new SWorks.DataModel();
+  var form  = mc.createMock(Ext.form.BasicForm);
+  form.expects().isValid().andReturn(false);
+
+  var oldMessageBox = Ext.MessageBox;
+  Ext.MessageBox = mc.createMock(Ext.MessageBox);
+  dm.saveForm(form, { waitMsg: false });
+
+  mc.verify();
+
+  form.expects().isValid().andReturn(false);
+  Ext.MessageBox.expects().alert(TypeOf.isA(String), TypeOf.isA(String));
+
+  dm.saveForm(form, {}); // Without waitMsg:false
+
+  mc.verify();
+
+  Ext.MessageBox = oldMessageBox;
+}
+
+function testSaveFormValid() {
+  var mc = new MockControl();
+  var options = {};
+
+  var dm = new SWorks.DataModel({
+    store: { recordType: Ext.emptyFn },
+    restUrl: '/test',
+    dealWithEmptyCombos: Ext.emptyFn    
+  });
+
+  var form  = mc.createMock(Ext.form.BasicForm);
+  form.expects().isValid().andReturn(true);
+  form.expects().updateRecord(TypeOf.isA(dm.store.recordType));
+  form.expects().submit(options);
+
+  form.record = { newRecord: false };
+
+  dm.saveForm(form, options);
+  mc.verify();
+
+  form.expects().isValid().andReturn(true);
+  // Shouldn't try to save while another save is going
+  dm.saveForm(form, options); 
+  mc.verify();
+}
+
+</script></body></html>
