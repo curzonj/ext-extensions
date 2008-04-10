@@ -10,7 +10,7 @@
 
 <!-- End Standard Code -->
 
-<script type="text/javascript" src="../collection_index.js"></script>
+<script type="text/javascript" src="../data_stores.js"></script>
 <script type="text/javascript" src="../mvc_data_models.js"></script>
 <script type="text/javascript" src="../mvc_crud_controller.js"></script>
 
@@ -62,6 +62,39 @@ function testSaveFormValid() {
   form.expects().isValid().andReturn(true);
   // Shouldn't try to save while another save is going
   dm.saveForm(form, options); 
+  mc.verify();
+}
+
+function testLinkToParent() {
+  var mc = new MockControl();
+  var compt = mc.createMock(SWorks.AbstractController);
+  var store = new Ext.data.Store();
+
+  // Persistent filters are required for standard linking to parent
+  Ext.ux.data.PersistentFilters(store);
+
+  var store = mc.createMock(store);
+
+  var dm = new SWorks.StoreDataModel({ store: store });
+  var childId = "I'm the child";
+  var callback;
+
+  // Don't link if you don't have a foreignKey
+  dm.linkToParent(compt, childId);
+  mc.verify();
+
+  dm.foreignKey = 'key';
+  compt.expects().on('load', TypeOf.isA(Function), dm).andStub(function() {
+    callback = arguments[1];
+  });
+
+  // execute your callback when the parent loads
+  dm.linkToParent(compt, childId);
+  mc.verify();
+
+  // when the parent loads, filter the grid
+  store.expects().addFilter(TypeOf.isA(Function), dm);
+  callback.call(dm, { id: childId }, {});
   mc.verify();
 }
 

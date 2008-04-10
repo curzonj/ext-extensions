@@ -1,5 +1,7 @@
 /*globals Ext, SWorks, ds */
 
+Ext.namespace('Ext.ux.data', 'SWorks');
+
 Ext.override(Ext.data.Store, {
   // Their load records function isn't very extensible,
   // so I had to copy it in here
