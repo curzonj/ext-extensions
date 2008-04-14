@@ -39,16 +39,12 @@ SWorks.DialogEditor = Ext.extend(Ext.Window, {
     this.form = this.formPanel.form;
   },
 
-  afterRender: function(ct) {
-    SWorks.DialogEditor.superclass.afterRender.call(this, ct);
-    
-    this.controller.initForm(this.form);
-  },
-
   loadRecord: function(record) {
     if(!this.rendered) {
       this.render(Ext.getBody());
     }
+
+    this.controller.initForm(this.form);
 
     if(this.controller.dataModel.loadForm(this.form, record)) {
       var saveBtn = this.buttons[0];
