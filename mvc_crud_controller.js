@@ -4,8 +4,7 @@ Ext.namespace("SWorks");
 
 SWorks.AbstractController = function() {
   this.forms = new Ext.util.MixedCollection();
-  this.addEvents( 'ready',
-                  'beforeaction', 'actionfailed', 'actioncomplete',
+  this.addEvents( 'beforeaction', 'actionfailed', 'actioncomplete',
                   'beforeload', 'load', 'delete', 'save');
 };
 Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
@@ -17,6 +16,7 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
 
     this.dataModel = this.buildDataModel(comp);
     this.relayEvents(this.dataModel, ['beforeload', 'load', 'delete', 'save']);
+    this.on('load', this.onLoad, this);
 
     this.editor = this.buildEditor(comp);
     this.editor.controller = this;
@@ -50,6 +50,8 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
     return config;
   },
 
+  onLoad: Ext.emptyFn,
+
   onRender: function(comp) {
     this.findParentComponent();
   },
@@ -72,11 +74,14 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
   },
 
   initForm: function(form) {
-
     if (!this.forms.contains(form)) {
       this.forms.add(form);
 
       this.relayEvents(form, ['beforeaction', 'actionfailed', 'actioncomplete']);
+
+      if(form.items.length < 1) {
+        console.error('Form is missing fields');
+      }
 
       var index = new Ext.ux.data.CollectionIndex(form.items, 'dataIndex',
         function(o) {
@@ -84,6 +89,10 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
         }
       );
       form.fields = index.map;
+
+      for (var field in index.map) {
+        field.form = form;
+      }
     }
   },
 
