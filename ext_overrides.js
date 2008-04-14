@@ -24,6 +24,29 @@ Ext.override(Ext.util.Observable, {
   }
 });
 
+Ext.override(Ext.util.Event, {
+    addListener : function(fn, scope, options){
+        scope = scope || this.obj;
+        if (typeof fn != 'function') {
+          throw ("Undefined function for listener: " + this.name);
+        }
+
+        if(!this.isListening(fn, scope)){
+            var l = this.createListener(fn, scope, options);
+            if(!this.firing){
+                this.listeners.push(l);
+            }else{                    
+                this.listeners = this.listeners.slice(0);
+                this.listeners.push(l);
+            }
+        }
+    }
+});
+Ext.override(Ext.grid.GridView, {
+  // There is a listener for this, but no method
+  onColumnLock: Ext.emptyFn
+});
+
 Ext.override(Ext.form.BasicForm, {
   updateOriginalValues: function(values) {
     var field;

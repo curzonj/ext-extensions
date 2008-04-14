@@ -334,6 +334,10 @@ Ext.ux.data.PersistentFilters.overrides = {
   addFilter: function(fn, scope, suppress_filtering) {
     this.filterChain = this.filterChain || [];
 
+    if (typeof fn != 'function') {
+      throw "Unable to add filter: function undefined";
+    }
+
     if(this.findFilter(fn, scope) == -1) {
       this.filterChain.push({
         fn: fn,
