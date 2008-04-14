@@ -1,5 +1,7 @@
 /*globals Ext, CSRFKiller, SWorks */
 
+Ext.reg('propertygrid', Ext.grid.PropertyGrid);
+
 Ext.override(Ext.TabPanel, {
   showPanel:function(p) {
     p.render(Ext.getBody());
