@@ -344,23 +344,20 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     var r = new this.recordType(data, id);
     this.loadRecord(r);
   },
-  loadForm: function(form, record, panel){
-    //the panel parameter is optional, it is up to the
-    //implementation to pass it or not
-    // TODO needs handle record locking
+  loadForm: function(form, record){
     form.record = record;
 
-    if(this.fireEvent('beforeload', form, record, panel) !== false) {
+    if(this.fireEvent('beforeload', form, record) !== false) {
 
-      this.onLoadForm(form, record, panel);
-      this.fireEvent('load', form, record, panel);
+      this.onLoadForm(form, record);
+      this.fireEvent('load', form, record);
 
       return true;
     } else {
       return false;
     }
   },
-  onLoadForm: function(form, record, panel) {
+  onLoadForm: function(form, record) {
     form.trackResetOnLoad = true;
     form.loadRecord(record);
     form.clearInvalid();

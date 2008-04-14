@@ -22,13 +22,13 @@ function testInitForm() {
   var form = new Ext.form.BasicForm();
 
   // should index the fields
-  controller.initForm(form);
-  assert(form.items.maps['dataIndex'] == form.fields);
+  controller.initFormIdempotent(form);
+  assert('assigned map', form.items.maps['dataIndex'] == form.fields);
 
   // should not re-init the form
   var firstIndex = form.fields;
-  controller.initForm(form);
-  assert(form.fields == firstIndex);
+  controller.initFormIdempotent(form);
+  assert('doesnt rebuild index', form.fields == firstIndex);
 
   assertEventRelay(form, controller, 'beforeaction');
   assertEventRelay(form, controller, 'actionfailed');

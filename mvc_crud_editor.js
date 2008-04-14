@@ -44,7 +44,7 @@ SWorks.DialogEditor = Ext.extend(Ext.Window, {
       this.render(Ext.getBody());
     }
 
-    this.controller.initForm(this.form);
+    this.controller.initFormIdempotent(this.form, this);
 
     if(this.controller.dataModel.loadForm(this.form, record)) {
       var saveBtn = this.buttons[0];

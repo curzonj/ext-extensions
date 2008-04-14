@@ -22,12 +22,8 @@ function setUpPage() {
   setUpPageStatus = 'complete'; 
 }
 
-function testAfterRender() {
-  appController = createMock(SWorks.GridController);
-  appController.expects().initForm(TypeOf.isA(Ext.form.BasicForm));
-
+function testBasicShow() {
   var editor = new SWorks.DialogEditor({
-    controller: appController,
     items: {
       xtype: 'form',
       items: {

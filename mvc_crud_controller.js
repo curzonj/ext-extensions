@@ -73,26 +73,33 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
     this.dataModel.saveForm(form, o);
   },
 
-  initForm: function(form) {
+  initFormIdempotent: function(form, panel) {
+    // I like the name initForm so much, but the subclasses
+    // shouldn't have to worry about being idempotent, so I
+    // moved that here
     if (!this.forms.contains(form)) {
-      this.forms.add(form);
+      this.initForm(form, panel);
+    }
+  },
 
-      this.relayEvents(form, ['beforeaction', 'actionfailed', 'actioncomplete']);
+  initForm: function(form, panel) {
+    this.forms.add(form);
 
-      if(form.items.length < 1) {
-        console.error('Form is missing fields');
+    this.relayEvents(form, ['beforeaction', 'actionfailed', 'actioncomplete']);
+
+    if(form.items.length < 1) {
+      console.error('Form is missing fields');
+    }
+
+    var index = new Ext.ux.data.CollectionIndex(form.items, 'dataIndex',
+      function(o) {
+        return o.dataIndex;
       }
+    );
+    form.fields = index.map;
 
-      var index = new Ext.ux.data.CollectionIndex(form.items, 'dataIndex',
-        function(o) {
-          return o.dataIndex;
-        }
-      );
-      form.fields = index.map;
-
-      for (var field in index.map) {
-        field.form = form;
-      }
+    for (var field in index.map) {
+      field.form = form;
     }
   },
 
@@ -136,6 +143,7 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
     if(pcomp) {
       this.childId = pcomp.form.id;
       this.parent = pcomp.controller;
+      this.parentForm = pcomp.form;
     }
   }
 });
