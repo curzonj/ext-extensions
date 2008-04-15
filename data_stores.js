@@ -46,6 +46,30 @@ Ext.override(Ext.data.Store, {
   },
   onDataChanged: function() {
     this.applySort();
+  },
+  isLoaded: function() {
+    return (this.lastOptions !== null);
+  },
+  whenLoaded: function(fn, scope) {
+    this.on('load', function() {
+      var myFn = fn;
+      // This prevents the method from being called in race conditions
+      fn = Ext.emptyFn;
+      myFn.call(scope);
+    }, null, {single:true});
+
+    if (this.isLoaded()) {
+      this.un('load', fn, scope);
+      fn.call(scope);
+    } else if(!this.proxy.activeRequest) {
+      this.load();
+    }
+  }
+});
+
+Ext.override(Ext.data.SimpleStore, {
+  isLoaded: function() {
+    return true;
   }
 });
 
@@ -146,6 +170,7 @@ Ext.override(Ext.data.Store, {
     this.remove = source.remove.createDelegate(source);
     this.load = source.load.createDelegate(source);
     this.reload = source.reload.createDelegate(source);
+    this.isLoaded = source.isLoaded.createDelegate(source);
 
     this.onMirror(source);
   },
@@ -242,7 +267,7 @@ Ext.ux.data.ReloadingStore.overrides = {
     //    we arn't automatically refreshing the data, or
     //    the data hasn't been loaded yet
     if( !this.proxy.activeRequest &&
-        (!(this.refreshTask || (this.mirrorSource && this.mirrorSource.refreshTask)) || data.length === 0)) {
+        (!(this.refreshTask || (this.mirrorSource && this.mirrorSource.refreshTask)) || !this.isLoaded())) {
       this.load();
     }
   },

@@ -10,6 +10,7 @@
 
 <!-- End Standard Code -->
 
+<script type="text/javascript" src="../mvc_data_models.js"></script>
 <script type="text/javascript" src="../mvc_crud_controller.js"></script>
 <script type="text/javascript" src="../mvc_crud_editor.js"></script>
 
@@ -32,6 +33,27 @@ function testBasicShow() {
     }
   });
   editor.show();
+}
+
+function testLoadRecord() {
+  var controller = createMock(SWorks.AbstractController);
+  controller.dataModel = createMock(SWorks.DataModel);
+  var record = {};
+
+  var editor = new SWorks.DialogEditor({
+    controller: controller,
+    items: {
+      xtype: 'form',
+      items: {
+        xtype: 'hidden'
+      }
+    }
+  });
+
+  controller.expects().initFormIdempotent(TypeOf.isA(Ext.form.BasicForm), editor);
+  controller.dataModel.expects().loadForm(TypeOf.isA(Ext.form.BasicForm), record);
+
+  editor.loadRecord(record);
 }
 
 </script></body></html>

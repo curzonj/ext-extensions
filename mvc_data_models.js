@@ -467,9 +467,9 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     return result;
   },
 
-  linkToParent: function(parent, childId) {
+  linkToParent: function(parent, parentForm) {
     this.parentController = parent;
-    this.childId = childId;
+    this.parentForm = parentForm;
   }
 });
 
@@ -513,23 +513,23 @@ Ext.extend(SWorks.StoreDataModel, SWorks.DataModel, {
   },
 
   loadFromRecord: function(record) {
-    if(this.fireEvent('beforeload', this, record) !== false) {
+//    if(this.fireEvent('beforeload', this, record) !== false) {
       this.loadedFromRecord = record;
       this.onLoadFromRecord(record);
-      this.fireEvent('load', this, record);
-    }
+//      this.fireEvent('load', this, record);
+//    }
   },
 
   onLoadFromRecord: function(record) {
     this.store.addFilter(this.recordFilter, this);
   },
 
-  linkToParent: function(parent, childId) {
+  linkToParent: function(parent, parentForm) {
     SWorks.StoreDataModel.superclass.linkToParent.apply(this, arguments);
 
     if (this.foreignKey) {
       parent.on('load', function(form, record) {
-        if(form.id == this.childId) {
+        if(form == this.parentForm) {
           this.currentParentRecord = record;
           this.loadFromRecord(record);
         }

@@ -103,15 +103,6 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
     }
   },
 
-  saveIfNeeded: function(childId, o) {
-    var form = this.forms.get(childId);
-    if(form && form.isDirty()) {
-      this.saveform(form, o);
-    } else if (o.callback) {
-      o.callback.call(o.scope);
-    }
-  },
-
   createRecord: function() {
     var f = function() {
       var r = this.dataModel.newRecord();
@@ -120,8 +111,8 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
       this.loadRecord(r);
     };
 
-    if (this.parent) {
-      this.parent.saveIfNeeded(this.childId, {
+    if (this.parentForm && this.parentForm.isDirty()) {
+      this.parent.saveForm(this.parentForm, {
         callback: this.createRecord,
         scope: this
       });
@@ -141,7 +132,6 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
     });
 
     if(pcomp) {
-      this.childId = pcomp.form.id;
       this.parent = pcomp.controller;
       this.parentForm = pcomp.form;
     }
@@ -162,7 +152,7 @@ SWorks.GridController = Ext.extend(SWorks.AbstractController, {
     SWorks.GridController.superclass.onRender.call(this, comp);
 
     if(this.parent) {
-      this.dataModel.linkToParent(this.parent, this.childId);
+      this.dataModel.linkToParent(this.parent, this.parentForm);
     } else {
       comp.store.load();
     }
