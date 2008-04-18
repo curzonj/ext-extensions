@@ -2,6 +2,25 @@
 
 Ext.reg('propertygrid', Ext.grid.PropertyGrid);
 
+Ext.override(Ext.Panel, {
+  showPanel:function(panel) {
+    var previous = this.getLayout().activeItem;
+
+    this.add(panel);
+    this.getLayout().setActiveItem(panel);
+
+    //non-standard, but helpful
+    if(previous) {
+      previous.fireEvent('deactivate');
+    }
+
+    // non-standard, but helpful, after the mask because
+    // it causes visual artifacts, this gives widgets the chance
+    // to fix them
+    panel.fireEvent('activate'); 
+  }
+});
+
 Ext.override(Ext.TabPanel, {
   showPanel:function(p) {
     p.render(Ext.getBody());

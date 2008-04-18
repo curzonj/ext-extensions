@@ -1,89 +1,67 @@
 Ext.namespace('SWorks');
 
-SWorks.registeredTests = SWorks.registeredTests || {};
-
-JSMock.extend(window);
+Ext.onReady(function() {
+  console.log('application ready');
+});
 
 SWorks.Testing = {
-    t: SWorks.registeredTests,
-    timout: 120000,
+  tests: {},
 
-    reg: function(name, fn, files) {
-      if(typeof this.t[name] != 'undefined') {
-        console.log('Reloading test: '+name);
-      }
-      SWorks.registeredTests[name] = {
-        name: name,
-        fn: fn,
-        files: files
-      };
-    },
-    run: function(name) {
-      var set = this.t[name];
-      var barrier = 0;
-      var fn = function() {
-        barrier = barrier - 1;
-        if (barrier === 0) {
-          SWorks.Testing.executeTest(name);
-        }
-      }
+  registerTest: function(name, fn, files) {
+    this.tests[name] = {
+      name: name,
+      fn: fn
+    };
+  },
+  registerTestSuite: function(name, obj) {
+    this.tests[name] = {
+      name: name,
+      fn: obj.main,
+      obj: obj
+    };
+  },
+  createContext: function(test) {
+    var Base = function() {};
+    Base.prototype = window;
 
-      if (set.files instanceof Array) {
-        barrier = set.files.length;
-        for(var i=0;i<set.files.length;i++) {
-          SWorks.Testing.reload(set.files[i], fn);
-        }
-      }
-    },
-    testComplete: function(name, mc) {
-      if (typeof mc != 'undefined') {
-        try {
-          window.verifyMocks();
-          console.log(name + ' was successful');
-        } catch(err) {
-          this.printError(err);
-        }
-      }
-    },
-    executeTest: function(name) {
-      try {
-        window.resetMocks();
+    var context = new Base();
+    Ext.apply(context, test.obj || {});
+    Ext.apply(context, { test: test });
 
-        var result = this.t[name].fn.call(window);
-
-        if (result == 'async') {
-          console.log(name + ' is asynchronous');
-        } else {
-          window.verifyMocks();
-          console.log(name + ' was successful');
-        }
-      } catch(err) {
-        this.printError(err);
+    return context;
+  },
+  runall: function() {
+    try {
+      for (var tname in this.tests) {
+        run(tname);
       }
-    },
-    printError: function(err) {
-      if(typeof err.stack != 'undefined') {
-        console.error(err.fileName + ' @ ' + err.lineNumber+':  ', err);
-        console.error(err.stack);
-      } else {
-        console.error(err);
-      }
-    },
-    reload: function (file, cb) {
-      Ext.Ajax.request({
-        url:   '/javascripts/'+file+'.js',
-        callback: function(o, s, r) {
-          if(s) {
-            eval(r.responseText);
-            if (typeof cb == 'function') {
-              cb.call(window);
-            }
-          }
-        }
-      });
+    } catch(err) {
+      this.printError(err);
     }
-}
+  },
+  run: function(name) {
+    try {
+      var test = this.tests[name];
+      var context = this.createContext(test);
+
+      setTimeout(function() {
+        test.fn.call(context);
+      }, 1);
+
+      return context;
+    } catch(err) {
+      this.printError(err);
+    }
+  },
+  printError: function(err) {
+    if(typeof err.stack != 'undefined') {
+      console.error(err.fileName + ' @ ' + err.lineNumber+':  ', err);
+      console.error(err.stack);
+    } else {
+      console.error(err);
+    }
+  }
+};
 
 // firebug doesn't like things without scopes
 runtest = SWorks.Testing.run.createDelegate(SWorks.Testing);
-reloadjs = SWorks.Testing.reload.createDelegate(SWorks.Testing);

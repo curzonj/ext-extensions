@@ -74,34 +74,31 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
   },
 
   initFormIdempotent: function(form, panel) {
-    // I like the name initForm so much, but the subclasses
-    // shouldn't have to worry about being idempotent, so I
-    // moved that here
     if (!this.forms.contains(form)) {
+      this.forms.add(form);
+
+      this.relayEvents(form, ['beforeaction', 'actionfailed', 'actioncomplete']);
+
+      if(form.items.length < 1) {
+        console.error('Form is missing fields');
+      }
+
+      var index = new Ext.ux.data.CollectionIndex(form.items, 'dataIndex',
+        function(o) {
+          return o.dataIndex;
+        }
+      );
+      form.fields = index.map;
+
+      for (var name in index.map) {
+        index.map[name].form = form;
+      }
+
       this.initForm(form, panel);
     }
   },
 
-  initForm: function(form, panel) {
-    this.forms.add(form);
-
-    this.relayEvents(form, ['beforeaction', 'actionfailed', 'actioncomplete']);
-
-    if(form.items.length < 1) {
-      console.error('Form is missing fields');
-    }
-
-    var index = new Ext.ux.data.CollectionIndex(form.items, 'dataIndex',
-      function(o) {
-        return o.dataIndex;
-      }
-    );
-    form.fields = index.map;
-
-    for (var field in index.map) {
-      field.form = form;
-    }
-  },
+  initForm: Ext.emptyFn,
 
   createRecord: function() {
     var f = function() {

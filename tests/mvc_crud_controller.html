@@ -20,6 +20,7 @@
 function testInitForm() {
   var controller = new SWorks.AbstractController();
   var form = new Ext.form.BasicForm();
+  form.add(new Ext.form.TextField({ dataIndex: 'test' }));
 
   // should index the fields
   controller.initFormIdempotent(form);
@@ -29,6 +30,10 @@ function testInitForm() {
   var firstIndex = form.fields;
   controller.initFormIdempotent(form);
   assert('doesnt rebuild index', form.fields == firstIndex);
+
+  for (var name in form.fields) {
+    assertEquals('set field.form', form, form.fields[name].form);
+  }
 
   assertEventRelay(form, controller, 'beforeaction');
   assertEventRelay(form, controller, 'actionfailed');
@@ -56,6 +61,7 @@ function testCreate() {
   mc.verify();
 }
 
+/*
 function testCreateWithParent() {
   var mc = new MockControl();
 
@@ -63,9 +69,9 @@ function testCreateWithParent() {
   controller.childId = "I'm a child";
 
   controller.parent = mc.createMock(SWorks.AbstractController);
-  controller.parent.expects().saveIfNeeded(controller.childId, TypeOf.isA(Object));
 
   controller.createRecord();
 }
+*/
 
 </script></body></html>

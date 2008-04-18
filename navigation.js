@@ -57,8 +57,9 @@ SWorks.Menu.loadPanel = function(key) {
   var previous = l.activeItem;
 
   if(!panel || panel != previous) {
-    // Give the mask cpu time to render
     t.el.maskLoading();
+
+    // Give the mask cpu time to render the mask
     setTimeout(function() {
       if (!panel) {
         // TODO help enforce testability by only accepting classes to instanciate
@@ -68,20 +69,8 @@ SWorks.Menu.loadPanel = function(key) {
         SWorks.Menu.panels[key] = panel = SWorks.Menu.panelFn[key].call(window);
       }
 
-      t.add(panel);
-      l.setActiveItem(panel);
-
-      //non-standard, but helpful
-      if(previous) {
-        previous.fireEvent('deactivate');
-      }
-
+      t.showPanel(panel);
       t.el.unmask();
-
-      // non-standard, but helpful, after the mask because
-      // it causes visual artifacts, this gives widgets the chance
-      // to fix them
-      panel.fireEvent('activate'); 
     }, 1);
   }
 };
