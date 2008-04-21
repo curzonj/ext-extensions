@@ -1,3 +1,5 @@
+/*globals Ext, SWorks, runtest */
+
 Ext.namespace('SWorks');
 
 Ext.onReady(function() {
@@ -7,18 +9,37 @@ Ext.onReady(function() {
 SWorks.Testing = {
   tests: {},
 
-  registerTest: function(name, fn, files) {
+  register: function(name, test, obj) {
+    if (typeof test == 'object') {
+      obj = test;
+      test = obj.main;
+    }
+
     this.tests[name] = {
       name: name,
-      fn: fn
-    };
-  },
-  registerTestSuite: function(name, obj) {
-    this.tests[name] = {
-      name: name,
-      fn: obj.main,
+      fn: test,
       obj: obj
     };
+  },
+
+  asyncTest: function(fn, scope) {
+    var context = this;
+
+    context.asyncTests++;
+    return function() {
+      try {
+        fn.apply(scope, arguments);
+      } catch(err) {
+        SWorks.Testing.printError(err);
+      }
+      context.asyncTests--;
+      if(context.asyncTests === 0) {
+        console.log('All async tests passed');
+      } else {
+        console.log(context.asyncTests +' async tests still waiting/running');
+      }
+    };
+
   },
   createContext: function(test) {
     var Base = function() {};
@@ -26,14 +47,18 @@ SWorks.Testing = {
 
     var context = new Base();
     Ext.apply(context, test.obj || {});
-    Ext.apply(context, { test: test });
+    Ext.apply(context, {
+      test: test,
+      asyncTests: 0,
+      asyncTest: this.asyncTest.createDelegate(context)
+    });
 
     return context;
   },
   runall: function() {
     try {
       for (var tname in this.tests) {
-        run(tname);
+        this.run(tname);
       }
     } catch(err) {
       this.printError(err);
@@ -45,7 +70,17 @@ SWorks.Testing = {
       var context = this.createContext(test);
 
       setTimeout(function() {
-        test.fn.call(context);
+        try {
+          test.fn.call(context);
+        } catch(err) {
+          SWorks.Testing.printError(err);
+        }
+
+        if (context.asyncTests === 0) {
+          console.log(name + ' test complete');
+        } else {
+          console.log(name + ' test function returned, waiting on '+context.asyncTests+' async tests to finish');
+        }
       }, 1);
 
       return context;
@@ -55,13 +90,22 @@ SWorks.Testing = {
   },
   printError: function(err) {
     if(typeof err.stack != 'undefined') {
-      console.error(err.fileName + ' @ ' + err.lineNumber+':  ', err);
-      console.error(err.stack);
+      if (err.fileName.indexOf('jsmock') != -1) {
+        console.error(err.fileName + ' @ ' + err.lineNumber+':  ', err);
+        console.error(err.stack);
+      } else {
+        throw err;
+      }
     } else {
       console.error(err);
     }
   }
 };
+
+Ext.apply(SWorks.Testing, {
+  registerTest: SWorks.Testing.register,
+  registerTestSuite: SWorks.Testing.register
+});
 
 // firebug doesn't like things without scopes
 runtest = SWorks.Testing.run.createDelegate(SWorks.Testing);

@@ -145,7 +145,7 @@ Ext.override(Ext.tree.TreePanel, {
   
       // It's up to the user to specify unique
       // constraints
-      if(fn.call((scope || this),  node)) {
+      if(typeof node == 'object' && fn.call((scope || this),  node)) {
         return node;
       }
     }
