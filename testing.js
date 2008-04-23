@@ -67,6 +67,10 @@ SWorks.Testing = {
   run: function(name) {
     try {
       var test = this.tests[name];
+      if(typeof test != 'object') {
+        console.log('No such test');
+        return;
+      }
       var context = this.createContext(test);
 
       setTimeout(function() {

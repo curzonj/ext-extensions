@@ -27,6 +27,7 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
     }
 
     comp.on('render', this.onRender, this);
+    comp.on('celldblclick', this.onGridCellDblClick, this);
   },
 
   buildEditor: function(comp) {
@@ -121,6 +122,11 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
 
   loadRecord: function(record) {
     this.editor.loadRecord(record);
+  },
+
+  onGridCellDblClick: function(grid, rowIndex, cellIndex, e) {
+    var r = this.component.store.getAt(rowIndex);
+    this.loadRecord(r);
   },
 
   findParentComponent: function() {

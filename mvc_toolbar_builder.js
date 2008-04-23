@@ -75,20 +75,19 @@ SWorks.CrudToolbarMgr.prototype = {
   },
 
   setupHandlers: function(b) {
-    if (typeof b == 'object') {
-      var handlerName = ('onClick' + b.text + 'Btn'),
+    if (typeof b == 'object' && typeof b.text == 'string' ) {
+      var text = b.text.replace(/ /,'');
+      var handlerName = ('onClick' + text + 'Btn'),
           detectedHandler = this.controller[handlerName] || this[handlerName];
 
       if (b.text == 'Options' && typeof b.handler == 'undefined') {
         this.buildOptionsMenu(b);
-      } else if (typeof b.text == 'string' &&
-                 typeof b.handler == 'undefined' &&
+      } else if (typeof b.handler == 'undefined' &&
                  typeof detectedHandler == 'function') {
         b.handler = detectedHandler;
       }
 
-      if (typeof b.text == 'string' &&
-          typeof b.handler == 'function' &&
+      if (typeof b.handler == 'function' &&
           typeof b.scope == 'undefined') {
         b.scope = this.controller;
       }
