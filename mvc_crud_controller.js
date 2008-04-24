@@ -15,11 +15,15 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
     comp.controller = this;
 
     this.dataModel = this.buildDataModel(comp);
-    this.relayEvents(this.dataModel, ['beforeload', 'load', 'delete', 'save']);
-    this.on('load', this.onLoad, this);
+    if(this.dataModel) {
+      this.relayEvents(this.dataModel, ['beforeload', 'load', 'delete', 'save']);
+      this.on('load', this.onLoadForm, this);
+    }
 
     this.editor = this.buildEditor(comp);
-    this.editor.controller = this;
+    if(this.editor) {
+      this.editor.controller = this;
+    }
 
     if(comp.topToolbar) {
       this.toolbarMgr = new this.toolbarMgrClass(comp.topToolbar, this);
@@ -27,13 +31,13 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
     }
 
     comp.on('render', this.onRender, this);
-    comp.on('celldblclick', this.onGridCellDblClick, this);
   },
 
+  buildDataModel: Ext.emptyFn,
   buildEditor: function(comp) {
     var config = comp.editor;
 
-    if (typeof config.loadRecord != 'function') {
+    if (config && typeof config.loadRecord != 'function') {
       if(config instanceof Array) {
         config = { items: config };
       } else if (config.xtype == 'form') {
@@ -51,11 +55,14 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
     return config;
   },
 
-  onLoad: Ext.emptyFn,
+  onLoadForm: Ext.emptyFn,
 
   onRender: function(comp) {
     this.findParentComponent();
+
+    this.afterRender();
   },
+  afterRender: Ext.emptyFn,
 
   isReadOnly: function() {
     var res = !SWorks.CurrentUser.has(this.rwPerm);
@@ -153,6 +160,8 @@ SWorks.GridController = Ext.extend(SWorks.AbstractController, {
 
   onRender: function(comp) {
     SWorks.GridController.superclass.onRender.call(this, comp);
+
+    comp.on('celldblclick', this.onGridCellDblClick, this);
 
     if(this.parent) {
       this.dataModel.linkToParent(this.parent, this.parentForm);
