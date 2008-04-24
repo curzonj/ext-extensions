@@ -29,14 +29,15 @@ SWorks.Testing = {
     return function() {
       try {
         fn.apply(scope, arguments);
+
+        context.asyncTests--;
+        if(context.asyncTests === 0) {
+          console.log('All async tests passed');
+        } else {
+          console.log(context.asyncTests +' async tests still waiting/running');
+        }
       } catch(err) {
         SWorks.Testing.printError(err);
-      }
-      context.asyncTests--;
-      if(context.asyncTests === 0) {
-        console.log('All async tests passed');
-      } else {
-        console.log(context.asyncTests +' async tests still waiting/running');
       }
     };
 
@@ -76,14 +77,14 @@ SWorks.Testing = {
       setTimeout(function() {
         try {
           test.fn.call(context);
+
+          if (context.asyncTests === 0) {
+            console.log(name + ' test complete');
+          } else {
+            console.log(name + ' test function returned, waiting on '+context.asyncTests+' async tests to finish');
+          }
         } catch(err) {
           SWorks.Testing.printError(err);
-        }
-
-        if (context.asyncTests === 0) {
-          console.log(name + ' test complete');
-        } else {
-          console.log(name + ' test function returned, waiting on '+context.asyncTests+' async tests to finish');
         }
       }, 1);
 
