@@ -1,3 +1,5 @@
+/*globals Ext, CSRFKiller */
+
 Ext.onReady(function() {
   if(typeof CSRFKiller != 'undefined' && CSRFKiller.field) {
     Ext.Ajax.on('beforerequest', function(conn, options) {

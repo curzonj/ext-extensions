@@ -487,7 +487,7 @@ SWorks.StoreDataModel = function(overrides) {
   SWorks.StoreDataModel.superclass.constructor.call(this, overrides);
 
   this.checkForeignKey();
-}
+};
 Ext.extend(SWorks.StoreDataModel, SWorks.DataModel, {
   reload: function() {
     this.store.reload();
@@ -543,7 +543,7 @@ Ext.extend(SWorks.StoreDataModel, SWorks.DataModel, {
       var value = (this.recordType.prototype.fields.keys.indexOf(column) != -1);
 
       if(value) {
-        this.foreignTypeKey = column
+        this.foreignTypeKey = column;
       }
     }
   },
@@ -571,7 +571,7 @@ SWorks.URLLoadingDataModel = function(overrides) {
   }
 
   SWorks.URLLoadingDataModel.superclass.constructor.call(this, overrides);
-}
+};
 Ext.extend(SWorks.URLLoadingDataModel, SWorks.StoreDataModel, {
   reload: function() {
     if(this.loadedFromRecord && 

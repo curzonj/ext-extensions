@@ -1,3 +1,5 @@
+/*globals Ext */
+
 Ext.namespace('Ext.ux.data');
 
 Ext.ux.data.CollectionIndex = function(coll, name, fn) {

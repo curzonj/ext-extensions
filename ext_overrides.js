@@ -8,6 +8,7 @@ Ext.override(Ext.Panel, {
 
     this.add(panel);
     this.getLayout().setActiveItem(panel);
+    this.doLayout();
 
     //non-standard, but helpful
     if(previous) {

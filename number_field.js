@@ -1,3 +1,5 @@
+/*globals Ext */
+
 // This allows you to override the parseValue function to allow
 // things like '12 ft' -> 144. 'baseChars' would need to be set 
 // appropriately too.

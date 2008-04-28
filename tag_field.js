@@ -1,3 +1,5 @@
+/*globals Ext */
+
 Ext.ux.TagField = function(config) {
  
     // init data
@@ -304,10 +306,10 @@ Ext.extend(Ext.ux.TagField, Ext.form.ComboBox, {
   {
     var parts = this.getRawValue().split(',');
     var len = parts.length;
-    if (len == 1 && parts[0].trim() == '')
+    if (len == 1 && parts[0].trim() === '') {
       return [];
-    for (var i=0; i<len; i++)
-    {
+    }
+    for (var i=0; i<len; i++) {
       parts[i] = parts[i].trim();
     }
     return parts;

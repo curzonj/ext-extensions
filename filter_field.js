@@ -1,3 +1,5 @@
+/*globals Ext, SWorks */
+
 SWorks.FilterField = Ext.extend(Ext.form.TextField, {
   afterRender: function(container) {
     this.el.on('keyup', this.applyGridFilter, this, {buffer: 250});
@@ -10,7 +12,7 @@ SWorks.FilterField = Ext.extend(Ext.form.TextField, {
     } else {
       var value = filter.replace(/^\s+|\s+$/g, "");
       if (value==="") {
-        this.store.removeFilter(regexFilter);
+        this.store.removeFilter(this.regexFilter, this);
       } else {
         var valueArr = value.split(/\ +/);
         this.filterRegexArray = [];

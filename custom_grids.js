@@ -2,7 +2,7 @@
 
 Ext.override(Ext.grid.GridView, {
   // By default it scrolls to the top
-  onLoad: Ext.emptyFn,
+  onLoad: Ext.emptyFn
 });
 
 SWorks.CustomGrid = Ext.extend(Ext.grid.GridPanel, {
@@ -16,7 +16,7 @@ SWorks.CustomGrid = Ext.extend(Ext.grid.GridPanel, {
 
     this.colModel.defaultSortable = true;
 
-    new SWorks.GridScrollSaver().init(this);
+    var saver = new SWorks.GridScrollSaver().init(this);
   },
   loadMask: { removeMask: true },
   getView: function() {
@@ -39,7 +39,7 @@ SWorks.CustomGrid = Ext.extend(Ext.grid.GridPanel, {
   }
 });
 
-SWorks.GridScrollSaver = function() {}
+SWorks.GridScrollSaver = function() {};
 SWorks.GridScrollSaver.prototype = {
   init: function(grid) {
     // Called in the scope of the grid
@@ -64,5 +64,5 @@ SWorks.GridScrollSaver.prototype = {
         grid.on('afterlayout', returnToSavedPosition, grid);
       }
     });
-  },
+  }
 };
