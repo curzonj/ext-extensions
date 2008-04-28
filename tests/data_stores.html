@@ -16,30 +16,52 @@
 
 function testCrudStoreConstructor() {
   var origMgr = Ext.StoreMgr;
-  var origStore = {
-    initialConfig: {
-      existing: true,
-      newValue: false     
+
+  function test(Type) {
+    var origStore = {
+      initialConfig: {
+        existing: true,
+        newValue: false     
+      }
     }
+
+    Ext.StoreMgr = {
+      get: function() {
+        return origStore;
+      }
+    }
+
+    var store = new Type('existing', {
+      newValue: true
+    });
+
+    assertTrue('copy existing config', store.existing);
+    assertTrue('override with new config', store.newValue);
+    assertFalse('preserve original config', origStore.initialConfig.newValue);
+    assertEquals('clean initialConfig', 'undefined', typeof store.initialConfig.proxy);
+    assertEquals('clean initialConfig', 'undefined', typeof store.initialConfig.reader);
   }
 
-  Ext.StoreMgr = {
-    get: function() {
-      return origStore;
-    }
-  }
-
-  var store = new SWorks.CrudStore('existing', {
-    newValue: true
-  });
-
-  assertTrue('copy existing config', store.existing);
-  assertTrue('override with new config', store.newValue);
-  assertFalse('preserve original config', origStore.initialConfig.newValue);
-  assertEquals('clean initialConfig', 'undefined', typeof store.initialConfig.proxy);
-  assertEquals('clean initialConfig', 'undefined', typeof store.initialConfig.reader);
+  test(SWorks.CrudStore);
+  test(SWorks.SearchStore);
 
   Ext.StoreMgr = origMgr;
+}
+
+function testSearchStoreLoad() {
+  // The query parameter is already provided, don't add it again
+  var text, store = new SWorks.SearchStore({ url: '/test' });
+  store.proxy.load = function(p) {
+    assertEquals(text, p.q);
+  };
+
+  text = 'test';
+  store.addFilter('test', 'filter');
+  store.load({ params: { q: text }});
+  store.reload();
+
+  text = 'filter';
+  store.load();
 }
 
 </script></body></html>

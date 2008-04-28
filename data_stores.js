@@ -522,15 +522,15 @@ SWorks.SearchStore = function(config, custom) {
     config = Ext.applyIf(custom, clone.initialConfig);
   }
 
-  Ext.applyIf(config, {
+  this.initialConfig = config;
+
+  SWorks.SearchStore.superclass.constructor.call(this, Ext.apply({
     proxy: new Ext.data.HttpProxy({
       method: "GET",
       url: config.url
     }),
     reader: new Ext.data.JsonReader(config, config.fields)
-  });
-
-  SWorks.SearchStore.superclass.constructor.call(this, config);
+  }, config));
 
   this.querySet = {};
 
@@ -556,18 +556,24 @@ Ext.extend(SWorks.SearchStore, Ext.data.GroupingStore, {
     options = options || {};
     options.params = options.params || {};
     var query = options.params[this.queryParam];
-    var qs = this.querySet, queryList = (typeof query == 'undefined') ? [] : [ query ];
 
-    for (var i in qs) if (typeof qs[i] == 'string') {
-      queryList.push(qs[i]);
-    }
-    if (queryList.length > 0) {
-      query = queryList.join(' AND ');
-    } else {
-      query = 'id:*';
+    if(typeof query == 'undefined') {
+      //reload on anything that uses lastOptions needs to bypass this, if you have
+      //a one off query you'll bypass it also
+      var qs = this.querySet, queryList = (typeof query == 'undefined') ? [] : [ query ];
+
+      for (var i in qs) if (typeof qs[i] == 'string') {
+        queryList.push(qs[i]);
+      }
+      if (queryList.length > 0) {
+        query = queryList.join(' AND ');
+      } else {
+        query = 'id:*';
+      }
+
+      options.params[this.queryParam] = query;
     }
 
-    options.params[this.queryParam] = query;
     SWorks.SearchStore.superclass.load.call(this, options);
   }
 });
