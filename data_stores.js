@@ -438,15 +438,13 @@ SWorks.CrudStore = function(config, custom) {
   this.initialConfig = config;
 
   // From JsonStore
-  Ext.applyIf(config, {
+  SWorks.CrudStore.superclass.constructor.call(this, Ext.apply({
     proxy: !config.data ? new Ext.data.HttpProxy({
       method: "GET",
       url: config.url
     }) : undefined,
     reader: new Ext.data.JsonReader(config, config.fields)
-  });
-
-  SWorks.CrudStore.superclass.constructor.call(this, config);
+  }, config));
 
   Ext.ux.data.LoadAttempts(this);
   Ext.ux.data.ReloadingStore(this);

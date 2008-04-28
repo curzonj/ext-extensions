@@ -1,0 +1,45 @@
+<!-- Standard Code -->
+
+<html><head>
+    
+<script type="text/javascript" src="../../ext/adapter/ext/ext-base.js"></script>
+<script type="text/javascript" src="../../ext/ext-all-debug.js"></script>
+<script type="text/javascript" src="../../jsunit/app/jsUnitCore.js"></script>
+<script type="text/javascript" src="jsmock.js"></script>
+<script type="text/javascript" src="helpers.js"></script>
+
+<!-- End Standard Code -->
+
+<script type="text/javascript" src="../data_stores.js"></script>
+
+</head><body><script type="text/javascript">
+
+function testCrudStoreConstructor() {
+  var origMgr = Ext.StoreMgr;
+  var origStore = {
+    initialConfig: {
+      existing: true,
+      newValue: false     
+    }
+  }
+
+  Ext.StoreMgr = {
+    get: function() {
+      return origStore;
+    }
+  }
+
+  var store = new SWorks.CrudStore('existing', {
+    newValue: true
+  });
+
+  assertTrue('copy existing config', store.existing);
+  assertTrue('override with new config', store.newValue);
+  assertFalse('preserve original config', origStore.initialConfig.newValue);
+  assertEquals('clean initialConfig', 'undefined', typeof store.initialConfig.proxy);
+  assertEquals('clean initialConfig', 'undefined', typeof store.initialConfig.reader);
+
+  Ext.StoreMgr = origMgr;
+}
+
+</script></body></html>
