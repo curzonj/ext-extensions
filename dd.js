@@ -1,5 +1,7 @@
 /*globals Ext, SWorks */
 
+Ext.namespace('Ext.ux.grid');
+
 Ext.override(Ext.dd.DragDrop, {
   // This allows multiple things lock/unlock with a
   // little overlap, and they won't break each other

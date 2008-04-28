@@ -1,5 +1,7 @@
 /*globals Ext */
 
+Ext.namespace('Ext.ux');
+
 Ext.ux.TagField = function(config) {
  
     // init data

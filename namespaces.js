@@ -1,3 +1,5 @@
 /*globals Ext */
 
-Ext.namespace("SWorks", "Ext.ux", "Ext.ux.data", "Ext.ux.tree", "Ext.ux.grid"); //Used by extensions
+
+// TODO, this should be moved in to the framework files that reference the namespace
+Ext.namespace("SWorks"); //Used by extensions

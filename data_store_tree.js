@@ -1,5 +1,7 @@
 /*globals Ext */
 
+Ext.namespace('Ext.ux.tree');
+
 //required: store, textField; optional: idField, parentIdField, qtipField
 Ext.ux.tree.DataStoreBacking = function(config) {
   Ext.apply(this, config);

@@ -23,6 +23,9 @@
  */
 
 /*globals Ext */
+
+Ext.namespace('Ext.ux');
+
 Ext.ux.TreeComboBox = Ext.extend(Ext.form.TriggerField, {
   valueNotFoundText: "Item not found",
   defaultAutoCreate : {tag: "input", type: "text", size: "24", autocomplete: "off"},
