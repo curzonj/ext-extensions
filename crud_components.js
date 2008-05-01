@@ -56,14 +56,14 @@ SWorks.CrudGridPanel = Ext.extend(Ext.grid.GridPanel, {
   minColumnWidth: 5,
 
   initComponent: function() {
+    this.setupEditor();
+    this.setupStore();
+
     this.tbar = this.createToolbar();
 
     SWorks.CrudGridPanel.superclass.initComponent.call(this);
 
     this.addEvents('load', 'beforeload');
-
-    this.setupEditor();
-    this.setupStore();
   
     this.colModel.defaultSortable = true;
     this.on('afterrender', function() {
@@ -569,11 +569,10 @@ Ext.extend(SWorks.CrudTreePanel, Ext.tree.TreePanel, {
   border: false,
 
   initComponent: function() {
+    this.setupEditor();
     this.tbar = this.createToolbar();
 
     SWorks.CrudTreePanel.superclass.initComponent.call(this);
-
-    this.setupEditor();
 
     if(this.store.loadIfNeeded) {
       this.store.loadIfNeeded();
