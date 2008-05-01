@@ -482,7 +482,7 @@ Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
     //Searches everything. Quite the hack.
     return this.snapshot.filterBy(this.parentFilter, {
       relation_id: record.data.id,
-      relation_type: record.data.type || record.store.klass,
+      relation_type: record.data.klass || (record.store ? record.store.klass : null),
       parentIdColumn: this.parentIdColumn,
       parentTypeColumn: this.parentTypeColumn
     });

@@ -451,6 +451,9 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
 
         if (success && result.id == id) {
           var record = new this.recordType(result, id);
+          if(this.store && !record.data.klass) {
+            record.data.klass = this.store.klass;
+          }
 
           options.cb.fn.call(options.cb.scope || this, record);
         } else {
