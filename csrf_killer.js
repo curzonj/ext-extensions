@@ -1,5 +1,12 @@
 /*globals Ext, CSRFKiller */
 
+/*
+ *   var CSRFKiller = {
+ *     "field": "<%= request_forgery_protection_token %>",
+ *     "token": "<%= form_authenticity_token %>"
+ *   }
+ */
+
 Ext.onReady(function() {
   if(typeof CSRFKiller != 'undefined' && CSRFKiller.field) {
     Ext.Ajax.on('beforerequest', function(conn, options) {
