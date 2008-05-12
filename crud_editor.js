@@ -288,7 +288,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     }
 
     // This way we know what we sent to the server
-    o.dataSentRecord = new this.store.recordType({});
+    o.dataSentRecord = new this.recordType({});
     form.updateRecord(o.dataSentRecord);
 
     form.submit(Ext.apply(o ,{
@@ -650,7 +650,7 @@ SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
         if(store && r.id) {
           record = store.getById(r.id);
           if(!record) {
-            record = new store.reader.recordType({}, r.id);
+            record = new this.recordType({}, r.id);
             store.addSorted(record);
             record.newBeforeSave = true;
           }

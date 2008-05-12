@@ -35,7 +35,7 @@ Ext.ux.grid.RowReorderDD = function(grid, config) {
 Ext.extend(Ext.ux.grid.RowReorderDD, Ext.dd.DropZone, {
   lazyInit: function() {
     var dom = this.grid.getGridEl().dom;
-    Ext.ux.grid.RowReorderDD.superclass.constructor.call(this, dom);
+    Ext.ux.grid.RowReorderDD.superclass.constructor.call(this, dom);
 
     this.view = this.grid.getView();
 
@@ -100,7 +100,7 @@ Ext.extend(Ext.ux.grid.RowReorderDD, Ext.dd.DropZone, {
       var r = Ext.lib.Dom.getRegion(n);
       var oldIndex = data.rowIndex;
       var newIndex = n.rowIndex + (((r.bottom - y) <= (r.bottom-r.top)/2) ? 1 : 0);
-    
+
       this.onRowChange(oldIndex, newIndex);
     }
 
