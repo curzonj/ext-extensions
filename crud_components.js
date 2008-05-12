@@ -359,7 +359,9 @@ SWorks.SearchCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
 
     SWorks.SearchCrudGrid.superclass.initComponent.call(this);
 
-    this.store.load();
+    this.on('render', function() {
+      this.store.load();
+    }, this);
   },
   setupStore: function() {
     this.store.baseParams = this.store.baseParams || {};
