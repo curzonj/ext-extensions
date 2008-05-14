@@ -85,6 +85,7 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
     if (!this.forms.contains(form)) {
       this.forms.add(form);
 
+      panel.controller = this;
       this.relayEvents(form, ['beforeaction', 'actionfailed', 'actioncomplete']);
 
       if(form.items.length < 1) {
@@ -145,6 +146,29 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
       this.parent = pcomp.controller;
       this.parentForm = pcomp.form;
     }
+  }
+});
+
+// To bridge parent/child relations between the two versions
+SWorks.LegacyController = function() {
+  this.addEvents( 'beforeaction', 'actionfailed', 'actioncomplete',
+                  'beforeload', 'load', 'delete', 'save');
+}
+Ext.extend(SWorks.LegacyController, Ext.util.Observable, {
+  init: function(comp) {
+    this.component = comp;
+    comp.controller = this;
+
+    this.editor = comp.editor;
+    this.editor.controller = this;
+    this.editor.on('render', this.wireEditor, this);
+
+    this.relayEvents(this.editor, ['beforeaction', 'actionfailed', 'actioncomplete',
+                  'beforeload', 'load', 'delete', 'save']);
+  },
+  wireEditor: function(panel) {
+    // this helps deal with the tabbed crud editor
+    panel.controller = this;
   }
 });
 

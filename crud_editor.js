@@ -409,9 +409,6 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
   },
   loadRecord: function(record) {},
   loadForm: function(form, record, panel){
-    //the panel parameter is optional, it is up to the
-    //implementation to pass it or not
-    // TODO needs handle record locking
     form.record = record;
 
     if(this.fireEvent('beforeload', form, record, panel) !== false) {
@@ -728,7 +725,7 @@ SWorks.paneledCrudEditorOverrides = {
       this.dialog.render(Ext.getBody());
     }
 
-    if(this.loadForm(this.form, record) && this.useDialog) {
+    if(this.loadForm(this.form, record, this.dialog) && this.useDialog) {
       if( this.isReadOnly(record) === true ) {
         this.formPanel.el.addClass('read-only');
         this.dialog.saveBtn.disable();
@@ -892,6 +889,8 @@ SWorks.TabbedCrudEditor = Ext.extend(SWorks.ManagedCrudEditor, {
     if(!panel.doLayout) {
       panel = new Ext.Panel(panel);
     }
+
+    this.relayEvents(panel, ['render']);
 
     var formPanel = panel.findByType('form')[0];
     if (panel != formPanel) {

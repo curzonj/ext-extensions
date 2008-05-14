@@ -186,9 +186,9 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     }
 
     if(this.foreignKey && this.controller &&
-       this.controller.getParent()) {
-      var p = this.controller.getParent();
-      Ext.applyIf(o.params, this.getParentRelAttrs(p.form.record));
+       this.controller.parentForm) {
+      var parentRecord = this.controller.parentForm.record;
+      Ext.applyIf(o.params, this.getParentRelAttrs(parentRecord));
     }
 
     if(o.callback) {
@@ -201,7 +201,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     }
 
     // This way we know what we sent to the server
-    o.dataSentRecord = new this.store.recordType({});
+    o.dataSentRecord = new this.recordType({});
     form.updateRecord(o.dataSentRecord);
 
     form.submit(Ext.apply(o ,{
@@ -244,11 +244,15 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     var r = action.options.dataSentRecord;
     var d = action.result.data;
 
-    for(var f in d) {
-      if (form.fields[f] && r.data[f] != d[f]) {
-        form.fields[f].setValue(d[f]);
+    form.items.each(function(f) {
+      var key = (f.dataIndex || f.name);
+      form.fields[key];
+
+      if (typeof r.data[key] != 'undefined' &&
+            r.data[key] != d[key]) {
+        f.setValue(d[key]);
       }
-    }
+    });
   },
   formSuccess: function(form, action) {
     if(action.result) { //should never be false, but who knows
@@ -262,7 +266,6 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       if(action.result.data) {
         form.updateOriginalValues(action.result.data);
       }
-
       if(record.newRecord) {
         // The action object will disappear so 
         // we don't need to clean this up. The actioncomplete

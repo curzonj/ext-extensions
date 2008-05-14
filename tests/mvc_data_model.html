@@ -42,26 +42,58 @@ function testSaveFormNotValid() {
 function testSaveFormValid() {
   var mc = new MockControl();
   var options = {};
-
   var dm = new SWorks.DataModel({
-    store: { recordType: Ext.emptyFn },
+    recordType: Ext.data.Record.create(['person_type', 'name']),
     restUrl: '/test',
-    dealWithEmptyCombos: Ext.emptyFn    
+    dealWithEmptyCombos: Ext.emptyFn
   });
 
   var form  = mc.createMock(Ext.form.BasicForm);
-  form.expects().isValid().andReturn(true);
-  form.expects().updateRecord(TypeOf.isA(dm.store.recordType));
-  form.expects().submit(options);
-
   form.record = { newRecord: false };
+
+  dm.controller = mc.createMock(SWorks.AbstractController);
+
+  form.expects().isValid().andReturn(true);
+  form.expects().updateRecord(TypeOf.isA(dm.recordType));
+  form.expects().submit(options);
 
   dm.saveForm(form, options);
   mc.verify();
 
   form.expects().isValid().andReturn(true);
   // Shouldn't try to save while another save is going
-  dm.saveForm(form, options); 
+  dm.saveForm(form, options);
+  mc.verify();
+}
+
+function testSaveFormWithParent() {
+  var mc = new MockControl();
+  var options = {};
+  var dm = new SWorks.DataModel({
+    foreignKey: 'person_id',
+    parameterTemplate: 'bob[{0}]',
+    recordType: Ext.data.Record.create(['person_type', 'name']),
+    restUrl: '/test',
+    dealWithEmptyCombos: Ext.emptyFn
+  });
+
+  var form  = mc.createMock(Ext.form.BasicForm);
+  form.record = { newRecord: false };
+
+  dm.controller = mc.createMock(SWorks.AbstractController);
+  dm.controller.parentForm = mc.createMock(Ext.form.BasicForm);
+  dm.controller.parentForm.record = { id: Ext.id(), data: { klass: 'bob' } };
+
+  form.expects().isValid().andReturn(true);
+  form.expects().updateRecord(TypeOf.isA(dm.recordType));
+  form.expects().submit(options);
+
+  dm.saveForm(form, options);
+  mc.verify();
+
+  form.expects().isValid().andReturn(true);
+  // Shouldn't try to save while another save is going
+  dm.saveForm(form, options);
   mc.verify();
 }
 
@@ -72,8 +104,6 @@ function testLinkToParent() {
 
   // Persistent filters are required for standard linking to parent
   Ext.ux.data.PersistentFilters(store);
-
-  var store = mc.createMock(store);
 
   var dm = new SWorks.StoreDataModel({ store: store });
   var childId = "I'm the child";
@@ -93,8 +123,35 @@ function testLinkToParent() {
   mc.verify();
 
   // when the parent loads, filter the grid
-  store.expects().addFilter(TypeOf.isA(Function), dm);
+  store.expectsCall('addFilter').withArgs(TypeOf.isA(Function), dm);
   callback.call(dm, { id: childId }, {});
+  mc.verify();
+}
+
+function testFormSuccess() {
+  // Test with a basic form not inited by a controller
+  var mc = new MockControl();
+  var dm = new SWorks.DataModel({
+    foreignKey: 'person_id',
+    parameterTemplate: 'bob[{0}]',
+    recordType: Ext.data.Record.create(['person_type', 'name']),
+    restUrl: '/test',
+    dealWithEmptyCombos: Ext.emptyFn
+  });
+
+  var form  = new Ext.form.BasicForm();
+  var action = { result: {}, options: { dataSentRecord: new dm.recordType() } };
+
+  // new record
+  form.record = new dm.recordType();
+  form.record.newRecord = true;
+  dm.on('save', function() { assert('newBeforeSave', action.newBeforeSave == true); });
+  dm.formSuccess(form, action);
+  mc.verify();
+
+  // existing record
+  form.record = new dm.recordType();
+  dm.formSuccess(form, action);
   mc.verify();
 }
 
