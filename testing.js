@@ -59,7 +59,9 @@ SWorks.Testing = {
   runall: function() {
     try {
       for (var tname in this.tests) {
-        this.run(tname);
+        if (typeof this.tests[tname] == 'object') {
+          this.run(tname);
+        }
       }
     } catch(err) {
       this.printError(err);
@@ -69,7 +71,7 @@ SWorks.Testing = {
     try {
       var test = this.tests[name];
       if(typeof test != 'object') {
-        console.log('No such test');
+        console.log('No such test: '+name);
         return;
       }
       var context = this.createContext(test);
