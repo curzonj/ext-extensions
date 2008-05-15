@@ -697,6 +697,7 @@ SWorks.paneledCrudEditorOverrides = {
     var Type = this.useDialog ? Ext.Window : Ext.Panel;
     // JSlint wants Type to be capitalized
     this.panel = new Type(config);
+    this.relayEvents(this.panel, ['render']);
 
     if(this.useDialog) {
       this.dialog = this.panel;
@@ -716,6 +717,7 @@ SWorks.paneledCrudEditorOverrides = {
     this.formPanel.border = false;
     this.formPanel.bodyStyle = "padding:10px";
     this.form = this.formPanel.form;
+    this.panel.form = this.form;
 
     this.setupForm(this.form);
     this.findChildren(this.panel, this.form);

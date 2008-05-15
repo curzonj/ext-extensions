@@ -64,4 +64,23 @@ function testSearchStoreLoad() {
   store.load();
 }
 
+function testWhenLoaded() {
+  var mc = new MockControl();
+  var store = new Ext.data.Store({
+    proxy: Ext.data.HttpProxy.dummyObj()
+  });
+
+  var obj = new Object();
+  store.expectsCall('load').withArgs().andStubOriginal();
+  obj.expectsCall('callback', mc).withArgs();
+ 
+  store.whenLoaded(obj.callback, obj);
+  store.fireEvent('load');
+  mc.verify();
+
+  obj.expectsCall('callback', mc).withArgs();
+  store.whenLoaded(obj.callback, obj);
+  mc.verify();
+}
+
 </script></body></html>

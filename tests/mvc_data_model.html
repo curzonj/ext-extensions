@@ -155,4 +155,27 @@ function testFormSuccess() {
   mc.verify();
 }
 
+function testLinkedParentLoadOnFirstAccess() {
+  var mc = new MockControl();
+  var dm = new SWorks.StoreDataModel({
+    foreignKey: 'person_id',
+    store: new SWorks.CrudStore({
+      proxy: Ext.data.HttpProxy.dummyObj(),
+      fields: [ 'person_type', 'person_id', 'name']
+    })
+  });
+
+  var cont = SWorks.AbstractController.dummyObj();
+  var form  = Ext.form.BasicForm.dummyObj();
+  var record = new dm.recordType();
+
+  dm.store.expectsCall('load', mc).withArgs().andStubOriginal();
+
+  dm.linkToParent(cont, form);
+  cont.fireEvent('load', form, record);
+  cont.fireEvent('load', form, record);
+
+  mc.verify();
+}
+
 </script></body></html>

@@ -51,17 +51,10 @@ Ext.override(Ext.data.Store, {
     return (this.lastOptions !== null);
   },
   whenLoaded: function(fn, scope) {
-    this.on('load', function() {
-      var myFn = fn;
-      // This prevents the method from being called in race conditions
-      fn = Ext.emptyFn;
-      myFn.call(scope);
-    }, null, {single:true});
-
     if (this.isLoaded()) {
-      this.un('load', fn, scope);
       fn.call(scope);
     } else if(!this.proxy.activeRequest) {
+      this.on('load', fn, scope, {single:true});
       this.load();
     }
   }

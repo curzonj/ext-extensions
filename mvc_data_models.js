@@ -533,8 +533,10 @@ Ext.extend(SWorks.StoreDataModel, SWorks.DataModel, {
     if (this.foreignKey) {
       parent.on('load', function(form, record) {
         if(form == this.parentForm) {
-          this.currentParentRecord = record;
-          this.loadFromRecord(record);
+          this.store.whenLoaded(function() {
+            this.currentParentRecord = record;
+            this.loadFromRecord(record);
+          }, this);
         }
       }, this);
     }

@@ -24,6 +24,31 @@ Ext.override(Ext.util.Observable, {
   }
 });
 
+Function.prototype.dummyObj = function dummyObj(over) {
+  return this.prototype.dummyObj();
+}
+
+Object.prototype.dummyObj = function dummyObj(over) {
+  over = over || {};
+  var obj = null;
+  if (this instanceof Ext.util.Observable) {
+    obj = new Ext.util.Observable();
+    obj.events = {};
+  } else {
+    obj = new Object();
+  }
+
+  for (var m in this) {
+    if (typeof this[m] == 'function' &&
+        typeof obj[m] == 'undefined') {
+      obj[m] = Ext.emptyFn;
+    }
+  }
+
+  Ext.apply(obj, over);
+  return obj;
+}
+
 Object.prototype.expectsCall = function expectsCall(name, mc) {
   var mockControl = mc || new MockControl();
   var obj = this;

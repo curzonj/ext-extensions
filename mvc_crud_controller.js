@@ -169,6 +169,9 @@ Ext.extend(SWorks.LegacyController, Ext.util.Observable, {
   wireEditor: function(panel) {
     // this helps deal with the tabbed crud editor
     panel.controller = this;
+  },
+  saveForm: function(form, opts) {
+    this.editor.saveForm(form, opts);
   }
 });
 
