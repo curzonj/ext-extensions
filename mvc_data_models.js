@@ -531,13 +531,14 @@ Ext.extend(SWorks.StoreDataModel, SWorks.DataModel, {
     SWorks.StoreDataModel.superclass.linkToParent.apply(this, arguments);
 
     if (this.foreignKey) {
-      parent.on('load', function(form, record) {
-        if(form == this.parentForm) {
-          this.store.whenLoaded(function() {
-            this.currentParentRecord = record;
-            this.loadFromRecord(record);
-          }, this);
-        }
+      parent.on('load', this.onParentLoaded, this);
+    }
+  },
+  onParentLoaded: function(form, record) {
+    if(form == this.parentForm) {
+      this.store.whenLoaded(function() {
+        this.currentParentRecord = record;
+        this.loadFromRecord(record);
       }, this);
     }
   },
