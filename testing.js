@@ -42,6 +42,31 @@ SWorks.Testing = {
     };
 
   },
+  testWithData: function(fn, scope) {
+    var context = this;
+
+    context.asyncTests++;
+    return function(store, records, options) {
+      try {
+        if (context.heavy == true) {
+          for(var i=0;i<records.length;i++) {
+            fn.apply(scope, records[i]);
+          }
+        } else {
+          fn.apply(scope, records[0]);
+        }
+
+        context.asyncTests--;
+        if(context.asyncTests === 0) {
+          console.log('All async tests passed');
+        } else {
+          console.log(context.asyncTests +' async tests still waiting/running');
+        }
+      } catch(err) {
+        SWorks.Testing.printError(err);
+      }
+    };
+  },
   createContext: function(test) {
     var Base = function() {};
     Base.prototype = window;
@@ -51,7 +76,8 @@ SWorks.Testing = {
     Ext.apply(context, {
       test: test,
       asyncTests: 0,
-      asyncTest: this.asyncTest.createDelegate(context)
+      asyncTest: this.asyncTest.createDelegate(context),
+      recordTest: this.recordTest.createDelegate(context)
     });
 
     return context;
