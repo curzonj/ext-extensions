@@ -219,3 +219,13 @@ Ext.override(Ext.grid.GroupingView, {
         return buf.join('');
     }
 });
+
+Ext.util.Format.dateRenderer = function(format){
+  return function(v){
+    try {
+      return Ext.util.Format.date(v, format);
+    } catch(e) {
+      return "Invalid";
+    }
+  };
+}

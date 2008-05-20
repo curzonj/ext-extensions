@@ -1,0 +1,28 @@
+<!-- Standard Code -->
+
+<html><head>
+    
+<script type="text/javascript" src="../../ext/adapter/ext/ext-base.js"></script>
+<script type="text/javascript" src="../../ext/ext-all-debug.js"></script>
+<script type="text/javascript" src="../external/jsunit/app/jsUnitCore.js"></script>
+<script type="text/javascript" src="jsmock.js"></script>
+<script type="text/javascript" src="helpers.js"></script>
+
+<!-- End Standard Code -->
+
+<script type="text/javascript" src="../ext_overrides.js"></script>
+
+</head><body><script type="text/javascript">
+
+function testDateRenderer() {
+  // I added exception handling
+  var fn = Ext.util.Format.dateRenderer('D M j y');
+
+  var value = fn('bob');
+  assertEquals('on exception', 'Invalid', value);
+
+  value = fn('05/02/08');
+  assertEquals('valid date', 'Sat May 2 08', value);
+}
+
+</script></body></html>
