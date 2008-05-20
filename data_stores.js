@@ -567,7 +567,7 @@ Ext.extend(SWorks.SearchStore, Ext.data.GroupingStore, {
       options.params[this.queryParam] = query;
     }
 
-    SWorks.SearchStore.superclass.load.call(this, options);
+    return SWorks.SearchStore.superclass.load.call(this, options);
   }
 });
 

@@ -1,0 +1,25 @@
+<!-- Standard Code -->
+
+<html><head>
+    
+<script type="text/javascript" src="../../../ext/adapter/ext/ext-base.js"></script>
+<script type="text/javascript" src="../../../ext/ext-all-debug.js"></script>
+<script type="text/javascript" src="../../external/jsunit/app/jsUnitCore.js"></script>
+<script type="text/javascript" src="../jsmock.js"></script>
+<script type="text/javascript" src="../helpers.js"></script>
+
+<!-- End Standard Code -->
+
+<script type="text/javascript" src="../../data_stores.js"></script>
+
+</head><body><script type="text/javascript">
+
+function testLoad() {
+  var store = new SWorks.SearchStore({
+    proxy: Ext.data.HttpProxy.dummyObj()
+  });
+
+  assertEquals('returns load result', true, store.load());
+}
+
+</script></body></html>
