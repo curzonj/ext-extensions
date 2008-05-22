@@ -31,16 +31,22 @@ SWorks.Testing = {
         fn.apply(scope, arguments);
 
         context.asyncTests--;
-        if(context.asyncTests === 0) {
-          console.log('All async tests passed');
-        } else {
-          console.log(context.asyncTests +' async tests still waiting/running');
-        }
+        SWorks.Testing.finished(context);
       } catch(err) {
         SWorks.Testing.printError(err);
       }
     };
 
+  },
+  finished: function(context) {
+    if(context.asyncTests === 0) {
+      console.log(context.test.name + ' finished');
+      if (typeof SWorks.Testing.barrierFn == 'function') {
+        SWorks.Testing.barrierFn(context);
+      }
+    } else {
+      console.log(context.test.name + ' waiting on ' + context.asyncTests +' tests.');
+    }
   },
   testWithData: function(fn, scope) {
     var context = this;
@@ -48,20 +54,16 @@ SWorks.Testing = {
     context.asyncTests++;
     return function(store, records, options) {
       try {
-        if (context.heavy == true) {
+        if (context.allRecords === true) {
           for(var i=0;i<records.length;i++) {
             fn.apply(scope, records[i]);
           }
         } else {
-          fn.apply(scope, records[0]);
+          fn.call(scope, records[0]);
         }
 
         context.asyncTests--;
-        if(context.asyncTests === 0) {
-          console.log('All async tests passed');
-        } else {
-          console.log(context.asyncTests +' async tests still waiting/running');
-        }
+        SWorks.Testing.finished(context);
       } catch(err) {
         SWorks.Testing.printError(err);
       }
@@ -77,18 +79,28 @@ SWorks.Testing = {
       test: test,
       asyncTests: 0,
       asyncTest: this.asyncTest.createDelegate(context),
-      recordTest: this.recordTest.createDelegate(context)
+      testWithData: this.testWithData.createDelegate(context)
     });
 
     return context;
   },
   runall: function() {
     try {
+      var list = [];
       for (var tname in this.tests) {
         if (typeof this.tests[tname] == 'object') {
-          this.run(tname);
+          list.push(tname);
         }
       }
+
+      this.barrierFn = function() {
+        var test = list.pop();
+        if (typeof test == 'string') {
+          console.log('running ' + test);
+          this.run(test);
+        }
+      }.createDelegate(this);
+      this.barrierFn();
     } catch(err) {
       this.printError(err);
     }
@@ -105,12 +117,7 @@ SWorks.Testing = {
       setTimeout(function() {
         try {
           test.fn.call(context);
-
-          if (context.asyncTests === 0) {
-            console.log(name + ' test complete');
-          } else {
-            console.log(name + ' test function returned, waiting on '+context.asyncTests+' async tests to finish');
-          }
+          SWorks.Testing.finished(context);
         } catch(err) {
           SWorks.Testing.printError(err);
         }
