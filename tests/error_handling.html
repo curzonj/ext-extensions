@@ -1,0 +1,140 @@
+<!-- Standard Code -->
+
+<html><head>
+    
+<script type="text/javascript" src="../../ext/adapter/ext/ext-base.js"></script>
+<script type="text/javascript" src="../../ext/ext-all-debug.js"></script>
+<script type="text/javascript" src="../external/jsunit/app/jsUnitCore.js"></script>
+<script type="text/javascript" src="../external/jsmock.js"></script>
+<script type="text/javascript" src="helpers.js"></script>
+
+<!-- End Standard Code -->
+
+<script type="text/javascript" src="../error_handling.js"></script>
+
+</head><body><script type="text/javascript">
+
+function tearDown() {
+  SWorks.ErrorHandling.dataList = [];
+}
+
+function testAddData() {
+  SWorks.ErrorHandling.addData('test');
+  assertEquals(1, SWorks.ErrorHandling.dataList.length);
+
+  for(var i=0;i<105;i++) {
+    SWorks.ErrorHandling.addData('test'+i);
+  }
+
+  assertEquals(100, SWorks.ErrorHandling.dataList.length);
+}
+
+function testOnAjaxRequest() {
+  // If the server sends an error message, print it
+  var msg = 'test this';
+  var text = Ext.encode({ success: false, message: msg });
+
+  var mc = Ext.MessageBox.expectsCall('alert').withArgs('Server Failed', msg);
+  Ext.Ajax.fireEvent('requestcomplete', Ext.Ajax, { status: 200, responseText: text }, {});
+  mc.verify();
+}
+
+function testOnAjaxRequestException() {
+  var mc = new MockControl();
+
+  // We can't connect to the server
+  Ext.MessageBox.expectsCall('alert',mc).withArgs('Server Not Found', TypeOf.isA(String));
+  Ext.Ajax.fireEvent('requestexception', Ext.Ajax, { status: 0 }, {});
+  mc.verify();
+
+  // Server choked, 500 status code
+  Ext.MessageBox.expectsCall('alert',mc).withArgs('Server Failed', TypeOf.isA(String));
+  Ext.Ajax.fireEvent('requestexception', Ext.Ajax, { status: 500 }, {});
+  mc.verify();
+
+  // Server timed out on a modify request, you can't retry it
+  Ext.MessageBox.expectsCall('alert',mc).withArgs('Server Failed', TypeOf.isA(String));
+  Ext.Ajax.fireEvent('requestexception', Ext.Ajax, { status: -1 }, {method:'POST'});
+  mc.verify();
+
+  // Explicit, don't retry
+  Ext.MessageBox.expectsCall('alert',mc).withArgs('Server Failed', TypeOf.isA(String));
+  Ext.Ajax.fireEvent('requestexception', Ext.Ajax, { status: -1 }, { retryAttempts: 0});
+  mc.verify();
+}
+
+function testRetryRequests() {
+  var mc = new MockControl();
+
+  // The server took too long and we killed the connection
+  var opts = { method: 'GET' };
+  Ext.Ajax.expectsCall('request', mc).withArgs(opts); // opts.retryAttempts == null
+  Ext.Ajax.fireEvent('requestexception', Ext.Ajax, { status: -1 }, opts);
+  mc.verify();
+
+  assertEquals('retry 1', 1, opts.retryAttempts);
+  Ext.Ajax.expectsCall('request', mc).withArgs(opts);
+  Ext.Ajax.fireEvent('requestexception', Ext.Ajax, { status: -1 }, opts);
+  mc.verify();
+
+  assertEquals('retry 0', 0, opts.retryAttempts);
+  Ext.MessageBox.expectsCall('alert', mc).withArgs('Server Failed', TypeOf.isA(String));
+  Ext.Ajax.fireEvent('requestexception', Ext.Ajax, { status: -1 }, opts);
+  mc.verify();
+}
+
+function testJsonRequest() {
+  var opts = {};
+  Ext.Ajax.expectsCall('request').withArgs(opts);
+  Ext.Ajax.jsonRequest(opts);
+  assertEquals('remap callback', opts.callback, Ext.Ajax.handleJsonResponse);
+}
+
+function testHandleJsonResponse() {
+  var mc = new MockControl();
+
+  // The error handler is supposed to take care of failed requests, we only
+  // handle the ones that went through.
+  Ext.Ajax.handleJsonResponse({}, false, null);
+  mc.verify();
+
+  Ext.MessageBox.expectsCall('alert',mc).withArgs('Server Failed', TypeOf.isA(String));
+  Ext.Ajax.handleJsonResponse({}, true, { responseText: 'garbage' });
+  mc.verify();
+
+  var text = Ext.encode({ success: false });
+  // If there is no callback, it should just pass over it
+  Ext.Ajax.handleJsonResponse({}, true, { responseText: text });
+  mc.verify();
+}
+
+function testFullJsonRequest() {
+  var mc = new MockControl();
+
+  // Make sure no alerts fire
+  var origMsgBox = Ext.MessageBox;
+  Ext.MessageBox = mc.createMock(Ext.MessageBox);
+
+  var opts = {};
+  var obj = {};
+  callbackExpect = obj.expectsCall('callback', mc);
+  opts.callback = obj.callback;
+  opts.scope = obj;
+
+  Ext.Ajax.expectsCall('request', mc).withArgs(opts).andStub(function() {
+    var text = Ext.encode({ success: false, type: 'bob' });
+    opts.callback.call(opts.scope, opts, true, { responseText: text });
+  });
+
+  callbackExpect.withArgs(TypeOf.isA(Object), opts);
+
+  Ext.Ajax.jsonRequest(opts);
+
+  // It should not interpret the contents of the message
+  mc.verify();
+
+  Ext.MessageBox = origMsgBox;
+}
+
+
+</script></body></html>

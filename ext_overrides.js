@@ -229,3 +229,16 @@ Ext.util.Format.dateRenderer = function(format){
     }
   };
 }
+
+Ext.override(Ext.data.Connection, {
+  handleFailure : function(response, e){
+    this.transId = false;
+    var options = response.argument.options;
+    response.argument = options ? options.argument : null;
+    // This allows the exception handler to implement recovery mechanisms
+    if(this.fireEvent("requestexception", this, response, options, e)) {
+      Ext.callback(options.failure, options.scope, [response, options]);
+      Ext.callback(options.callback, options.scope, [options, false, response]);
+    }
+  }
+});
