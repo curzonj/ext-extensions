@@ -13,16 +13,13 @@ Ext.override(Ext.util.Observable, {
     mock[methodName] = function() {};
 
     mock = mc.createMock(mock);
-    target.on(name, mock[methodName], mock);
+    target.on(name, mock[methodName], mock, {single: true});
 
     return {
       notFired: function() {},
       withArgs: function() {
         mock.expects();
         return mock[methodName].apply(mock, arguments);
-      },
-      remove: function() {
-        target.un(name, mock[methodName], mock);
       }
     };
   }
