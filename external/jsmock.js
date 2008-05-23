@@ -182,28 +182,26 @@ ExpectationMatcher.prototype = {
 
 	matches: function() {
 	  var self = this;
-	  var matches = true;
+	  var differ = false,
+        matches = true;
 	  
 	  this.__expectationBehaviorList.eachIndexForJsMock(function(index, expectedBehavior) {
 	    var actualBehavior = (self.__actualBehaviorList.length > index) ? self.__actualBehaviorList[index] : null;
-	    
+
 	    if(matches) {
 	      if( actualBehavior === null ) {
   				self.__discrepancy = new Discrepancy("Expected function not called", expectedBehavior);
   				matches = false;
-  			}	
-  			else if( expectedBehavior.method != actualBehavior.method ) {
-  				self.__discrepancy = new Discrepancy("Surprise call", actualBehavior);
-  				matches = false;
-  			}
-  			else if( expectedBehavior.caller != actualBehavior.caller ) {
-  				self.__discrepancy = new Discrepancy("Surprise call from unexpected caller", actualBehavior);
-  				matches = false;
-  			} 
-  			else if( !self.__matchArguments(expectedBehavior.methodArguments, actualBehavior.methodArguments) ) {
-  				self.__discrepancy = new Discrepancy("Unexpected Arguments", actualBehavior);
-  				matches = false;
-  			}
+
+  			}	else if (differ = self.behaviorsDiffer(expectedBehavior, actualBehavior)) {
+          var nextBehavior = self.__expectationBehaviorList[index+1];
+          if (nextBehavior && !self.behaviorsDiffer(nextBehavior, actualBehavior)) {
+            self.__discrepancy = new Discrepancy("Expected function not called", expectedBehavior);
+          } else {
+            self.__discrepancy = differ;
+          }
+          matches = false;
+        }
 	    }
 	  });
 	  
@@ -214,6 +212,21 @@ ExpectationMatcher.prototype = {
 
 		return matches;
 	},
+
+  behaviorsDiffer: function(expectedBehavior, actualBehavior) {
+    if( expectedBehavior.method != actualBehavior.method ) {
+      return new Discrepancy("Surprise call", actualBehavior);
+
+    } else if( expectedBehavior.caller != actualBehavior.caller ) {
+      return new Discrepancy("Surprise call from unexpected caller", actualBehavior);
+
+    } else if( !this.__matchArguments(expectedBehavior.methodArguments, actualBehavior.methodArguments) ) {
+      return new Discrepancy("Unexpected Arguments", actualBehavior);
+
+    } else {
+      return false;
+    }
+  },
 
 	reset: function() {
 		this.__expectationBehaviorList = [];
