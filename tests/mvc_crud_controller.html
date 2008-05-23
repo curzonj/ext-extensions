@@ -19,11 +19,12 @@
 
 function testInitForm() {
   var controller = new SWorks.AbstractController();
+  var panel = {};
   var form = new Ext.form.BasicForm();
   form.add(new Ext.form.TextField({ dataIndex: 'test' }));
 
   // should index the fields
-  controller.initFormIdempotent(form);
+  controller.initFormIdempotent(form, panel);
   assert('assigned map', form.items.maps['dataIndex'] == form.fields);
 
   // should not re-init the form

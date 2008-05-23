@@ -4,6 +4,13 @@ function replaceAjaxRequest() {
   // when the stores try to load
 }
 
+function assertEventRelay(src, relay, event) {
+  var mc = new MockControl();
+  relay.expectsEvent(event, mc).withArgs();
+  src.fireEvent(event);
+  mc.verify();
+}
+
 Ext.override(Ext.util.Observable, {
   expectsEvent: function(name, mc) {
     mc = mc || window;

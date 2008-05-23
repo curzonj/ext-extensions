@@ -193,26 +193,6 @@ Ext.override(Ext.grid.GridPanel, {
   }
 });
 
-Ext.ux.data.LoadAttempts = function(store, maxAttempts) {
-  maxAttempts = maxAttempts || 5;
-
-  store.loadAttempts = 0;
-  store.maxAttempts = maxAttempts;
-
-  if(store.proxy) {
-    store.proxy.on('loadexception', function(proxy, data, transaction) {
-      store.loadAttempts = store.loadAttempts ? store.loadAttempts + 1 : 1;
-      if (store.loadAttempts < maxAttempts) {
-        store.reload();
-      }
-    }, store);
-  }
-
-  store.on('load', function() {
-    store.loadAttempts = 0;
-  }, store);
-};
-
 Ext.ux.data.ReloadingStore = function(store) {
   store.mirror_without_reloading = store.mirror;
   Ext.apply(store, Ext.ux.data.ReloadingStore.overrides);
@@ -439,7 +419,6 @@ SWorks.CrudStore = function(config, custom) {
     reader: new Ext.data.JsonReader(config, config.fields)
   }, config));
 
-  Ext.ux.data.LoadAttempts(this);
   Ext.ux.data.ReloadingStore(this);
   Ext.ux.data.PersistentFilters(this);
 };
@@ -526,8 +505,6 @@ SWorks.SearchStore = function(config, custom) {
   }, config));
 
   this.querySet = {};
-
-  Ext.ux.data.LoadAttempts(this);
 };
 Ext.extend(SWorks.SearchStore, Ext.data.GroupingStore, {
   queryParam: 'q',

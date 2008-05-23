@@ -1,0 +1,206 @@
+<!-- Standard Code -->
+
+<html><head>
+    
+<script type="text/javascript" src="../../ext/adapter/ext/ext-base.js"></script>
+<script type="text/javascript" src="../../ext/ext-all-debug.js"></script>
+<script type="text/javascript" src="../external/jsunit/app/jsUnitCore.js"></script>
+<script type="text/javascript" src="../external/jsmock.js"></script>
+<script type="text/javascript" src="helpers.js"></script>
+
+<!-- End Standard Code -->
+
+<script type="text/javascript" src="../collection_index.js"></script>
+<script type="text/javascript" src="../error_handling.js"></script>
+<script type="text/javascript" src="../crud_editor.js"></script>
+
+</head><body><script type="text/javascript">
+
+function setUpPage() {
+  window.mc = new MockControl();
+  window.origMsgBox = Ext.MessageBox;
+  Ext.MessageBox = mc.createMock(Ext.MessageBox);
+
+  setUpPageStatus = 'complete';
+}
+
+function setUp() {
+  window.editor = new SWorks.CrudEditor({
+    createUrl: 'test',
+    restUrl: 'test/{0}',
+    recordType: Ext.data.Record.create(['id', 'bob']),
+    store: {
+      klass: 'rails class, ie. Person'
+    }
+  });
+
+}
+
+function tearDown() {
+  mc.verify();
+}
+
+function testFetchRecord() {
+  var result = null, id = 1, opts = {};
+
+  function bridge() {
+    Ext.MessageBox.expects().wait(TypeOf.isA(String));
+    Ext.Ajax.expectsCall('jsonRequest', mc).withArgs(opts).andStub(
+      function() {
+        assertEquals('url', 'test/'+id, opts.url);
+        opts.callback.call(opts.scope, result, opts);
+      });
+    Ext.MessageBox.expects().updateProgress(1);
+    Ext.MessageBox.expects().hide();
+  }
+
+  // Server didn't send us the right record
+  result = { id: 2 };
+  bridge();
+  SWorks.ErrorHandling.expectsCall('serverError', mc).withArgs(result);
+  editor.fetchRecord(id, opts);
+  mc.verify();
+
+  // Test the callback
+  result = { id: id, bob: 'wohoo' };
+  bridge();
+  opts.expectsCall('callback', mc).withArgs(TypeOf.isA(editor.recordType)).andStub(
+      function(record) {
+        assertEquals('record id', id, record.id);
+        assertEquals('record data', result.bob, record.data.bob);
+      });
+  editor.fetchRecord(id, opts);
+  mc.verify();
+}
+
+function testPostToRecord() {
+  var result = null, id = 1, opts = {};
+
+  // Some where there was a bug passing bad args
+  // Make sure it doesn't call jsonRequest
+  Ext.Ajax.expectsCall('jsonRequest', mc); 
+  var expect = SWorks.ErrorHandling.expectsCall('clientError', mc);
+  expect.withArgs();
+  expect.withArgs();
+  editor.postToRecord(null);
+  editor.postToRecord();
+  mc.verify();
+
+  // a new record
+  opts = {
+    record: new editor.recordType({bob: 'yo, Bobo!'}),
+    waitMsg: false
+  };
+  opts.record.newRecord = true;
+  editor.expectsCall('setUpdateOrCreate', mc).
+      withArgs(opts.record, opts).andStubOriginal();
+  Ext.Ajax.expectsCall('jsonRequest', mc).withArgs(opts).andStub(
+      function() {
+        assertEquals('url from create', 'test', opts.url);
+      });
+  editor.postToRecord(opts);
+  mc.verify();
+
+  // an existing record
+  opts = {
+    record: new editor.recordType({id: 1, bob: 'yo, Bobo!'}, 1),
+    waitMsg: false
+  };
+  editor.expectsCall('setUpdateOrCreate', mc).
+      withArgs(opts.record, opts).andStubOriginal();
+  Ext.Ajax.expectsCall('jsonRequest', mc).withArgs(opts).andStub(
+      function() {
+        assertEquals('url from record', 'test/1', opts.url);
+      });
+  editor.postToRecord(opts);
+  mc.verify();
+
+  // id in the options
+  opts = {
+    id: 1,
+    waitMsg: 'waitmsg'
+  };
+  Ext.MessageBox.expects().wait(opts.waitMsg);
+  Ext.Ajax.expectsCall('jsonRequest', mc).withArgs(opts).andStub(
+      function() {
+        assertEquals('url from id', 'test/1', opts.url);
+      });
+  editor.postToRecord(opts);
+  mc.verify();
+
+  // id in the arguments
+  opts = {
+    url: 'testUrl'
+  };
+  Ext.MessageBox.expects().wait(TypeOf.isA(String));
+  Ext.Ajax.expectsCall('jsonRequest', mc).withArgs(opts).andStub(
+      function() {
+        assertEquals('url from opts', 'testUrl', opts.url);
+      });
+  editor.postToRecord(1, opts);
+  mc.verify();
+}
+
+function testPostToRecordCallback() {
+  var result = null, opts = null, id = 1;
+  function bridge() {
+    if(opts.waitMsg !== false) {
+      Ext.MessageBox.expects().wait(TypeOf.isA(String));
+    }
+    Ext.Ajax.expectsCall('jsonRequest', mc).withArgs(TypeOf.isA(Object)).andStub(
+        function() {
+          opts.callback.call(opts.scope, result, opts);
+        });
+    if(opts.waitMsg !== false) {
+      Ext.MessageBox.expects().updateProgress(1);
+      Ext.MessageBox.expects().hide();
+    }
+  }
+
+  // request failed
+  opts = {};
+  result = { success: false };
+  bridge();
+  opts.expectsCall('callback', mc).withArgs(false, opts.record, result);
+  SWorks.ErrorHandling.expectsCall('serverError', mc).withArgs(result);
+  editor.postToRecord(opts);
+  mc.verify();
+
+  // record passed in
+  opts = { record: new editor.recordType({id: id, bob: 'way cool!'}, id) };
+  result = { success: true, data: { id: id, bob: 'new data' }};
+  bridge();
+  opts.store = {};
+  opts.store.expectsCall('getById').withArgs(opts.record.id).andStub(
+      function() { return opts.record });
+  opts.expectsCall('callback', mc).withArgs(true, opts.record, result);
+  editor.expectsEvent('save', mc).withArgs(opts.record, result).andStub(
+      function(r) {
+        assertEquals('updated record', opts.record.data.bob, result.data.bob);
+      });
+  editor.postToRecord(opts);
+  assertFalse('clears newBeforeSave', opts.record.newBeforeSave);
+  mc.verify();
+
+  // record passed in, without a store, and no data returned
+  opts = { record: new editor.recordType({id: id, bob: 'way cool!'}, id) };
+  result = { success: true };
+  bridge();
+  opts.expectsCall('callback', mc).withArgs(true, opts.record, result);
+  editor.expectsEvent('save', mc).withArgs(opts.record, result);
+  editor.postToRecord(opts);
+  mc.verify();
+
+  // no record passed in
+  opts = {};
+  result = { success: true, objectid: id };
+  bridge();
+  editor.expectsEvent('save', mc).withArgs(TypeOf.isA(editor.recordType), result).
+      andStub(function(r) {
+        assertEquals('created with correct id', id, r.id);
+      });
+  editor.postToRecord(id, opts);
+  mc.verify();
+}
+
+</script></body></html>

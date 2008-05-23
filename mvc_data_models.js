@@ -25,9 +25,8 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
 
     this.postToRecord(o.record.id, o);
   },
-  sendEvent: function(record, eventName, failedMsg){
+  sendEvent: function(record, eventName){
     this.postToRecord(record.id, {
-      errmsg: failedMsg,
       record: record,
       params: {
         'event': eventName,
@@ -64,9 +63,13 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     o.params = o.params || {};
     
     if(record.newRecord) {
+      // If we retry create requests, we could end up with
+      // multiple entries
       Ext.applyIf(o, { url: this.createUrl});
       Ext.applyIf(o.params, { '_method': 'post'});
     } else {
+      // Only retry the request if it is idempotent
+      o.forceRetryRequest = true;
       Ext.applyIf(o, { url: String.format(this.restUrl, record.id)});
       Ext.applyIf(o.params, { '_method': 'put'});
     }
@@ -88,18 +91,17 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     return values;
   },
   postToRecord: function(rid, o) {
-    if(typeof rid == 'object') {
+    if(typeof rid == 'object' && rid !== null) {
       o = rid;
       rid = o.id;
-    } else if(typeof rid == 'undefined') {
-      Ext.MessageBox.alert('Operation failed', "There was an internal error. Please report the issue and reload the application");
+    } else if(typeof rid != 'number') {
+      SWorks.ErrorHandling.clientError();
+      return;
     }
 
     if(o.waitMsg !== false) {
       Ext.MessageBox.wait(o.waitMsg || "Updating Record...");
     }
-
-    // TODO add a retry mechanism
 
     if(!o.url && o.record) {
       o = this.setUpdateOrCreate(o.record, o);
@@ -107,30 +109,24 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       o.url = o.url || String.format(this.restUrl, rid);
     }
 
-    o.errmsg = o.errmsg || "Failed update the record. Please try again.";
     o.cb = {
       fn: o.callback,
       scope: o.scope
     };
 
-    Ext.Ajax.request(Ext.apply(o, {
+    Ext.Ajax.jsonRequest(Ext.apply(o, {
       callback: this.postToRecordCallback,
       scope: this
     }));
   },
-  postToRecordCallback: function(options, success, response) {
+  postToRecordCallback: function(result, options) {
     if(options.waitMsg !== false) {
       Ext.MessageBox.updateProgress(1);
       Ext.MessageBox.hide();
     }
 
-    var result = null;
-    if(success) {
-      result =  Ext.decode(response.responseText);
-    }
-
     var record = options.record;
-    if (success && result.success) {
+    if (result.success) {
       if(record) {
         if(record.store) {
           record = record.store.getById(record.id);
@@ -150,8 +146,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
         options.cb.fn.call(options.cb.scope || this, false, record, result);
       }
 
-      var msg = ((result && result.errors) ? (result.errors.base || options.errmsg) : options.errmsg);
-      Ext.MessageBox.alert('Operation failed', msg);
+      SWorks.ErrorHandling.serverError(result);
     }
   },
 
@@ -162,23 +157,28 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
   saveForm: function(form, o){
     o = o || {};
 
-    if(!form.isValid()) {
-      if(typeof o.waitMsg == 'undefined' || o.waitMsg) {
-        Ext.MessageBox.alert('Save failed',
-          'Please fix all the boxes highlighted in red.');
-      }
+    // TODO, add readOnly safety check
+
+    // Did they already submit?
+    if (form.submitLock) {
+      // Prevents errors from holding the enter key
+      // down too long or bouncing it
       return;
+    } else {
+      form.submitLock = true;
     }
 
-    // Prevents errors from holding the enter key
-    // down too long or bouncing it
-    if (form.submitLock) {
+    // Is the form valid?
+    if(!form.isValid()) {
+      // This follows the Ext api for an invalid form,
+      // we're just doing a precheck
+      this.formFailure(form, { failureType: 'client', options: o });
       return;
     }
-    form.submitLock = true;
 
     this.dealWithEmptyCombos(form);
 
+    // Then lets prepare the submit
     var record = form.record;
     o = this.setUpdateOrCreate(record, o);
     if(typeof o.waitMsg == 'undefined') {
@@ -287,19 +287,16 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     form.submitLock = false;
   },
   formFailure: function(form, action) {
-
-    if (action.failureType == 'client' && action.options.waitMsg) {
-      Ext.MessageBox.alert('Save failed',
-        'Please fill in all the boxes highlighted in red.');
-    } else if (action.failureType != 'client' &&
-        (!action.result || !action.result.errors)) {
-      Ext.MessageBox.alert('Save failed',
-        'Failed to save the record. Please try again.');
-    } else if (action.result && action.result.errors &&
-        action.result.errors.base) {
+    if (action.failureType != 'server' && action.failureType != 'client') {
+      SWorks.ErrorHandling.serverError(action.result);
+    } else if (action.failureType == 'server' && action.result.errors.base) {
       Ext.MessageBox.alert('Save failed', action.result.errors.base);
+    } else if (action.options.waitMsg !== false) {
+      Ext.MessageBox.alert('Save failed',
+        'Please fix all the boxes highlighted in red.');
     }
-    // else, Ext will display our validation errors from JsonController.
+
+    // Ext will display our validation errors from JsonController.
     // Read http://extjs.com/deploy/ext/docs/output/Ext.form.TextField.html#config-msgTarget
     // for more information about your options for styling error messages.
     // We should however keep the styling consistant across all our modules
@@ -370,32 +367,30 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       fn: o.callback,
       scope: o.scope
     };
-    o.errmsg = o.errmsg || "Failed to load the record. Please try again.";
 
     Ext.MessageBox.wait("Loading Record...");
 
-    Ext.Ajax.request(Ext.apply(o, {
+    Ext.Ajax.jsonRequest(Ext.apply(o, {
+      idRequested: id,
       url: String.format(this.restUrl, id),
-      callback: function(options, success, response) {
-        Ext.MessageBox.updateProgress(1);
-        Ext.MessageBox.hide();
-
-        var result = null;
-        if(success) {
-          result =  Ext.decode(response.responseText);
-        }
-
-        if (success && result.id == id) {
-          var record = new this.recordType(result, id);
-
-          options.cb.fn.call(options.cb.scope || this, record);
-        } else {
-          var msg = (result ? (result.error || options.errmsg) : options.errmsg);
-          Ext.MessageBox.alert('Load record failed', msg);
-        }
-      },
+      callback: this.onFetchRecordResponse,
       scope: this
     }));
+  },
+  onFetchRecordResponse: function(result, options) {
+    Ext.MessageBox.updateProgress(1);
+    Ext.MessageBox.hide();
+
+    if (result.id == options.idRequested) {
+      var record = new this.recordType(result, result.id);
+      if(this.store && !record.data.klass) {
+        record.data.klass = this.store.klass;
+      }
+
+      options.cb.fn.call(options.cb.scope || this, record);
+    } else {
+      SWorks.ErrorHandling.serverError(result);
+    }
   },
 
   /*
@@ -438,7 +433,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     // the msgBox doesn't work is because this method is called
     // seperately for each record to delete
     if(this.restUrl) {
-      Ext.Ajax.request({
+      Ext.Ajax.jsonRequest({
         cb: {
           fn: cb,
           scope: scope || this
@@ -451,20 +446,16 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       });
     }
   },
-  onDeleteById: function(options, success, response) {
-    var result = null, id = options.deleting_id;
-    if(success) {
-      result =  Ext.decode(response.responseText);
-    }
+  onDeleteById: function(result, options) {
+    var id = options.deleting_id;
 
-    if (success && result.success) {
+    if (result.success) {
       if(options.cb.fn) {
         options.cb.fn.call(options.cb.scope);
       }
       this.fireEvent('delete', id);
     } else {
-      var msg = (result && result.msg ? result.msg : "Failed to delete the record. Please try again.");
-      Ext.MessageBox.alert('Delete failed', msg);
+      SWorks.ErrorHandling.serverError(result);
     }
 
     return result;
