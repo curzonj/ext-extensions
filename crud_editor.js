@@ -611,7 +611,9 @@ SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
   updateRecord: function(record, result) {
     this.processRecords(result);
     SWorks.ManagedCrudEditor.superclass.updateRecord.call(this, record, result);
-    if(record.newBeforeSave) {
+    if(record.newBeforeSave &&
+       record.constructor == this.store.recordType &&
+       !record.store) {
       record.id = record.data.id = result.objectid;
       this.store.addSorted(record);
     }
@@ -635,8 +637,10 @@ SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
             store.addSorted(record);
             record.newBeforeSave = true;
           }
-          this.updateRecord(record, {objectid:r.id, data:r});
+          // Don't use our own updateRecord because it'll try and add this record to our own
+          // store, and it doesn't belong there
           SWorks.ManagedCrudEditor.superclass.updateRecord.call(this, record, {objectid:r.id, data:r});
+          record.newBeforeSave = false;
         }
       }
     }
