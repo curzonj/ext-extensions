@@ -23,9 +23,11 @@ SWorks.ErrorHandling = {
     var result = null;
     try {
       result =  Ext.decode(resp.responseText);
-    } catch(e) {}
-    if (typeof result === 'object' && result.success === false) {
-      this.serverError(result);
+      if (typeof result === 'object' && result.success === false) {
+        this.serverError(result);
+      }
+    } catch(e) {
+      console.error(e.message);
     }
   },
 
@@ -34,7 +36,7 @@ SWorks.ErrorHandling = {
     //resp.status == HTTP status code
     if(resp.status === 0) {
       Ext.MessageBox.alert('Server Not Found',
-            "Failed to connect to the server. Please try again.");
+            "Failed to connect to the server.  Please report the issue.");
     } else {
       if (resp.status == -1) {
         if ((opts.method == 'GET' || opts.forceRetryRequest === true) &&

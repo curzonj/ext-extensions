@@ -120,7 +120,9 @@ SWorks.CrudGridPanel = Ext.extend(Ext.grid.GridPanel, {
     //we catch them right here
     this.checkToolbarButtons();
 
-    if(this.store.proxy.activeRequest && this.loadMask) {
+    if(this.store.proxy &&
+       this.store.proxy.activeRequest &&
+       this.loadMask) {
       this.loadMask.show();
     }
   },
