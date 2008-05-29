@@ -7,7 +7,7 @@ SWorks.ErrorHandling = {
                  typeof result.message == 'string' ? result.message : null ) || 
                   "The server had a problem. Please report the issue.";
 
-      Ext.MessageBox.alert('Server Failed', msg);
+      Ext.MessageBox.alert('Error', msg);
       if (typeof result == 'object') {
         result.serverErrorDispatched = true;
       }
@@ -39,7 +39,8 @@ SWorks.ErrorHandling = {
             "Failed to connect to the server.  Please report the issue.");
     } else {
       if (resp.status == -1) {
-        if ((opts.method == 'GET' || opts.forceRetryRequest === true) &&
+        var m = opts.method;
+        if ((!m || m === '' || m == 'GET' || opts.forceRetryRequest === true) &&
             (typeof opts.retryAttempts != 'number' || opts.retryAttempts > 0)) {
           // if retryAttempts == null, set = 1 and try which gives 1 more
           // retry after this, so retryAttempts == null gets 2 retrys
