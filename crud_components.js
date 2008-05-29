@@ -37,6 +37,10 @@ SWorks.commonCrudPanelFunctions = {
     }
 
     if (!this.editor.addListener) {
+      Ext.applyIf(this.editor, {
+        store: this.store
+      });
+
       this.editor = new SWorks.PanelCrudEditor(this.editor);
     }
 
@@ -369,12 +373,12 @@ SWorks.SearchCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
     this.store.baseParams = this.store.baseParams || {};
     this.store.baseParams.limit = this.page_size;
 
-    this.editor.on('save', function(r) {
-      // The record doesn't have the data we need for
-      // the grid. So if they save a new record, we
-      // need to ask the server for a new list because
-      // they expect it to be there.
-      if( r.newBeforeSave ) {
+    this.editor.on('save', function(r, res) {
+      if (res.ferret_data) {
+        var myrecord = this.store.getById(res.objectid) ||
+                       new this.store.recordType(res.ferret_data, res.objectid);
+        this.editor.updateRecord(myrecord, { data: res.ferret_data });
+      } else {
         this.store.reload();
       }
     }, this);
