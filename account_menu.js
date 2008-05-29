@@ -187,8 +187,8 @@ SWorks.AccountMenu = Ext.extend(Ext.Panel, {
               win.hide();
               SWorks.CurrentUser.fireEvent("loggedIn");
             },
-            failure: function() {
-              Ext.MessageBox.alert('Login failed', "The username or password is not correct. Please try again.");
+            failure: function(form, action) {
+              SWorks.ErrorHandling.serverError(action.result);
               // TODO the field focus isn't working
               win.submitLock = false;
               win.keyMap.enable();
