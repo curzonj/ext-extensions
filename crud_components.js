@@ -409,7 +409,7 @@ SWorks.SearchCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
       if (str === '') {
         this.store.removeFilter('search');
       } else {
-        this.store.addFilter('search', str);
+        this.store.addFilter('search', '+('+str+')');
       }
       this.store.load();
     };

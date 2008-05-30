@@ -536,7 +536,7 @@ Ext.extend(SWorks.SearchStore, Ext.data.GroupingStore, {
         queryList.push(qs[i]);
       }
       if (queryList.length > 0) {
-        query = queryList.join(' AND ');
+        query = queryList.join(' OR ');
       } else {
         query = 'id:*';
       }
