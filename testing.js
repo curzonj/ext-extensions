@@ -54,6 +54,10 @@ SWorks.Testing = {
     context.asyncTests++;
     return function(store, records, options) {
       try {
+        if (records.length < 1) {
+          throw "No records found for testing";
+        }
+
         if (context.allRecords === true) {
           for(var i=0;i<records.length;i++) {
             fn.apply(scope, records[i]);

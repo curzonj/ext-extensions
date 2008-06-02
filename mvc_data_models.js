@@ -20,10 +20,10 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       o.record = this.newRecord(o.record, false);
     }
 
-    o = this.setUpdateOrCreate(o.record, o);
+    o.params = o.params || {};
     Ext.applyIf(o.params, this.serializeRecord(o.record));
 
-    this.postToRecord(o.record.id, o);
+    this.postToRecord(o);
   },
   sendEvent: function(record, eventName){
     this.postToRecord(record.id, {
@@ -95,8 +95,8 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       o = rid;
       rid = o.id;
     } else if(typeof rid != 'number') {
-      SWorks.ErrorHandling.clientError();
-      return;
+      // It may not be fatal, so don't die. But it's not right.
+      console.error("rid argument to postToRecord should be numeric: "+rid);
     }
 
     if(o.waitMsg !== false) {
@@ -371,7 +371,6 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     Ext.MessageBox.wait("Loading Record...");
 
     Ext.Ajax.jsonRequest(Ext.apply(o, {
-      idRequested: id,
       url: String.format(this.restUrl, id),
       callback: this.onFetchRecordResponse,
       scope: this
@@ -381,8 +380,8 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     Ext.MessageBox.updateProgress(1);
     Ext.MessageBox.hide();
 
-    if (result.id == options.idRequested) {
-      var record = new this.recordType(result, result.id);
+    if (result.success) {
+      var record = new this.recordType(result.data, result.objectid);
       if(this.store && !record.data.klass) {
         record.data.klass = this.store.klass;
       }
@@ -507,15 +506,14 @@ Ext.extend(SWorks.StoreDataModel, SWorks.DataModel, {
   },
 
   loadFromRecord: function(record) {
-//    if(this.fireEvent('beforeload', this, record) !== false) {
-      this.loadedFromRecord = record;
-      this.onLoadFromRecord(record);
-//      this.fireEvent('load', this, record);
-//    }
+    this.loadedFromRecord = record;
+    this.onLoadFromRecord(record);
   },
 
   onLoadFromRecord: function(record) {
-    this.store.addFilter(this.recordFilter, this);
+    this.store.whenLoaded(function() {
+      this.store.addFilter(this.recordFilter, this);
+    }, this);
   },
 
   linkToParent: function(parent, parentForm) {
@@ -527,10 +525,8 @@ Ext.extend(SWorks.StoreDataModel, SWorks.DataModel, {
   },
   onParentLoaded: function(form, record) {
     if(form == this.parentForm) {
-      this.store.whenLoaded(function() {
-        this.currentParentRecord = record;
-        this.loadFromRecord(record);
-      }, this);
+      this.currentParentRecord = record;
+      this.loadFromRecord(record);
     }
   },
 

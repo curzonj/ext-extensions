@@ -16,6 +16,8 @@ SWorks.ErrorHandling = {
   clientError: function(message) {
     message = typeof message == 'string' ? message :
       "There was an internal error. Please report the issue and reload the application";
+
+    console.trace();
     Ext.MessageBox.alert('Application Error', message);
   },
   onAjaxRequestComplete: function(conn, resp, opts) {
@@ -27,7 +29,7 @@ SWorks.ErrorHandling = {
         this.serverError(result);
       }
     } catch(e) {
-      console.error(e.message);
+      console.error("Failed to parse response: " + e.message);
     }
   },
 
