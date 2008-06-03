@@ -303,3 +303,39 @@ Ext.lib.Ajax.serializeForm = function(form) {
     data = data.substr(0, data.length - 1);
     return data;
 };
+
+Ext.override(Ext.data.HttpProxy, {
+    load : function(params, reader, callback, scope, arg){
+        if(this.fireEvent("beforeload", this, params) !== false){
+            var  o = {
+                method : arg.method,
+                url : arg.url,
+
+                params : params || {},
+                request: {
+                    callback : callback,
+                    scope : scope,
+                    arg : arg
+                },
+                reader: reader,
+                callback : this.loadResponse,
+                scope: this
+            };
+            if(this.useAjax){
+                Ext.applyIf(o, this.conn);
+                if(this.activeRequest){
+                    console.warn("Aborting existing proxy request:");
+                    console.dir(this.activeRequest);
+                    console.trace();
+
+                    Ext.Ajax.abort(this.activeRequest);
+                }
+                this.activeRequest = Ext.Ajax.request(o);
+            }else{
+                this.conn.request(o);
+            }
+        }else{
+            callback.call(scope||this, null, arg, false);
+        }
+    }
+});
