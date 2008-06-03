@@ -108,11 +108,11 @@ function testLinkToParent() {
   Ext.ux.data.PersistentFilters(store);
 
   var dm = new SWorks.StoreDataModel({ store: store });
-  var childId = "I'm the child";
+  var parentForm = new Ext.form.BasicForm();
   var callback;
 
   // Don't link if you don't have a foreignKey
-  dm.linkToParent(compt, childId);
+  dm.linkToParent(compt, parentForm);
   mc.verify();
 
   dm.foreignKey = 'key';
@@ -121,12 +121,12 @@ function testLinkToParent() {
   });
 
   // execute your callback when the parent loads
-  dm.linkToParent(compt, childId);
+  dm.linkToParent(compt, parentForm);
   mc.verify();
 
   // when the parent loads, filter the grid
   store.expectsCall('addFilter').withArgs(TypeOf.isA(Function), dm);
-  callback.call(dm, { id: childId }, {});
+  callback.call(dm, parentForm, {});
   mc.verify();
 }
 

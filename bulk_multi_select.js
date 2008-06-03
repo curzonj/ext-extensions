@@ -41,7 +41,7 @@ Ext.ux.DDBulkMultiselect = function(config) {
   var multiselect = this;
   Ext.applyIf(config, {
     //required: store, dataIndex, name
-    displayField: 'display_name',
+    displayField: 'text',
     valueField: 'id',
     layout: 'column',
     border: false,

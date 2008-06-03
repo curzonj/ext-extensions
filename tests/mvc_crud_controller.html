@@ -67,9 +67,9 @@ function testCreateWithParent() {
   var mc = new MockControl();
 
   var controller = new SWorks.AbstractController();
-  controller.childId = "I'm a child";
 
   controller.parent = mc.createMock(SWorks.AbstractController);
+  controller.parentForm = mc.createMock(Ext.form.BasicForm);
 
   controller.createRecord();
 }

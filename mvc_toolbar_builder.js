@@ -115,7 +115,7 @@ SWorks.CrudToolbarMgr.prototype = {
 
   onClickDeleteBtn: function() {
     var r = this.getCurrentRecord();
-    var name = r.data.display_name || 'this item';
+    var name = r.data.text || 'this item';
 
     Ext.MessageBox.confirm('Confirm', 'Do you really want to delete '+name+'?', function(btn) {
       if (btn == 'yes') {
@@ -123,10 +123,11 @@ SWorks.CrudToolbarMgr.prototype = {
       }
     }, this);
   },
+  // These two need to refactor the common code
 
   onClickHideBtn: function() {
     var r = this.getCurrentRecord();
-    var name = r.data.display_name || 'this item';
+    var name = r.data.text || 'this item';
 
     Ext.MessageBox.confirm('Confirm', 'Do you really want to hide '+name+'?', function(btn) {
       if (btn == 'yes') {

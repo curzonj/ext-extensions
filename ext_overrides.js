@@ -242,3 +242,64 @@ Ext.override(Ext.data.Connection, {
     }
   }
 });
+
+Ext.lib.Ajax.serializeForm = function(form) {
+    if(typeof form == 'string') {
+        form = (document.getElementById(form) || document.forms[form]);
+    }
+
+    var el, name, val, disabled, data = '', hasSubmit = false;
+    for (var i = 0; i < form.elements.length; i++) {
+        el = form.elements[i];
+        disabled = form.elements[i].disabled;
+        name = form.elements[i].name;
+        val = form.elements[i].value;
+
+        if (!disabled && name){
+            switch (el.type)
+                    {
+                case 'select-one':
+                case 'select-multiple':
+                    for (var j = 0; j < el.options.length; j++) {
+                        if (el.options[j].selected) {
+                            if (Ext.isIE) {
+                                data += encodeURIComponent(name) + '=' + encodeURIComponent(el.options[j].attributes['value'].specified ? el.options[j].value : el.options[j].text) + '&';
+                            }
+                            else {
+                                data += encodeURIComponent(name) + '=' + encodeURIComponent(el.options[j].hasAttribute('value') ? el.options[j].value : el.options[j].text) + '&';
+                            }
+                        }
+                    }
+                    break;
+                case 'radio':
+                case 'checkbox':
+                    if (el.checked) {
+                        data += encodeURIComponent(name) + '=' + encodeURIComponent(true) + '&';
+                    } else {
+                        data += encodeURIComponent(name) + '=' + encodeURIComponent(false) + '&';
+                    }
+                    break;
+                case 'file':
+
+                case undefined:
+
+                case 'reset':
+
+                case 'button':
+
+                    break;
+                case 'submit':
+                    if(hasSubmit == false) {
+                        data += encodeURIComponent(name) + '=' + encodeURIComponent(val) + '&';
+                        hasSubmit = true;
+                    }
+                    break;
+                default:
+                    data += encodeURIComponent(name) + '=' + encodeURIComponent(val) + '&';
+                    break;
+            }
+        }
+    }
+    data = data.substr(0, data.length - 1);
+    return data;
+};

@@ -490,7 +490,8 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     };
 
     if(this.parent && this.parent.form &&
-       this.parent.form.record.newRecord) {
+      (this.parent.form.isDirty() ||
+       this.parent.form.record.newRecord)) {
 
       this.parent.save({
         callback: fn,
