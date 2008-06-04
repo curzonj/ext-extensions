@@ -94,7 +94,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     if(typeof rid == 'object' && rid !== null) {
       o = rid;
       rid = o.id;
-    } else if(typeof rid != 'number') {
+    } else if((typeof rid == 'string' && isNaN(rid)) || typeof rid != 'number') {
       // It may not be fatal, so don't die. But it's not right.
       console.error("rid argument to postToRecord should be numeric: "+rid);
     }
@@ -185,10 +185,8 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       o.waitMsg = o.waitMsg || "Saving record...";
     }
 
-    if(this.foreignKey && this.controller &&
-       this.controller.parentForm) {
-      var parentRecord = this.controller.parentForm.record;
-      Ext.applyIf(o.params, this.getParentRelAttrs(parentRecord));
+    if(this.foreignKey) {
+      Ext.applyIf(o.params, this.getParentRelation(form));
     }
 
     if(o.callback) {
@@ -219,17 +217,23 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       }
     }
   },
-  getParentRelAttrs: function(r) {
+  getParentRelation: function(form) {
     var values = {};
-    
-    var idField = String.format(this.parameterTemplate, this.foreignKey);
-    values[idField] = r.id;
 
-    var typeColumn = this.foreignKey.replace(/id/, "type");
-    if (this.recordType.prototype.fields.keys.indexOf(typeColumn) != -1) {
-      var typeField = String.format(this.parameterTemplate, typeColumn);
+    if (this.controller && this.controller.parentForm) {
+      var parentRecord = this.controller.parentForm.record;
 
-      values[typeField] = r.store ? (r.store.klass || r.data.klass) : r.data.klass;
+      var idField = String.format(this.parameterTemplate, this.foreignKey);
+      values[idField] = parentRecord.id;
+
+      var typeColumn = this.foreignKey.replace(/id/, "type");
+      if (this.recordType.prototype.fields.keys.indexOf(typeColumn) != -1) {
+        var typeField = String.format(this.parameterTemplate, typeColumn);
+
+        values[typeField] = parentRecord.store ?
+                           (parentRecord.store.klass || parentRecord.data.klass) :
+                            parentRecord.data.klass;
+      }
     }
 
     return values;
@@ -456,8 +460,6 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     } else {
       SWorks.ErrorHandling.serverError(result);
     }
-
-    return result;
   },
 
   linkToParent: function(parent, parentForm) {
@@ -492,17 +494,15 @@ Ext.extend(SWorks.StoreDataModel, SWorks.DataModel, {
       this.store.addSorted(record);
     }
   },
-  onDeleteById: function(options, success, response) {
-    var result = SWorks.StoreDataModel.superclass.onDeleteById.apply(this, arguments);
-    if(success && result.success) {
+  onDeleteById: function(result, options) {
+    SWorks.StoreDataModel.superclass.onDeleteById.apply(this, arguments);
+    if(result.success) {
       var id = options.deleting_id;
       var record = this.store.getById(id);
       if(record) {
         this.store.remove(record);
       }
     }
-
-    return result;
   },
 
   loadFromRecord: function(record) {
@@ -575,10 +575,10 @@ Ext.extend(SWorks.URLLoadingDataModel, SWorks.StoreDataModel, {
     }
   },
   onLoadFromRecord: function(record) {
-    if(this.loadedFromRecord.newRecord) {
+    if(!record || record.newRecord) {
       this.store.removeAll();
     } else {
-      var r = this.loadedFromRecord, s = this.store, url = s.baseUrl;
+      var r = record, s = this.store, url = s.baseUrl;
       if(!url && this.foreignKey) {
         url = s.url + '?' + this.foreignKey + '={0}';
         if(this.foreignTypeKey) {

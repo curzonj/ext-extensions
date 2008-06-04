@@ -2,7 +2,12 @@
 
 Ext.namespace("SWorks");
 
+// Anything that inherits directly from AbstractController
+// is pretty custom. The sky is the limit on what it can do.
 SWorks.AbstractController = function() {
+  // The controllers don't take overrides to prohibit customizing it
+  // inside the grid definition. Controllers should always have a class
+  // definition if it needs anything
   this.forms = new Ext.util.MixedCollection();
   this.addEvents( 'beforeaction', 'actionfailed', 'actioncomplete',
                   'beforeload', 'load', 'delete', 'save');
@@ -64,12 +69,11 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
   },
   afterRender: Ext.emptyFn,
 
-  isReadOnly: function() {
+  isReadOnly: function(form) {
     var res = !SWorks.CurrentUser.has(this.rwPerm);
-    // TODO check permissions
-/*    if (this.parent) {
-      res = (res || this.parent.isReadOnly());
-    } */
+    if (this.parent) {
+      res = (res || this.parent.isReadOnly(this.parentForm));
+    }
     return res;
   },
 
@@ -110,20 +114,16 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
   initForm: Ext.emptyFn,
 
   createRecord: function() {
-    var f = function() {
-      var r = this.dataModel.newRecord();
-
-      this.setDefaults(r);
-      this.loadRecord(r);
-    };
-
     if (this.parentForm && this.parentForm.isDirty()) {
       this.parent.saveForm(this.parentForm, {
         callback: this.createRecord,
         scope: this
       });
     } else {
-      f.call(this);
+      var r = this.dataModel.newRecord.apply(this.dataModel, arguments);
+
+      this.setDefaults(r);
+      this.loadRecord(r);
     }
   },
   setDefaults: Ext.emptyFn,
@@ -172,6 +172,13 @@ Ext.extend(SWorks.LegacyController, Ext.util.Observable, {
   },
   saveForm: function(form, opts) {
     this.editor.saveForm(form, opts);
+  },
+  isReadOnly: function(form) {
+    if (form) {
+      return this.editor.isReadOnly(form.record);
+    } else {
+      return this.component.isReadOnly();
+    }
   }
 });
 
@@ -211,5 +218,14 @@ SWorks.GridController = Ext.extend(SWorks.AbstractController, {
 });
 
 
+SWorks.URLLoadingController = Ext.extend(SWorks.GridController, {
+  buildDataModel: function(comp) {
+    return new SWorks.URLLoadingDataModel({
+      controller: this,
+      store: comp.store,
+      foreignKey: this.foreignKey
+    });
+  }
+});
 
 

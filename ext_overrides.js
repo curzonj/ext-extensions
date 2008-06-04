@@ -339,3 +339,14 @@ Ext.override(Ext.data.HttpProxy, {
         }
     }
 });
+
+Ext.override(Ext.form.ComboBox, {
+  getSelected: function() {
+    var value = this.getValue();
+    var index = this.store.find(this.valueField, value);
+
+    if (index != -1) {
+      return this.store.getAt(index);
+    }
+  }
+});

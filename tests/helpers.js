@@ -90,6 +90,11 @@ Object.prototype.expectsCall = function expectsCall(name, mc) {
   };
 }
 
+// By not calling 'withArgs', it's a negative expectation
+Object.prototype.doesntExpectCall = function() {
+  this.expectsCall.apply(this, arguments);
+}
+
 Ext.apply(MockControl.prototype, {
   originalMockControlVerify: MockControl.prototype.verify,
   verify: function() {
