@@ -400,7 +400,8 @@ Ext.ux.data.PersistentFilters.overrides = {
 
 ds = Ext.StoreMgr;
 
-SWorks.CrudStore = function(config, custom) {
+SWorks.CustomGroupingStore = function(config, custom) {
+  // Because we need to hack the constructor a little
   if (typeof config == 'string') {
     var clone = Ext.StoreMgr.get(config);
     custom = custom || {};
@@ -411,7 +412,7 @@ SWorks.CrudStore = function(config, custom) {
   this.initialConfig = config;
 
   // From JsonStore
-  SWorks.CrudStore.superclass.constructor.call(this, Ext.apply({
+  SWorks.CustomGroupingStore.superclass.constructor.call(this, Ext.apply({
     proxy: !config.data ? new Ext.data.HttpProxy({
       method: "GET",
       url: config.url
@@ -419,10 +420,26 @@ SWorks.CrudStore = function(config, custom) {
     reader: new Ext.data.JsonReader(config, config.fields)
   }, config));
 
+  this.data.getKey = function(o) {
+    var id = o.id;
+    // Some of the server side code returns integers coded
+    // as strings and then Array.indexOf doesn't work
+    if (typeof id == 'string' && !isNaN(id)) {
+      id = parseInt(id);
+    }
+
+    return id;
+  };
+}
+Ext.extend(SWorks.CustomGroupingStore, Ext.data.GroupingStore);
+
+SWorks.CrudStore = function(config, custom) {
+  SWorks.CrudStore.superclass.constructor.apply(this, arguments);
+
   Ext.ux.data.ReloadingStore(this);
   Ext.ux.data.PersistentFilters(this);
 };
-Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
+Ext.extend(SWorks.CrudStore, SWorks.CustomGroupingStore, {
   remoteSort: false,
 
   linkToParent: function(p, idCol) {
@@ -432,7 +449,8 @@ Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
       if(!p.form || p.form == form) {
         //This deals with polymorphic relations
         this.relation_id = p.form.record.id;
-        this.relation_type = p.store.klass; // New records don't have a store
+        // New records don't have a store, so get it off the parent
+        this.relation_type = record.getKlass() || p.store.klass;
 
         this.addFilter(this.parentFilter, this);
       }
@@ -446,7 +464,7 @@ Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
   filterOnRelation: function(record) {
     //This deals with polymorphic relations
     this.relation_id = record.data.id;
-    this.relation_type = record.data.klass || (record.store ? record.store.klass : null);
+    this.relation_type = record.getKlass();
 
     this.addFilter(this.parentFilter, this);
   },
@@ -454,7 +472,7 @@ Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
     //Searches everything. Quite the hack.
     return this.snapshot.filterBy(this.parentFilter, {
       relation_id: record.data.id,
-      relation_type: record.data.klass || (record.store ? record.store.klass : null),
+      relation_type: record.getKlass(),
       parentIdColumn: this.parentIdColumn,
       parentTypeColumn: this.parentTypeColumn
     });
@@ -487,26 +505,11 @@ Ext.extend(SWorks.CrudStore, Ext.data.GroupingStore, {
 });
 
 SWorks.SearchStore = function(config, custom) {
-  if (typeof config == 'string') {
-    var clone = Ext.StoreMgr.get(config);
-    custom = custom || {};
-
-    config = Ext.applyIf(custom, clone.initialConfig);
-  }
-
-  this.initialConfig = config;
-
-  SWorks.SearchStore.superclass.constructor.call(this, Ext.apply({
-    proxy: new Ext.data.HttpProxy({
-      method: "GET",
-      url: config.url
-    }),
-    reader: new Ext.data.JsonReader(config, config.fields)
-  }, config));
+  SWorks.SearchStore.superclass.constructor.apply(this, arguments);
 
   this.querySet = {};
 };
-Ext.extend(SWorks.SearchStore, Ext.data.GroupingStore, {
+Ext.extend(SWorks.SearchStore, SWorks.CustomGroupingStore, {
   queryParam: 'q',
   allQuery: 'id:*',
   mode: 'remote',

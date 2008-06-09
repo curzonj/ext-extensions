@@ -503,8 +503,8 @@ SWorks.DependentUrlCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
       }
 
       if(url) {
-        var klass = (typeof r.store == 'object') ? r.store.klass : ( r.data.klass ||
-                     ((this.parent && typeof this.parent.store == 'object') ? this.parent.store.klass : ''));
+        var klass = r.getKlass() || ( this.parent && this.parent.store ?
+                                              this.parent.store.klass : null );
 
         s.proxy.conn.url = String.format(url, r.id, klass);
         s.load();

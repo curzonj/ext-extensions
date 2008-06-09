@@ -178,7 +178,7 @@ SWorks.SearchCombo = Ext.extend(SWorks.CustomCombo, {
 
       var field = this.dataIndex.replace(this.valueField, this.displayField);
       var idField = this.store.reader.meta.id
-      var data = this.form.record.json && this.form.record.data;
+      var data = this.form.record.json || this.form.record.data;
 
       if (data && data[field] && this.valueField == idField) {
         var record = {}

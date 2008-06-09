@@ -230,9 +230,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       if (this.recordType.prototype.fields.keys.indexOf(typeColumn) != -1) {
         var typeField = String.format(this.parameterTemplate, typeColumn);
 
-        values[typeField] = parentRecord.store ?
-                           (parentRecord.store.klass || parentRecord.data.klass) :
-                            parentRecord.data.klass;
+        values[typeField] = parentRecord.getKlass();
       }
     }
 
@@ -387,8 +385,8 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     if (result.success) {
       var record = new this.recordType(result.data, result.objectid);
       record.json = result.data;
-      if(this.store && !record.data.klass) {
-        record.data.klass = this.store.klass;
+      if(this.store) {
+        record.join(this.store);
       }
 
       options.cb.fn.call(options.cb.scope || this, record);
@@ -549,8 +547,7 @@ Ext.extend(SWorks.StoreDataModel, SWorks.DataModel, {
 
     //Provides automatic filtering on polymophic relations
     if(this.foreignTypeKey) {
-      var recordType = (r.store && r.store.klass) ? r.store.klass : r.data.klass;
-      typeMatch = (record.data[this.foreignTypeKey] == recordType);
+      typeMatch = (record.data[this.foreignTypeKey] == r.getKlass());
     }
 
     return (idMatch && typeMatch);
@@ -580,22 +577,37 @@ Ext.extend(SWorks.URLLoadingDataModel, SWorks.StoreDataModel, {
   onLoadFromRecord: function(record) {
     if(!record || !record.data[this.parentKey]) {
       this.store.removeAll();
+    } else if(this.store.constructor == SWorks.SearchStore) {
+      this.loadSearchStoreFromRecord(record);
     } else {
-      var r = record, s = this.store, url = s.baseUrl;
-      if(!url && this.foreignKey) {
-        url = s.url + '?' + this.foreignKey + '={0}';
-        if(this.foreignTypeKey) {
-          url = url + '&' + this.foreignTypeKey + '={1}';
-        }
-      }
+      this.loadStandardStoreFromRecord(record);
+    }
+  },
 
-      if(url) {
-        var recordType = (r.store && r.store.klass) ? r.store.klass : r.data.klass;
-
-        s.load({ url: String.format(url, r.data[this.parentKey], recordType) });
-      } else {
-        console.error("This store doesn't have a url");
+  loadStandardStoreFromRecord: function(record) {
+    var r = record, s = this.store, url = s.baseUrl;
+    if(!url && this.foreignKey) {
+      url = s.url + '?' + this.foreignKey + '={0}';
+      if(this.foreignTypeKey) {
+        url = url + '&' + this.foreignTypeKey + '={1}';
       }
     }
+
+    if(url) {
+      // putting this in the options doesn't make it durable enough
+      s.proxy.conn.url = String.format(url, r.data[this.parentKey], r.getKlass());
+
+      s.load();
+    } else {
+      console.error("This store doesn't have a url");
+    }
+  },
+
+  loadSearchStoreFromRecord: function(record) {
+    this.store.addFilter('data_model_fk', this.foreignKey+':'+record.data[this.parentKey])
+    if (this.foreignTypeKey) {
+      this.store.addFilter('data_model_polymorphic', this.foreignTypeKey+':'+record.getKlass())
+    }
+    this.store.load();
   }
 });

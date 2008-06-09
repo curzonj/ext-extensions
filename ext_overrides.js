@@ -339,3 +339,9 @@ Ext.override(Ext.data.HttpProxy, {
         }
     }
 });
+
+Ext.override(Ext.data.Record, {
+  getKlass: function() {
+    return this.data.klass || (this.store ? this.store.klass : undefined);
+  }
+});

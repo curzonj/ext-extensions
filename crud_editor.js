@@ -449,8 +449,8 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     if (result.success) {
       var record = new this.recordType(result.data, result.objectid);
       record.json = result.data;
-      if(this.store && !record.data.klass) {
-        record.data.klass = this.store.klass;
+      if(this.store) {
+        record.join(this.store);
       }
 
       options.cb.fn.call(options.cb.scope || this, record);
