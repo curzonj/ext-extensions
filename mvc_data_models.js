@@ -386,6 +386,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
 
     if (result.success) {
       var record = new this.recordType(result.data, result.objectid);
+      record.json = result.data;
       if(this.store && !record.data.klass) {
         record.data.klass = this.store.klass;
       }
@@ -566,6 +567,8 @@ SWorks.URLLoadingDataModel = function(overrides) {
   SWorks.URLLoadingDataModel.superclass.constructor.call(this, overrides);
 };
 Ext.extend(SWorks.URLLoadingDataModel, SWorks.StoreDataModel, {
+  parentKey: 'id',
+
   reload: function() {
     if(this.loadedFromRecord && 
        this.loadedFromRecord.newRecord) {
@@ -575,7 +578,7 @@ Ext.extend(SWorks.URLLoadingDataModel, SWorks.StoreDataModel, {
     }
   },
   onLoadFromRecord: function(record) {
-    if(!record || record.newRecord) {
+    if(!record || !record.data[this.parentKey]) {
       this.store.removeAll();
     } else {
       var r = record, s = this.store, url = s.baseUrl;
@@ -589,8 +592,7 @@ Ext.extend(SWorks.URLLoadingDataModel, SWorks.StoreDataModel, {
       if(url) {
         var recordType = (r.store && r.store.klass) ? r.store.klass : r.data.klass;
 
-        s.proxy.conn.url = String.format(url, r.id, recordType);
-        s.load();
+        s.load({ url: String.format(url, r.data[this.parentKey], recordType) });
       } else {
         console.error("This store doesn't have a url");
       }

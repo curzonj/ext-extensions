@@ -32,6 +32,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
   setupForm: function(form) {
     var index = new Ext.ux.data.CollectionIndex(form.items,
       function(o) {
+        o.form = form;
         return o.dataIndex;
       }
     );
@@ -447,6 +448,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
 
     if (result.success) {
       var record = new this.recordType(result.data, result.objectid);
+      record.json = result.data;
       if(this.store && !record.data.klass) {
         record.data.klass = this.store.klass;
       }
@@ -456,6 +458,20 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
       SWorks.ErrorHandling.serverError(result);
     }
   },
+  reloadRecord: function(id) {
+    var record = this.store.getById(id);
+
+    if (record) {
+      Ext.Ajax.jsonRequest(Ext.apply(o, {
+        url: String.format(this.restUrl, id),
+        callback: function(result, options) {
+          this.updateRecord(record, result);
+        },
+        scope: this
+      }));
+    }
+  },
+
 
   /*
    * Create new records

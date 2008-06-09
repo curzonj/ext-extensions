@@ -4,7 +4,8 @@ Ext.namespace('SWorks.plugins');
 SWorks.plugins.LinkedToParent = Ext.extend(SWorks.AbstractController, {
   buildDataModel: function(comp) {
     return new SWorks.URLLoadingDataModel({
-      foreignKey: this.foreignKey,
+      foreignKey: comp.foreignKey,
+      parentKey: comp.parentKey,
       controller: this,
       store: comp.store
     });

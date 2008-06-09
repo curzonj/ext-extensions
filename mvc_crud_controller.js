@@ -159,10 +159,18 @@ Ext.extend(SWorks.LegacyController, Ext.util.Observable, {
     this.component = comp;
     comp.controller = this;
 
-    this.editor = comp.editor;
-    this.editor.controller = this;
-    this.editor.on('render', this.wireEditor, this);
+    if (comp.editor) {
+      this.editor = comp.editor;
+      this.editor.controller = this;
+    } else {
+      // Can't be put as a plugin on editors, you need to use:
+      // new SWorks.LegacyController().init(editor);
+      // because the plugins property works on the editor panel,
+      // not the editor
+      this.editor = comp;
+    }
 
+    this.editor.on('render', this.wireEditor, this);
     this.relayEvents(this.editor, ['beforeaction', 'actionfailed', 'actioncomplete',
                   'beforeload', 'load', 'delete', 'save']);
   },
@@ -223,7 +231,7 @@ SWorks.URLLoadingController = Ext.extend(SWorks.GridController, {
     return new SWorks.URLLoadingDataModel({
       controller: this,
       store: comp.store,
-      foreignKey: this.foreignKey
+      foreignKey: comp.foreignKey
     });
   }
 });

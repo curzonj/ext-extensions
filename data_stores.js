@@ -516,6 +516,10 @@ Ext.extend(SWorks.SearchStore, Ext.data.GroupingStore, {
 
   addFilter: function(name, query) {
     this.querySet[name] = query;
+
+    // This is to make it easy to use inline
+    // with your markup by chaining.
+    return this;
   },
 
   removeFilter: function(name) {
@@ -536,7 +540,7 @@ Ext.extend(SWorks.SearchStore, Ext.data.GroupingStore, {
         queryList.push(qs[i]);
       }
       if (queryList.length > 0) {
-        query = queryList.join(' OR ');
+        query = queryList.join(' AND ');
       } else {
         query = 'id:*';
       }
