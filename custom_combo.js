@@ -1,11 +1,32 @@
 /*globals SWorks, Ext */
 
+Ext.override(Ext.form.ComboBox, {
+  getSelected: function() {
+    var value = this.getValue();
+    var index = this.store.find(this.valueField, value);
+
+    if (index != -1) {
+      return this.store.getAt(index);
+    }
+  },
+
+  original_setValue: Ext.form.ComboBox.prototype.setValue,
+  setValue: function(v) {
+    if (v && v !== '') {
+      this.original_setValue(v);
+    } else {
+      this.clearValue();
+    }
+  }
+});
+
 SWorks.CustomCombo = Ext.extend(Ext.form.ComboBox, {
   allowBlank: 'true',
   mode: 'local',
   typeAhead: true,
   emptyText:'Select one...',
-  // valueNotFoundText is a problem if not for our custom setValue
+  // valueNotFoundText is a problem if not for our custom
+  // setValue in ComboBox
   valueNotFoundText: "Item not found",
   selectOnFocus:true,
   forceSelection: true,
@@ -97,52 +118,36 @@ SWorks.CustomCombo = Ext.extend(Ext.form.ComboBox, {
   syncValue: function() {
     if(this.valueField) {
       if(this.hasFocus) {
-        this.on('blur', function() {
-          this.setValue(this.getValue());
-        }, this, {single: true});
+        this.on('blur', this.syncValue, this, {single: true});
       } else {
         this.setValue(this.value);
       }
-    }
-  },
-  setValue: function(v) {
-    if (v && v !== '') {
-      SWorks.CustomCombo.superclass.setValue.call(this, v);
-    } else {
-      this.clearValue();
     }
   }
 });
 Ext.reg('customcombo', SWorks.CustomCombo);
 
-SWorks.EditableCombo = Ext.extend(SWorks.CustomCombo, {
-  initComponent: function() {
-    SWorks.EditableCombo.superclass.initComponent.call(this);
-    this.addEvents('edit');
+SWorks.EditableCombo = Ext.extend(Ext.util.Observable, {
+  init: function(comp) {
+    comp.addEvents('edit');
+    comp.on('render', this.afterRender, this);
   },
-  afterRender: function() {
-    SWorks.EditableCombo.superclass.afterRender.call(this);
-    var btn = Ext.DomHelper.append(this.wrap, {
+  afterRender: function(comp) {
+    var btn = Ext.DomHelper.append(comp.wrap, {
       tag: 'img',
       src:'../images/application_form_edit.png',
       style:'position:absolute;cursor:pointer;top:3.5px;margin-left:20px'
     }, true);
-    btn.on('click', function() { this.fireEvent('edit', this); }, this);
+    btn.on('click', function() { comp.fireEvent('edit', comp); });
   }
 });
-Ext.reg('editablecombo', SWorks.EditableCombo);
 
-SWorks.SearchCombo = Ext.extend(Ext.form.ComboBox, {
+SWorks.SearchCombo = Ext.extend(SWorks.CustomCombo, {
   // select only the displayField and valueFields 
   // use a querySet
+  mode: 'remote',
+  triggerAction: 'query',
   typeAhead: false,
-  allowBlank: true,
-  emptyText: 'Select one...',
-  // valueNotFoundText is a problem if not for our custom setValue
-  valueNotFoundText: "Item not found",
-  selectOnFocus:true,
-  forceSelection: true,
-  lazyInit: false,
   loadingText: 'Searching...',
   queryParam: 'q',
   pageSize: 0,
@@ -151,6 +156,8 @@ SWorks.SearchCombo = Ext.extend(Ext.form.ComboBox, {
     SWorks.SearchCombo.superclass.initComponent.call(this);
     this.on('beforequery', this.mangleQuery, this);
     this.store.baseParams = this.store.baseParams || {};
+    // Ferret will only return a few columns regardless, if you need the whole
+    // record, you'll need to fetch it
     this.store.baseParams.select = [ this.displayField, this.valueField ].join(',');
   },
 
@@ -158,49 +165,70 @@ SWorks.SearchCombo = Ext.extend(Ext.form.ComboBox, {
     qData.query = this.displayField + ':' + qData.query + '*';
   },
 
-  findRecord: function(prop, value) {
-    var r = SWorks.SearchCombo.superclass.findRecord.call(this, prop, value);
-    if (!r) {
-    } else {
-      return r;
+  bindStore: function(store, initial) {
+    if (store.mirrorSource) {
+      console.error('SearchCombo must use a SearchStore');
+    }
+
+    SWorks.SearchCombo.superclass.bindStore.call(this, store, initial);
+  },
+
+  loadEmbeddedValue: function(v) {
+    if (this.form && this.form.record) {
+
+      var field = this.dataIndex.replace(this.valueField, this.displayField);
+      var idField = this.store.reader.meta.id
+      var data = this.form.record.json && this.form.record.data;
+
+      if (data && data[field] && this.valueField == idField) {
+        var record = {}
+        record[this.valueField] = v;
+        record[this.displayField] = data[field];
+        record = new this.store.recordType(record, v);
+
+        this.store.add(record, v);
+        return true;
+      }
+    }
+
+    return false;
+  },
+
+  loadServerValue: function(v) {
+    this.store.load({
+      add: true,
+      params: {
+        q: this.valueField + ':' + v,
+      },
+      // syncValue doesn't get triggered on this
+      // because of add:true.
+      scope: this,
+      callback: function() {
+        SWorks.SearchCombo.superclass.setValue.call(this, v);
+      }
+    });
+
+    var text = this.loadingText;
+
+    // This sets this.value = text, so we need to fix
+    // this.value after the call.
+    Ext.form.ComboBox.superclass.setValue.call(this, text);
+
+    this.lastSelectionText = text;
+    this.value = v;
+    if(this.hiddenField) {
+        this.hiddenField.value = v;
     }
   },
 
-  // copy the beforeBlur features
-  setValue : function(v, stopLoop) {
-    if (v && v !== '') {
-      var text = v;
-      if(this.valueField){
-          var r = this.findRecord(this.valueField, v);
-          if(r){
-              text = r.data[this.displayField];
-          } else {
-            var prop = this.valueField;
-
-            if(!stopLoop) {
-              this.store.load({
-                params: { q: prop+':'+v },
-                add: true,
-                scope: this,
-                callback: function(rArr, opts, succ) {
-                  this.setValue(v, true);
-                }
-              });
-            }
-
-            if(this.valueNotFoundText !== undefined){
-              text = this.valueNotFoundText;
-            }
-          }
-      }
-      this.lastSelectionText = text;
-      if(this.hiddenField){
-          this.hiddenField.value = v;
-      }
-      Ext.form.ComboBox.superclass.setValue.call(this, text);
-      this.value = v;
+  setValue: function(v) {
+    if (v && v !== '' &&
+        this.valueField &&
+        !this.findRecord(this.valueField, v) &&
+        !this.loadEmbeddedValue(v)) {
+      this.loadServerValue(v);
     } else {
-      this.clearValue();
+      SWorks.SearchCombo.superclass.setValue.call(this, v);
     }
   }
 });
