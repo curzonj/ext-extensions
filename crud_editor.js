@@ -461,9 +461,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     if (result.success) {
       var record = new this.recordType(result.data, result.objectid);
       record.json = result.data;
-      if(this.store) {
-        record.join(this.store);
-      }
+      record.data.klass = record.data.klass || this.store.klass;
 
       options.cb.fn.call(options.cb.scope || this, record);
     } else {
@@ -639,8 +637,7 @@ SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
   newRecord: function(data, initRecord) {
     var record = SWorks.ManagedCrudEditor.superclass.newRecord.apply(this, arguments);
     if (record && this.store) {
-      // This doesn't add it to the store, just sets record.store = store
-      record.join(this.store);
+      record.data.klass = record.data.klass || this.store.klass;
     }
 
     return record;
