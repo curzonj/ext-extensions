@@ -59,14 +59,14 @@ Ext.override(Ext.form.ComboBox, {
       if(forceAll === true || (q.length >= this.minChars)){
           if(this.lastQuery !== q){
               this.lastQuery = q;
-              this.applyQueryToStore(q);
+              this.applyQueryToStore(q, forceAll);
           }else{
               this.selectedIndex = -1;
               this.onLoad();
           }
       }
   },
-  applyQueryToStore: function(q) {
+  applyQueryToStore: function(q, forceAll) {
     // Just extracted this so it can be overriden
     if(this.mode == 'local'){
         this.selectedIndex = -1;
