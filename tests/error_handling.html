@@ -14,6 +14,12 @@
 
 </head><body><script type="text/javascript">
 
+function setUp() {
+  SWorks.Logging = {
+    error: Ext.emptyFn
+  }
+}
+
 function tearDown() {
   SWorks.ErrorHandling.dataList = [];
 }

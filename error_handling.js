@@ -9,6 +9,7 @@ SWorks.ErrorHandling = {
                   "The server had a problem. Please report the issue.";
 
       Ext.MessageBox.alert('Error', msg);
+
       if (typeof result == 'object') {
         result.serverErrorDispatched = true;
       }
@@ -58,6 +59,7 @@ SWorks.ErrorHandling = {
         }
       } else {
         this.serverError();
+        SWorks.Logging.error(Ext.encode({resp: resp, params: opts.params}));
       }
     }
   },
