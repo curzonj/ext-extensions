@@ -220,7 +220,10 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     if (result.success) {
       if(record) {
         if(record.store) {
-          record = record.store.getById(record.id);
+          var reloaded_record = record.store.getById(record.id);
+          if (reloaded_record) {
+            record = reloaded_record;
+          }
         }
         this.updateRecord(record, result);
       } else {
@@ -323,8 +326,11 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
       // Reload our record because it might be too old
       var record = form.record;
       if(!record.newRecord && record.store) {
-        record = form.record =
-          record.store.getById(action.result.objectid);
+        var reloaded_record = record.store.getById(action.result.objectid);
+        if(reloaded_record) {
+          // Fetched records may not be in the store they belong to
+          record = form.record = reloaded_record;
+        }
       }
   
       if(action.result.data) {
@@ -429,18 +435,24 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     form.clearInvalid();
   },
   fetchRecord: function(id, o) {
-    o.cb = {
-      fn: o.callback,
-      scope: o.scope
-    };
+    if(id) {
+      o.cb = {
+        fn: o.callback,
+        scope: o.scope
+      };
 
-    Ext.MessageBox.wait("Loading Record...");
+      if (o.waitMsg !== false) {
+        Ext.MessageBox.wait(o.waitMsg || "Loading Record...");
+      }
 
-    Ext.Ajax.jsonRequest(Ext.apply(o, {
-      url: String.format(this.restUrl, id),
-      callback: this.onFetchRecordResponse,
-      scope: this
-    }));
+      Ext.Ajax.jsonRequest(Ext.apply(o, {
+        url: String.format(this.restUrl, id),
+        callback: this.onFetchRecordResponse,
+        scope: this
+      }));
+    } else {
+      SWorks.ErrorHandling.clientError();
+    }
   },
   onFetchRecordResponse: function(result, options) {
     Ext.MessageBox.updateProgress(1);
@@ -624,13 +636,21 @@ SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
       }
     }
   },
+  newRecord: function(data, initRecord) {
+    var record = SWorks.ManagedCrudEditor.superclass.newRecord.apply(this, arguments);
+    if (record && this.store) {
+      // This doesn't add it to the store, just sets record.store = store
+      record.join(this.store);
+    }
+
+    return record;
+  },
   updateRecord: function(record, result) {
     this.processRecords(result);
     SWorks.ManagedCrudEditor.superclass.updateRecord.call(this, record, result);
     if(record.newBeforeSave &&
        record.constructor == this.store.recordType &&
-       !record.store) {
-      record.id = record.data.id = result.objectid;
+       !store.getById(record.id)) {
       this.store.addSorted(record);
     }
   },

@@ -86,7 +86,13 @@ function testSaveFormWithParent() {
 
   dm.controller = mc.createMock(SWorks.AbstractController);
   dm.controller.parentForm = mc.createMock(Ext.form.BasicForm);
-  dm.controller.parentForm.record = { id: Ext.id(), data: { klass: 'bob' } };
+  dm.controller.parentForm.record = {
+    id: Ext.id(),
+    data: { klass: 'bob' },
+    getKlass: function() {
+      return this.data.klass;
+    }
+  };
 
   form.expects().isValid().andReturn(true);
   form.expects().updateRecord(TypeOf.isA(dm.recordType));
@@ -125,6 +131,10 @@ function testLinkToParent() {
   mc.verify();
 
   // when the parent loads, filter the grid
+  store.expectsCall('whenLoaded').withArgs(TypeOf.isA(Function), dm).andStub(
+      function(fn, scope) {
+        fn.apply(scope);
+      });
   store.expectsCall('addFilter').withArgs(TypeOf.isA(Function), dm);
   callback.call(dm, parentForm, {});
   mc.verify();
@@ -200,20 +210,20 @@ function testFetchRecord() {
     Ext.MessageBox.expects().hide();
   }
 
-  // Server didn't send us the right record
-  result = { id: 2 };
+  // Server sends invalid response
+  result = { };
   bridge();
   SWorks.ErrorHandling.expectsCall('serverError', mc).withArgs(result);
   data_model.fetchRecord(id, opts);
   mc.verify();
 
   // Test the callback
-  result = { id: id, bob: 'wohoo' };
+  result = { success: true, objectid: id, data: { id: 'joe schmo', bob: 'wohoo' } };
   bridge();
   opts.expectsCall('callback', mc).withArgs(TypeOf.isA(data_model.recordType)).andStub(
       function(record) {
         assertEquals('record id', id, record.id);
-        assertEquals('record data', result.bob, record.data.bob);
+        assertEquals('record data', result.data.bob, record.data.bob);
       });
   data_model.fetchRecord(id, opts);
   mc.verify();
@@ -229,16 +239,6 @@ function testPostToRecord() {
       klass: 'rails class, ie. Person'
     }
   });
-
-  // Some where there was a bug passing bad args
-  // Make sure it doesn't call jsonRequest
-  Ext.Ajax.expectsCall('jsonRequest', mc); 
-  var expect = SWorks.ErrorHandling.expectsCall('clientError', mc);
-  expect.withArgs();
-  expect.withArgs();
-  data_model.postToRecord(null);
-  data_model.postToRecord();
-  mc.verify();
 
   // a new record
   opts = {

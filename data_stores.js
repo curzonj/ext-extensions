@@ -2,6 +2,12 @@
 
 Ext.namespace('Ext.ux.data', 'SWorks');
 
+Ext.override(Ext.data.Record, {
+  getKlass: function() {
+    return this.data.klass || (this.store ? this.store.klass : undefined);
+  }
+});
+
 Ext.override(Ext.data.Store, {
   // Their load records function isn't very extensible,
   // so I had to copy it in here
@@ -53,9 +59,12 @@ Ext.override(Ext.data.Store, {
   whenLoaded: function(fn, scope) {
     if (this.isLoaded()) {
       fn.call(scope);
-    } else if(!this.proxy.activeRequest) {
+    } else {
       this.on('load', fn, scope, {single:true});
-      this.load();
+
+      if(!this.proxy.activeRequest) {
+        this.load();
+      }
     }
   }
 });

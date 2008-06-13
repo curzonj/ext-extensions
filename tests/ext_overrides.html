@@ -25,18 +25,4 @@ function testDateRenderer() {
   assertEquals('valid date', 'Sat May 2 08', value);
 }
 
-function testGetKlass() {
-  var mc = new MockControl();
-  var store = new Ext.data.Store({
-    klass: 'bob',
-    reader: new Ext.data.JsonReader({},
-                [ 'id', 'klass', 'text', 'estimated', 'quicktip' ])
-  });
-
-  var record = new store.recordType({});
-  assertUndefined('getKlass un-init', record.getKlass());
-  record.join(store);
-  assertEquals('getKlass inited', store.klass, record.getKlass());
-}
-
 </script></body></html>

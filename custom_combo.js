@@ -17,6 +17,72 @@ Ext.override(Ext.form.ComboBox, {
     } else {
       this.clearValue();
     }
+  },
+
+  onTriggerClick : function(){
+    if(this.disabled){
+      return;
+    }
+    if(this.isExpanded()){
+      this.collapse();
+      this.el.focus();
+    }else {
+      this.onFocus({});
+      if(this.triggerAction == 'all') {
+        this.doQuery(this.allQuery, true);
+      } else {
+        // I think an empty combo should show everything,
+        // not nothing, and then if there is some text
+        // entered you can filter on that:
+        // Added forceAll = true
+        this.doQuery(this.getRawValue(), true);
+      }
+      this.el.focus();
+    }
+  },
+
+  doQuery : function(q, forceAll){
+      if(q === undefined || q === null){
+          q = '';
+      }
+      var qe = {
+          query: q,
+          forceAll: forceAll,
+          combo: this,
+          cancel:false
+      };
+      if(this.fireEvent('beforequery', qe)===false || qe.cancel){
+          return false;
+      }
+      q = qe.query;
+      forceAll = qe.forceAll;
+      if(forceAll === true || (q.length >= this.minChars)){
+          if(this.lastQuery !== q){
+              this.lastQuery = q;
+              this.applyQueryToStore(q);
+          }else{
+              this.selectedIndex = -1;
+              this.onLoad();
+          }
+      }
+  },
+  applyQueryToStore: function(q) {
+    // Just extracted this so it can be overriden
+    if(this.mode == 'local'){
+        this.selectedIndex = -1;
+        if(forceAll){
+            this.store.clearFilter();
+        }else{
+            this.store.filter(this.displayField, q);
+        }
+        this.onLoad();
+    }else{
+        this.store.baseParams[this.queryParam] = q;
+        this.store.load({
+            params: this.getParams(q)
+        });
+        this.expand();
+    }
   }
 });
 
@@ -123,7 +189,39 @@ SWorks.CustomCombo = Ext.extend(Ext.form.ComboBox, {
         this.setValue(this.value);
       }
     }
-  }
+  },
+
+  loadEmbeddedValue: function(v) {
+    if (this.form && this.form.record) {
+
+      var field = this.dataIndex.replace(this.valueField, this.displayField);
+      var idField = this.store.reader.meta.id
+      var data = this.form.record.json || this.form.record.data;
+
+      if (data && data[field] && this.valueField == idField) {
+        var record = {}
+        record[this.valueField] = v;
+        record[this.displayField] = data[field];
+        record = new this.store.recordType(record, v);
+
+        this.store.add(record, v);
+        return true;
+      }
+    }
+
+    return false;
+  },
+
+  setValue: function(v) {
+    if (v && v !== '' && this.valueField &&
+        !this.findRecord(this.valueField, v)) {
+
+      this.loadEmbeddedValue(v);
+    }
+
+    SWorks.CustomCombo.superclass.setValue.call(this, v);
+  },
+
 });
 Ext.reg('customcombo', SWorks.CustomCombo);
 
@@ -154,15 +252,10 @@ SWorks.SearchCombo = Ext.extend(SWorks.CustomCombo, {
 
   initComponent: function() {
     SWorks.SearchCombo.superclass.initComponent.call(this);
-    this.on('beforequery', this.mangleQuery, this);
     this.store.baseParams = this.store.baseParams || {};
     // Ferret will only return a few columns regardless, if you need the whole
     // record, you'll need to fetch it
     this.store.baseParams.select = [ this.displayField, this.valueField ].join(',');
-  },
-
-  mangleQuery: function(qData) {
-    qData.query = this.displayField + ':' + qData.query + '*';
   },
 
   bindStore: function(store, initial) {
@@ -171,27 +264,6 @@ SWorks.SearchCombo = Ext.extend(SWorks.CustomCombo, {
     }
 
     SWorks.SearchCombo.superclass.bindStore.call(this, store, initial);
-  },
-
-  loadEmbeddedValue: function(v) {
-    if (this.form && this.form.record) {
-
-      var field = this.dataIndex.replace(this.valueField, this.displayField);
-      var idField = this.store.reader.meta.id
-      var data = this.form.record.json || this.form.record.data;
-
-      if (data && data[field] && this.valueField == idField) {
-        var record = {}
-        record[this.valueField] = v;
-        record[this.displayField] = data[field];
-        record = new this.store.recordType(record, v);
-
-        this.store.add(record, v);
-        return true;
-      }
-    }
-
-    return false;
   },
 
   loadServerValue: function(v) {
@@ -222,13 +294,29 @@ SWorks.SearchCombo = Ext.extend(SWorks.CustomCombo, {
   },
 
   setValue: function(v) {
-    if (v && v !== '' &&
-        this.valueField &&
-        !this.findRecord(this.valueField, v) &&
-        !this.loadEmbeddedValue(v)) {
+    SWorks.SearchCombo.superclass.setValue.call(this, v);
+
+    if (v && v !== '' && this.valueField &&
+       this.lastSelectionText == this.valueNotFoundText) {
       this.loadServerValue(v);
-    } else {
-      SWorks.SearchCombo.superclass.setValue.call(this, v);
+    }
+  },
+
+  applyQueryToStore: function(q) {
+    if(this.mode == 'local'){
+      // I guess a search store could be used in local mode,
+      // I've never tried. No point in cutting the code out
+      this.selectedIndex = -1;
+      if(forceAll){
+          this.store.clearFilter();
+      }else{
+          this.store.filter(this.displayField, q);
+      }
+      this.onLoad();
+    }else{
+      this.store.addFilter('combo_query', this.displayField + ':' + q + '*');
+      this.store.load();
+      this.expand();
     }
   }
 });

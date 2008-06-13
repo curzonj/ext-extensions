@@ -2,6 +2,7 @@ Ext.namespace('SWorks');
 
 SWorks.ErrorHandling = {
   serverError: function(result) {
+    console.trace();
     if(typeof result !== 'object' || result.serverErrorDispatched !== true) {
       var msg = (typeof result === 'object' &&
                  typeof result.message == 'string' ? result.message : null ) || 
@@ -29,7 +30,7 @@ SWorks.ErrorHandling = {
         this.serverError(result);
       }
     } catch(e) {
-      console.error("Failed to parse response: " + e.message);
+      console.error("Failed to parse response ("+resp.tId+"): " + e.message);
     }
   },
 
@@ -52,7 +53,7 @@ SWorks.ErrorHandling = {
 
           return false; // halt the error propogation
         } else {
-          Ext.MessageBox.alert('Server Failed',
+          Ext.MessageBox.alert('Error',
               "The server was too slow. The request may or may not have completed.");
         }
       } else {

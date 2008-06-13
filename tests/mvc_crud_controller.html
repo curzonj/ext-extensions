@@ -26,13 +26,13 @@ function testInitForm() {
 
   // should index the fields
   controller.initFormIdempotent(form, panel);
-  assert('assigned map', form.items.maps['dataIndex'] == form.fields);
-  assert('indexed field', form.fields.test, field);
+  assertEquals('assigned map', form.fields, form.items.maps['dataIndex']);
+  assertEquals('indexed field', form.fields.test, field);
 
   // should not re-init the form
   var firstIndex = form.fields;
   controller.initFormIdempotent(form);
-  assert('doesnt rebuild index', form.fields == firstIndex);
+  assertEquals('doesnt rebuild index', firstIndex, form.fields);
 
   for (var name in form.fields) {
     assertEquals('set field.form', form, form.fields[name].form);

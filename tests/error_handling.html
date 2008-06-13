@@ -34,7 +34,7 @@ function testOnAjaxRequest() {
   var msg = 'test this';
   var text = Ext.encode({ success: false, message: msg });
 
-  var mc = Ext.MessageBox.expectsCall('alert').withArgs('Server Failed', msg);
+  var mc = Ext.MessageBox.expectsCall('alert').withArgs('Error', msg);
   Ext.Ajax.fireEvent('requestcomplete', Ext.Ajax, { status: 200, responseText: text }, {});
   mc.verify();
 }
@@ -48,17 +48,17 @@ function testOnAjaxRequestException() {
   mc.verify();
 
   // Server choked, 500 status code
-  Ext.MessageBox.expectsCall('alert',mc).withArgs('Server Failed', TypeOf.isA(String));
+  Ext.MessageBox.expectsCall('alert',mc).withArgs('Error', TypeOf.isA(String));
   Ext.Ajax.fireEvent('requestexception', Ext.Ajax, { status: 500 }, {});
   mc.verify();
 
   // Server timed out on a modify request, you can't retry it
-  Ext.MessageBox.expectsCall('alert',mc).withArgs('Server Failed', TypeOf.isA(String));
+  Ext.MessageBox.expectsCall('alert',mc).withArgs('Error', TypeOf.isA(String));
   Ext.Ajax.fireEvent('requestexception', Ext.Ajax, { status: -1 }, {method:'POST'});
   mc.verify();
 
   // Explicit, don't retry
-  Ext.MessageBox.expectsCall('alert',mc).withArgs('Server Failed', TypeOf.isA(String));
+  Ext.MessageBox.expectsCall('alert',mc).withArgs('Error', TypeOf.isA(String));
   Ext.Ajax.fireEvent('requestexception', Ext.Ajax, { status: -1 }, { retryAttempts: 0});
   mc.verify();
 }
@@ -78,7 +78,7 @@ function testRetryRequests() {
   mc.verify();
 
   assertEquals('retry 0', 0, opts.retryAttempts);
-  Ext.MessageBox.expectsCall('alert', mc).withArgs('Server Failed', TypeOf.isA(String));
+  Ext.MessageBox.expectsCall('alert', mc).withArgs('Error', TypeOf.isA(String));
   Ext.Ajax.fireEvent('requestexception', Ext.Ajax, { status: -1 }, opts);
   mc.verify();
 }
@@ -98,7 +98,7 @@ function testHandleJsonResponse() {
   Ext.Ajax.handleJsonResponse({}, false, null);
   mc.verify();
 
-  Ext.MessageBox.expectsCall('alert',mc).withArgs('Server Failed', TypeOf.isA(String));
+  Ext.MessageBox.expectsCall('alert',mc).withArgs('Error', TypeOf.isA(String));
   Ext.Ajax.handleJsonResponse({}, true, { responseText: 'garbage' });
   mc.verify();
 

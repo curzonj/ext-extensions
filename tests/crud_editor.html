@@ -62,12 +62,12 @@ function testFetchRecord() {
   mc.verify();
 
   // Test the callback
-  result = { id: id, bob: 'wohoo' };
+  result = { success: true, objectid: id, data: { id: 'joe schmo', bob: 'wohoo' } };
   bridge();
   opts.expectsCall('callback', mc).withArgs(TypeOf.isA(editor.recordType)).andStub(
       function(record) {
         assertEquals('record id', id, record.id);
-        assertEquals('record data', result.bob, record.data.bob);
+        assertEquals('record data', result.data.bob, record.data.bob);
       });
   editor.fetchRecord(id, opts);
   mc.verify();
@@ -75,16 +75,6 @@ function testFetchRecord() {
 
 function testPostToRecord() {
   var result = null, id = 1, opts = {};
-
-  // Some where there was a bug passing bad args
-  // Make sure it doesn't call jsonRequest
-  Ext.Ajax.expectsCall('jsonRequest', mc); 
-  var expect = SWorks.ErrorHandling.expectsCall('clientError', mc);
-  expect.withArgs();
-  expect.withArgs();
-  editor.postToRecord(null);
-  editor.postToRecord();
-  mc.verify();
 
   // a new record
   opts = {
