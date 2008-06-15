@@ -102,12 +102,6 @@ Ext.override(Ext.data.Store, {
 
     return newObj;
   },
-  initData: function() {
-    this.data = new Ext.util.MixedCollection(false);
-    this.data.getKey = function(o){
-        return o.id;
-    };
-  },
   mirror: function(source) {
     // Mirrored data stores only work for a limited subset of the total
     // uses of datastores. Consider them carefully before using them.
@@ -428,17 +422,6 @@ SWorks.CustomGroupingStore = function(config, custom) {
     }) : undefined,
     reader: new Ext.data.JsonReader(config, config.fields)
   }, config));
-
-  this.data.getKey = function(o) {
-    var id = o.id;
-    // Some of the server side code returns integers coded
-    // as strings and then Array.indexOf doesn't work
-    if (typeof id == 'string' && !isNaN(id)) {
-      id = parseInt(id);
-    }
-
-    return id;
-  };
 }
 Ext.extend(SWorks.CustomGroupingStore, Ext.data.GroupingStore);
 
