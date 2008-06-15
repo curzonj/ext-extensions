@@ -10,6 +10,8 @@ SWorks.CrudToolbarMgr = function(tbar, controller) {
     this.tbar = tbar;
   }
 
+  this.mangleToolbar(this.tbar);
+
   for(var i=0;i<this.tbar.buttons.length;i++) {
     var b = this.tbar.buttons[i];
 
@@ -49,9 +51,27 @@ SWorks.CrudToolbarMgr.prototype = {
     return this.tbar;
   },
 
+  mangleToolbar: function(tbar) {
+    for(var i=0; i<tbar.buttons.length; i++) {
+      var item = tbar.buttons[i];
+
+      if (item.xtype == 'filter') {
+        tbar.buttons = this.tbar.buttons.insertBefore(item, 'Quicksearch');
+        i++;
+      } else if(item.xtype == 'ferretfilter') {
+        tbar.buttons = this.tbar.buttons.insertBefore(item, 'Adv Search');
+        i++;
+      }
+    }
+  },
+
   hookFilter: function(b) {
-    if (b.xtype == 'filter' && typeof b.store == 'undefined') {
-      b.store = this.controller.component.store;
+    if (typeof b.store == 'undefined') {
+      var filters = [ 'filter', 'ferretfilter' ];
+
+      if (filters.indexOf(b.xtype) != -1) {
+        b.store = this.controller.component.store;
+      }
     }
   },
 
@@ -138,13 +158,7 @@ SWorks.CrudToolbarMgr.prototype = {
   // End default behaviors
 
   onCustomFilterChecked: function(item, checked, filter) {
-    var store = this.controller.component.store;
-
-    if (checked) {
-      store.addFilter(filter.filter);
-    } else {
-      store.removeFilter(filter.filter);
-    }
+    this.controller.dataModel.onCustomFilter(checked, filter);
   },
 
   buildOptionsMenu: function(btn) {

@@ -569,6 +569,14 @@ Ext.extend(SWorks.StoreDataModel, SWorks.DataModel, {
     }
 
     return (idMatch && typeMatch);
+  },
+
+  onCustomFilter: function(enabled, filter) {
+    if (enabled) {
+      this.store.addFilter(filter.filter);
+    } else {
+      this.store.removeFilter(filter.filter);
+    }
   }
 });
 
@@ -626,6 +634,35 @@ Ext.extend(SWorks.URLLoadingDataModel, SWorks.StoreDataModel, {
     if (this.foreignTypeKey) {
       this.store.addFilter('data_model_polymorphic', this.foreignTypeKey+':'+record.getKlass())
     }
+    this.store.load();
+  }
+});
+
+SWorks.FerretSearchDataModel = function(overrides) {
+  SWorks.FerretSearchDataModel.superclass.constructor.apply(this, arguments);
+
+  this.store.baseParams = this.store.baseParams || {};
+  this.store.baseParams.limit = this.pageSize;
+
+  this.on('save', this.updateFerretData, this);
+}
+Ext.extend(SWorks.FerretSearchDataModel, SWorks.StoreDataModel, {
+  updateFerretData: function(record, result) {
+    if (result.ferret_data) {
+      var myrecord = this.store.getById(result.objectid) ||
+                     new this.store.recordType(result.ferret_data, result.objectid);
+      this.updateRecord(myrecord, { data: result.ferret_data });
+    } else {
+      this.store.reload();
+    }
+  },
+  onCustomFilter: function(enabled, filter) {
+    if (enabled) {
+      this.store.addFilter(filter.text, (filter.query || filter.getQuery.call(this)));
+    } else {
+      this.store.removeFilter(filter.text);
+    }
+
     this.store.load();
   }
 });

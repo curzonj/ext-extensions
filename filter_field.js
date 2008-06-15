@@ -2,6 +2,8 @@
 
 SWorks.FilterField = Ext.extend(Ext.form.TextField, {
   afterRender: function(container) {
+    // The toolbar builder assigns our store
+
     this.el.on('keyup', this.applyGridFilter, this, {buffer: 250});
   },
   applyGridFilter: function(e) {
@@ -53,3 +55,25 @@ SWorks.FilterField = Ext.extend(Ext.form.TextField, {
   }
 });
 Ext.reg('filter', SWorks.FilterField);
+
+SWorks.FerretFilterField = Ext.extend(Ext.form.TextField, {
+  afterRender: function(container) {
+    this.on('specialkey', this.testForEnterKey, this);
+  },
+  testForEnterKey: function(item, e) {
+    if (e.getKey() == Ext.EventObject.ENTER) {
+      this.applyGridFilter();
+    }
+  },
+  applyGridFilter: function(e) {
+    var str = this.getValue().trim();
+
+    if (str === '') {
+      this.store.removeFilter('search');
+    } else {
+      this.store.addFilter('search', '+('+str+')');
+    }
+    this.store.load();
+  }
+});
+Ext.reg('ferretfilter', SWorks.FerretFilterField);

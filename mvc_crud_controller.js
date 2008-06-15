@@ -235,4 +235,45 @@ SWorks.URLLoadingController = Ext.extend(SWorks.GridController, {
   }
 });
 
+SWorks.SearchGridController = Ext.extend(SWorks.GridController, {
+  pageSize: 100,
+  loadMask: true,
+
+  init: function(comp) {
+    SWorks.SearchGridController.superclass.init.apply(this, arguments);
+
+    comp.elements += ',bbar';
+    comp.bottomToolbar = new Ext.PagingToolbar({
+      pageSize: this.pageSize,
+      store: comp.store,
+      displayInfo: true,
+      displayMsg: 'Displaying items {0} - {1} of {2}',
+      emptyMsg: "No items to display"
+    });
+  },
+
+  buildDataModel: function(comp) {
+    return new SWorks.FerretSearchDataModel({
+      controller: this,
+      store: comp.store,
+      pageSize: this.pageSize,
+      foreignKey: comp.foreignKey
+    });
+  },
+
+  loadRecord: function(record) {
+    if(record.newRecord) {
+      this.editor.loadRecord(record);
+    } else {
+      this.dataModel.fetchRecord(record.id, {
+        callback: function(fullRecord) {
+          this.editor.loadRecord(fullRecord);
+        },
+        scope: this
+      });
+    }
+  }
+
+});
+
 
