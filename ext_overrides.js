@@ -339,3 +339,23 @@ Ext.override(Ext.data.HttpProxy, {
         }
     }
 });
+
+Ext.override(Array, {
+  insertBefore: function(current, newItem) {
+    var index = this.indexOf(current);
+    return this.insertAt(index, newItem);
+  },
+  insertAfter: function(current, newItem) {
+    var index = this.indexOf(current) ;
+    return this.insertAt(index+1, newItem);
+  },
+  insertAt: function(index, newItem) {
+    if (index != -1 && index <= this.length) {
+      var front = this.slice(0,index);
+      var back = this.slice(index);
+
+      front.push(newItem);
+      return front.concat(back);
+    }
+  }
+});
