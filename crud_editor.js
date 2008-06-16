@@ -645,9 +645,8 @@ SWorks.ManagedCrudEditor = Ext.extend(SWorks.CrudEditor, {
   updateRecord: function(record, result) {
     this.processRecords(result);
     SWorks.ManagedCrudEditor.superclass.updateRecord.call(this, record, result);
-    if(record.newBeforeSave &&
-       record.constructor == this.store.recordType &&
-       !store.getById(record.id)) {
+    if(record.newBeforeSave && !record.store &&
+       record.constructor == this.store.recordType) {
       this.store.addSorted(record);
     }
   },
