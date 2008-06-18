@@ -5,6 +5,23 @@ Ext.namespace('Ext.ux.data', 'SWorks');
 Ext.override(Ext.data.Record, {
   getKlass: function() {
     return this.data.klass || (this.store ? this.store.klass : undefined);
+  },
+  setAttributes: function(data) {
+    this.json = this.json || {};
+    Ext.apply(this.json, data);
+
+    this.beginEdit();
+    for(var a in data) if (typeof data[a] !== 'function') {
+      var value = data[a];
+
+      if(typeof value == 'object') {
+        //this.set only takes non-objects
+        this.data[a] = value;
+      } else {
+        this.set(a, value);
+      }
+    }
+    this.endEdit();
   }
 });
 

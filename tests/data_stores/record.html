@@ -1,0 +1,83 @@
+<!-- Standard Code -->
+
+<html><head>
+    
+<script type="text/javascript" src="../../../ext/adapter/ext/ext-base.js"></script>
+<script type="text/javascript" src="../../../ext/ext-all-debug.js"></script>
+<script type="text/javascript" src="../../external/jsunit/app/jsUnitCore.js"></script>
+<script type="text/javascript" src="../../external/jsmock.js"></script>
+<script type="text/javascript" src="../helpers.js"></script>
+
+<!-- End Standard Code -->
+
+<script type="text/javascript" src="../../data_stores.js"></script>
+
+</head><body><script type="text/javascript">
+
+function testGetKlass() {
+  var mc = new MockControl();
+  var store = new Ext.data.Store({
+    klass: 'bob',
+    reader: new Ext.data.JsonReader({},
+                [ 'id', 'klass', 'text', 'estimated', 'quicktip' ])
+  });
+
+  var record = new store.recordType({});
+  assertUndefined('getKlass un-init', record.getKlass());
+
+  record.data.klass = 'bob';
+  assertEquals('getKlass inited', record.data.klass, record.getKlass());
+
+  record.data.klass = undefined;
+  assertUndefined('getKlass un-init', record.getKlass());
+
+  record.join(store);
+  assertEquals('getKlass inited', store.klass, record.getKlass());
+}
+
+function testSetAttributes() {
+  // does 3 things:
+  // - sets applies data to json
+  // - calls record.set() with non-object attributes
+  // - sets record.data with object attributes
+  var store = new Ext.data.Store({
+    klass: 'bob',
+    reader: new Ext.data.JsonReader({},
+                [ 'id', 'klass', 'text', 'estimated', 'quicktip' ])
+  });
+
+  var data = {};
+  var record = new store.recordType(data);
+  assertEquals('record data initialized', record.data, data);
+
+  record.json = { bob: true };
+  record.setAttributes( { fred: true } );
+  assertTrue('existing json not removed', record.json.bob);
+  assertTrue('new json added', record.json.fred);
+
+  record.setAttributes( { bob: false } );
+  assertFalse('existing json updated', record.json.bob);
+
+  var obj = { this: true, is: 'a', complex: { _object: true } };
+  record.setAttributes( { estimated: obj } );
+  assertEquals('object attributes updated correctly',
+                  record.data.estimated, obj);
+
+  var mc = new MockControl();
+  record.expectsCall('set', mc).withArgs('quicktip', 'text');
+  record.setAttributes({ quicktip: 'text' });
+  mc.verify();
+
+  //make sure it sets all the values
+  record.expectsCall('beginEdit', mc).withArgs().andStubOriginal();
+  var expectation = record.expectsCall('set', mc)
+  expectation.withArgs(TypeOf.isA(String), TypeOf.isA(String)).andStubOriginal();
+  expectation.withArgs(TypeOf.isA(String), TypeOf.isA(String)).andStubOriginal();
+  record.expectsCall('endEdit', mc).withArgs().andStubOriginal();
+  record.setAttributes({ quicktip: 'fred', text: 'bob' });
+  mc.verify();
+  assertEquals('set record data', 'bob', record.data.text);
+  assertEquals('set record data', 'fred', record.data.quicktip);
+}
+
+</script></body></html>
