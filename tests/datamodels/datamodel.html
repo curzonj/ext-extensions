@@ -1,0 +1,44 @@
+<!-- Standard Code -->
+
+<html><head>
+    
+<script type="text/javascript" src="../../../ext/adapter/ext/ext-base.js"></script>
+<script type="text/javascript" src="../../../ext/ext-all-debug.js"></script>
+<script type="text/javascript" src="../../external/jsunit/app/jsUnitCore.js"></script>
+<script type="text/javascript" src="../../external/jsmock.js"></script>
+<script type="text/javascript" src="../helpers.js"></script>
+
+<!-- End Standard Code -->
+
+<script type="text/javascript" src="../../error_handling.js"></script>
+<script type="text/javascript" src="../../data_stores.js"></script>
+<script type="text/javascript" src="../../mvc_data_models.js"></script>
+<script type="text/javascript" src="../../mvc_crud_controller.js"></script>
+<script type="text/javascript" src="common_tests.js"></script>
+
+</head><body><script type="text/javascript">
+
+function setUpPage() {
+  window.mc = new MockControl();
+  window.origMsgBox = Ext.MessageBox;
+  Ext.MessageBox = mc.createMock(Ext.MessageBox);
+
+  setUpPageStatus = 'complete';
+}
+
+function tearDown() {
+  mc.verify();
+}
+
+function buildDataModel() {
+  return new SWorks.DataModel({
+    foreignKey: 'person_id',
+    parameterTemplate: 'bob[{0}]',
+    recordType: Ext.data.Record.create(['person_type', 'name']),
+    restUrl: '/test/{0}',
+    createUrl: '/test',
+    dealWithEmptyCombos: Ext.emptyFn
+  });
+}
+
+</script></body></html>

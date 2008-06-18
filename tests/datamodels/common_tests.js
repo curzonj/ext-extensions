@@ -1,36 +1,6 @@
-<!-- Standard Code -->
-
-<html><head>
-    
-<script type="text/javascript" src="../../ext/adapter/ext/ext-base.js"></script>
-<script type="text/javascript" src="../../ext/ext-all-debug.js"></script>
-<script type="text/javascript" src="../external/jsunit/app/jsUnitCore.js"></script>
-<script type="text/javascript" src="../external/jsmock.js"></script>
-<script type="text/javascript" src="helpers.js"></script>
-
-<!-- End Standard Code -->
-
-<script type="text/javascript" src="../error_handling.js"></script>
-<script type="text/javascript" src="../data_stores.js"></script>
-<script type="text/javascript" src="../mvc_data_models.js"></script>
-<script type="text/javascript" src="../mvc_crud_controller.js"></script>
-
-</head><body><script type="text/javascript">
-
-function setUpPage() {
-  window.mc = new MockControl();
-  window.origMsgBox = Ext.MessageBox;
-  Ext.MessageBox = mc.createMock(Ext.MessageBox);
-
-  setUpPageStatus = 'complete';
-}
-
-function tearDown() {
-  mc.verify();
-}
 
 function testSaveFormNotValid() {
-  var dm = new SWorks.DataModel();
+  var dm = buildDataModel();
   var form  = mc.createMock(Ext.form.BasicForm);
   form.expects().isValid().andReturn(false);
 
@@ -48,11 +18,7 @@ function testSaveFormNotValid() {
 
 function testSaveFormValid() {
   var options = {};
-  var dm = new SWorks.DataModel({
-    recordType: Ext.data.Record.create(['person_type', 'name']),
-    restUrl: '/test',
-    dealWithEmptyCombos: Ext.emptyFn
-  });
+  var dm = buildDataModel();
 
   var form  = mc.createMock(Ext.form.BasicForm);
   form.record = { newRecord: false };
@@ -73,13 +39,7 @@ function testSaveFormValid() {
 
 function testSaveFormWithParent() {
   var options = {};
-  var dm = new SWorks.DataModel({
-    foreignKey: 'person_id',
-    parameterTemplate: 'bob[{0}]',
-    recordType: Ext.data.Record.create(['person_type', 'name']),
-    restUrl: '/test',
-    dealWithEmptyCombos: Ext.emptyFn
-  });
+  var dm = buildDataModel();
 
   var form  = mc.createMock(Ext.form.BasicForm);
   form.record = { newRecord: false };
@@ -106,50 +66,10 @@ function testSaveFormWithParent() {
   mc.verify();
 }
 
-function testLinkToParent() {
-  var compt = mc.createMock(SWorks.AbstractController);
-  var store = new Ext.data.Store();
-
-  // Persistent filters are required for standard linking to parent
-  Ext.ux.data.PersistentFilters(store);
-
-  var dm = new SWorks.StoreDataModel({ store: store });
-  var parentForm = new Ext.form.BasicForm();
-  var callback;
-
-  // Don't link if you don't have a foreignKey
-  dm.linkToParent(compt, parentForm);
-  mc.verify();
-
-  dm.foreignKey = 'key';
-  compt.expects().on('load', TypeOf.isA(Function), dm).andStub(function() {
-    callback = arguments[1];
-  });
-
-  // execute your callback when the parent loads
-  dm.linkToParent(compt, parentForm);
-  mc.verify();
-
-  // when the parent loads, filter the grid
-  store.expectsCall('whenLoaded').withArgs(TypeOf.isA(Function), dm).andStub(
-      function(fn, scope) {
-        fn.apply(scope);
-      });
-  store.expectsCall('addFilter').withArgs(TypeOf.isA(Function), dm);
-  callback.call(dm, parentForm, {});
-  mc.verify();
-}
 
 function testFormSuccess() {
   // Test with a basic form not inited by a controller
-  var dm = new SWorks.DataModel({
-    foreignKey: 'person_id',
-    parameterTemplate: 'bob[{0}]',
-    recordType: Ext.data.Record.create(['person_type', 'name']),
-    restUrl: '/test',
-    dealWithEmptyCombos: Ext.emptyFn
-  });
-
+  var dm = buildDataModel();
   var form  = new Ext.form.BasicForm();
   var action = { result: {}, options: { dataSentRecord: new dm.recordType() } };
 
@@ -166,44 +86,16 @@ function testFormSuccess() {
   mc.verify();
 }
 
-function testLinkedParentLoadOnFirstAccess() {
-  var dm = new SWorks.StoreDataModel({
-    foreignKey: 'person_id',
-    store: new SWorks.CrudStore({
-      proxy: Ext.data.HttpProxy.dummyObj(),
-      fields: [ 'person_type', 'person_id', 'name']
-    })
-  });
-
-  var cont = SWorks.AbstractController.dummyObj();
-  var form  = Ext.form.BasicForm.dummyObj();
-  var record = new dm.recordType();
-
-  dm.store.expectsCall('load', mc).withArgs().andStubOriginal();
-
-  dm.linkToParent(cont, form);
-  cont.fireEvent('load', form, record);
-  cont.fireEvent('load', form, record);
-
-  mc.verify();
-}
 
 function testFetchRecord() {
   var result = null, id = 1, opts = {};
-  var data_model = new SWorks.StoreDataModel({
-    createUrl: 'test',
-    restUrl: 'test/{0}',
-    recordType: Ext.data.Record.create(['id', 'bob']),
-    store: {
-      klass: 'rails class, ie. Person'
-    }
-  });
+  var data_model = buildDataModel();
 
   function bridge() {
     Ext.MessageBox.expects().wait(TypeOf.isA(String));
     Ext.Ajax.expectsCall('jsonRequest', mc).withArgs(opts).andStub(
       function() {
-        assertEquals('url', 'test/'+id, opts.url);
+        assertEquals('url', String.format(data_model.restUrl, id), opts.url);
         opts.callback.call(opts.scope, result, opts);
       });
     Ext.MessageBox.expects().updateProgress(1);
@@ -218,12 +110,12 @@ function testFetchRecord() {
   mc.verify();
 
   // Test the callback
-  result = { success: true, objectid: id, data: { id: 'joe schmo', bob: 'wohoo' } };
+  result = { success: true, objectid: id, data: { id: 'joe schmo', name: 'wohoo' } };
   bridge();
   opts.expectsCall('callback', mc).withArgs(TypeOf.isA(data_model.recordType)).andStub(
       function(record) {
         assertEquals('record id', id, record.id);
-        assertEquals('record data', result.data.bob, record.data.bob);
+        assertEquals('record data', result.data.name, record.data.name);
       });
   data_model.fetchRecord(id, opts);
   mc.verify();
@@ -231,18 +123,11 @@ function testFetchRecord() {
 
 function testPostToRecord() {
   var result = null, id = 1, opts = {};
-  var data_model = new SWorks.StoreDataModel({
-    createUrl: 'test',
-    restUrl: 'test/{0}',
-    recordType: Ext.data.Record.create(['id', 'bob']),
-    store: {
-      klass: 'rails class, ie. Person'
-    }
-  });
+  var data_model = buildDataModel();
 
   // a new record
   opts = {
-    record: new data_model.recordType({bob: 'yo, Bobo!'}),
+    record: new data_model.recordType({name: 'yo, Bobo!'}),
     waitMsg: false
   };
   opts.record.newRecord = true;
@@ -250,21 +135,23 @@ function testPostToRecord() {
       withArgs(opts.record, opts).andStubOriginal();
   Ext.Ajax.expectsCall('jsonRequest', mc).withArgs(opts).andStub(
       function() {
-        assertEquals('url from create', 'test', opts.url);
+        assertEquals('url from create', data_model.createUrl, opts.url);
       });
   data_model.postToRecord(opts);
   mc.verify();
 
   // an existing record
   opts = {
-    record: new data_model.recordType({id: 1, bob: 'yo, Bobo!'}, 1),
+    record: new data_model.recordType({id: 1, name: 'yo, Bobo!'}, 1),
     waitMsg: false
   };
   data_model.expectsCall('setUpdateOrCreate', mc).
       withArgs(opts.record, opts).andStubOriginal();
   Ext.Ajax.expectsCall('jsonRequest', mc).withArgs(opts).andStub(
       function() {
-        assertEquals('url from record', 'test/1', opts.url);
+        assertEquals('url from record',
+              String.format(data_model.restUrl, opts.record.id),
+              opts.url);
       });
   data_model.postToRecord(opts);
   mc.verify();
@@ -277,19 +164,22 @@ function testPostToRecord() {
   Ext.MessageBox.expects().wait(opts.waitMsg);
   Ext.Ajax.expectsCall('jsonRequest', mc).withArgs(opts).andStub(
       function() {
-        assertEquals('url from id', 'test/1', opts.url);
+        assertEquals('url from record',
+              String.format(data_model.restUrl, opts.id),
+              opts.url);
       });
   data_model.postToRecord(opts);
   mc.verify();
 
   // id in the arguments
+  var staticUrl = 'testUrl';
   opts = {
-    url: 'testUrl'
+    url: staticUrl
   };
   Ext.MessageBox.expects().wait(TypeOf.isA(String));
   Ext.Ajax.expectsCall('jsonRequest', mc).withArgs(opts).andStub(
       function() {
-        assertEquals('url from opts', 'testUrl', opts.url);
+        assertEquals('url from opts', staticUrl, opts.url);
       });
   data_model.postToRecord(1, opts);
   mc.verify();
@@ -297,14 +187,7 @@ function testPostToRecord() {
 
 function testPostToRecordCallback() {
   var result = null, opts = null, id = 1;
-  var data_model = new SWorks.StoreDataModel({
-    createUrl: 'test',
-    restUrl: 'test/{0}',
-    recordType: Ext.data.Record.create(['id', 'bob']),
-    store: {
-      klass: 'rails class, ie. Person'
-    }
-  });
+  var data_model = buildDataModel();
 
   function bridge() {
     if(opts.waitMsg !== false) {
@@ -330,8 +213,8 @@ function testPostToRecordCallback() {
   mc.verify();
 
   // record passed in
-  opts = { record: new data_model.recordType({id: id, bob: 'way cool!'}, id) };
-  result = { success: true, data: { id: id, bob: 'new data' }};
+  opts = { record: new data_model.recordType({id: id, name: 'way cool!'}, id) };
+  result = { success: true, data: { id: id, name: 'new data' }};
   bridge();
   opts.store = {};
   opts.store.expectsCall('getById').withArgs(opts.record.id).andStub(
@@ -339,14 +222,14 @@ function testPostToRecordCallback() {
   opts.expectsCall('callback', mc).withArgs(true, opts.record, result);
   data_model.expectsEvent('save', mc).withArgs(opts.record, result).andStub(
       function(r) {
-        assertEquals('updated record', opts.record.data.bob, result.data.bob);
+        assertEquals('updated record', opts.record.data.name, result.data.name);
       });
   data_model.postToRecord(opts);
   assertFalse('clears newBeforeSave', opts.record.newBeforeSave);
   mc.verify();
 
   // record passed in, without a store, and no data returned
-  opts = { record: new data_model.recordType({id: id, bob: 'way cool!'}, id) };
+  opts = { record: new data_model.recordType({id: id, name: 'way cool!'}, id) };
   result = { success: true };
   bridge();
   opts.expectsCall('callback', mc).withArgs(true, opts.record, result);
@@ -365,5 +248,3 @@ function testPostToRecordCallback() {
   data_model.postToRecord(id, opts);
   mc.verify();
 }
-
-</script></body></html>

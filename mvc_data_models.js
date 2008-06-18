@@ -10,6 +10,13 @@ SWorks.DataModel = function(overrides) {
   this.addEvents('beforeload', 'load', 'delete', 'save');
 };
 Ext.extend(SWorks.DataModel, Ext.util.Observable, {
+  buildRecord: function(data, id) {
+    var record = new this.recordType(data, id);
+    record.json = data;
+
+    return record;
+  },
+
   /*
    * Updating and saving records
    *
@@ -136,7 +143,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
         }
         this.updateRecord(record, result);
       } else {
-        record = new this.recordType(result.data, result.objectid);
+        record = this.buildRecord(result.data, result.objectid);
       }
      
       if(options.cb.fn) { 
@@ -202,7 +209,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     }
 
     // This way we know what we sent to the server
-    o.dataSentRecord = new this.recordType({});
+    o.dataSentRecord = this.buildRecord({});
     form.updateRecord(o.dataSentRecord);
 
     form.submit(Ext.apply(o ,{
@@ -325,21 +332,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
         record.newBeforeSave = true;
       }
   
-      // By using edit, widgets can update the UI if a related record changes 
-      record.json = result.data;
-      record.beginEdit();
-      for(var a in result.data) {
-        var value = result.data[a];
-
-        if(typeof value == 'object') {
-          //record.set only takes non-objects
-          record.data[a] = value;
-        } else {
-          record.set(a, value);
-        }
-      }
-      record.endEdit();
-
+      record.setAttributes(result.data);
       record.commit();
     }
   },
@@ -349,7 +342,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
    *
    */
   loadData: function(data, id) {
-    var r = new this.recordType(data, id);
+    var r = this.buildRecord(data, id);
     this.loadRecord(r);
   },
   loadForm: function(form, record){
@@ -395,10 +388,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     Ext.MessageBox.hide();
 
     if (result.success) {
-      var record = new this.recordType(result.data, result.objectid);
-      record.json = result.data;
-      record.data.klass = record.data.klass || this.store.klass;
-
+      var record = this.buildRecord(result.data, result.objectid);
       options.cb.fn.call(options.cb.scope || this, record);
     } else {
       SWorks.ErrorHandling.serverError(result);
@@ -410,7 +400,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
    *
    */
   newRecord: function(data, initRecord) {
-    var record = new this.recordType(data || {});
+    var record = this.buildRecord(data || {});
     record.id = 'new';
     record.newRecord = true;
 
@@ -493,6 +483,13 @@ SWorks.StoreDataModel = function(overrides) {
   this.checkForeignKey();
 };
 Ext.extend(SWorks.StoreDataModel, SWorks.DataModel, {
+  buildRecord: function(data, id) {
+    var record = SWorks.StoreDataModel.superclass.buildRecord.apply(this, arguments);
+    record.data = record.data || {};
+    record.data.klass = record.data.klass || this.store.klass;
+
+    return record;
+  },
   reload: function() {
     this.store.reload();
   },
@@ -506,8 +503,8 @@ Ext.extend(SWorks.StoreDataModel, SWorks.DataModel, {
   },
   updateRecord: function(record, result) {
     SWorks.StoreDataModel.superclass.updateRecord.call(this, record, result);
-    if(record.newBeforeSave) {
-      record.id = record.data.id = result.objectid;
+    if(record.newBeforeSave && !record.store &&
+      record.constructor == this.store.recordType) {
       this.store.addSorted(record);
     }
   },
@@ -643,15 +640,30 @@ SWorks.FerretSearchDataModel = function(overrides) {
 
   this.store.baseParams = this.store.baseParams || {};
   this.store.baseParams.limit = this.pageSize;
-
-  this.on('save', this.updateFerretData, this);
 }
 Ext.extend(SWorks.FerretSearchDataModel, SWorks.StoreDataModel, {
-  updateFerretData: function(record, result) {
+  updateRecord: function(record, result) {
+    // We don't want the normal StoreDataModel behavior, which is to add the
+    // record to our store if it is new. New records with ferret models are
+    // for the form only and shouldn't be put in the store, we'll make special
+    // ferret records for our store (which backs the grid). So go to
+    // StoreDataModel's superclass (DataModel). The standard behavior of removing
+    // hidden records works fine with our ferret records, that way they get
+    // removed when the record is actually hidden, and it set's the record id
+    // on the form records and manages newRecord and newBeforeSave for us
+    SWorks.StoreDataModel.superclass.updateRecord.call(this, record, result);
+
     if (result.ferret_data) {
+      // if we got ferret_data back, find or create a ferret record and update
+      // its attributes
       var myrecord = this.store.getById(result.objectid) ||
                      new this.store.recordType(result.ferret_data, result.objectid);
-      this.updateRecord(myrecord, { data: result.ferret_data });
+
+      myrecord.setAttributes(result.ferret_data);
+      myrecord.commit();
+      if (!myrecord.store) {
+        this.store.add(myrecord);
+      }
     } else {
       this.store.reload();
     }
