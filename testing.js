@@ -22,22 +22,6 @@ SWorks.Testing = {
     };
   },
 
-  asyncTest: function(fn, scope) {
-    var context = this;
-
-    context.asyncTests++;
-    return function() {
-      try {
-        fn.apply(scope, arguments);
-
-        context.asyncTests--;
-        SWorks.Testing.finished(context);
-      } catch(err) {
-        SWorks.Testing.printError(err);
-      }
-    };
-
-  },
   finished: function(context) {
     if(context.asyncTests === 0) {
       console.log(context.test.name + ' finished');
@@ -48,43 +32,14 @@ SWorks.Testing = {
       console.log(context.test.name + ' waiting on ' + context.asyncTests +' tests.');
     }
   },
-  testWithData: function(fn, scope) {
-    var context = this;
-
-    context.asyncTests++;
-    return function(store, records, options) {
-      try {
-        if (records.length < 1) {
-          throw "No records found for testing";
-        }
-
-        if (context.allRecords === true) {
-          for(var i=0;i<records.length;i++) {
-            fn.apply(scope, records[i]);
-          }
-        } else {
-          fn.call(scope, records[0]);
-        }
-
-        context.asyncTests--;
-        SWorks.Testing.finished(context);
-      } catch(err) {
-        SWorks.Testing.printError(err);
-      }
-    };
-  },
   createContext: function(test) {
     var Base = function() {};
     Base.prototype = window;
 
     var context = new Base();
     Ext.apply(context, test.obj || {});
-    Ext.apply(context, {
-      test: test,
-      asyncTests: 0,
-      asyncTest: this.asyncTest.createDelegate(context),
-      testWithData: this.testWithData.createDelegate(context)
-    });
+    Ext.apply(context, { test: test, asyncTests: 0 });
+    Ext.apply(context, this.contextTestFunctions);
 
     return context;
   },
@@ -143,6 +98,74 @@ SWorks.Testing = {
     } else {
       console.error(err);
     }
+  },
+
+  contextTestFunctions: {
+    assertWellBuiltCombo: function(combo) {
+      if(Ext.isArray(combo)) {
+        // Happens when you use Container.find()
+        combo = combo[0];
+      }
+
+      combo.store.whenLoaded(this.asyncTest(function() {
+        console.assert(combo.store.data.getCount() > 0);
+
+        combo.store.each(function(record) {
+          var value = record.data[combo.displayField];
+          console.assert(typeof value == 'string' && value != '');
+        }, this);
+      }));
+    },
+
+    standardFormPanelTests: function(container) {
+      container.cascade(function(component) {
+        if (component instanceof Ext.form.ComboBox) {
+          this.assertWellBuiltCombo(component);
+        }
+      }, this);
+    },
+
+    asyncTest: function(fn, scope) {
+      var context = this;
+
+      context.asyncTests++;
+      return function() {
+        try {
+          fn.apply(scope, arguments);
+
+          context.asyncTests--;
+          SWorks.Testing.finished(context);
+        } catch(err) {
+          SWorks.Testing.printError(err);
+        }
+      };
+
+    },
+    testWithData: function(fn, scope) {
+      var context = this;
+
+      context.asyncTests++;
+      return function(store, records, options) {
+        try {
+          if (records.length < 1) {
+            throw "No records found for testing";
+          }
+
+          if (context.allRecords === true) {
+            for(var i=0;i<records.length;i++) {
+              fn.apply(scope, records[i]);
+            }
+          } else {
+            fn.call(scope, records[0]);
+          }
+
+          context.asyncTests--;
+          SWorks.Testing.finished(context);
+        } catch(err) {
+          SWorks.Testing.printError(err);
+        }
+      };
+    },
   }
 };
 
