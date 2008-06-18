@@ -59,7 +59,10 @@ SWorks.ErrorHandling = {
         }
       } else {
         this.serverError();
-        SWorks.Logging.error(Ext.encode({resp: resp, params: opts.params}));
+
+        if(opts.loggingRequest !== true) {
+          SWorks.Logging.error(Ext.encode({resp: resp, params: opts.params}));
+        }
       }
     }
   },

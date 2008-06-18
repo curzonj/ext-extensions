@@ -1,0 +1,37 @@
+<!-- Standard Code -->
+
+<html><head>
+    
+<script type="text/javascript" src="../../ext/adapter/ext/ext-base.js"></script>
+<script type="text/javascript" src="../../ext/ext-all-debug.js"></script>
+<script type="text/javascript" src="../external/jsunit/app/jsUnitCore.js"></script>
+<script type="text/javascript" src="../external/jsmock.js"></script>
+<script type="text/javascript" src="helpers.js"></script>
+
+<!-- End Standard Code -->
+
+<script type="text/javascript" src="../error_handling.js"></script>
+<script type="text/javascript" src="../logging.js"></script>
+
+</head><body><script type="text/javascript">
+
+SWorks.Logging.init('/test');
+
+function testDoesntLoopOnError() {
+  var method = SWorks.Logging.log.createDelegate(SWorks.Logging);
+  SWorks.Logging.log = function() {
+    fail('Logging.log should never loop');
+  }
+
+  var mc = Ext.Ajax.expectsCall('request').
+    withArgs(TypeOf.isA(Object)).andStub(
+      function(opts) {
+        Ext.Ajax.fireEvent('requestexception', Ext.Ajax,
+          { status: 500 }, opts);
+      });
+
+  method();
+  mc.verify();
+}
+
+</script></body></html>
