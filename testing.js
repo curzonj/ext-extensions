@@ -104,17 +104,20 @@ SWorks.Testing = {
     assertWellBuiltCombo: function(combo) {
       if(Ext.isArray(combo)) {
         // Happens when you use Container.find()
-        combo = combo[0];
+        // which returns an array
+        for (var i=0; i<combo.length; i++) {
+          this.assertWellBuiltCombo(combo[i]);
+        }
+      } else {
+        combo.store.whenLoaded(this.asyncTest(function() {
+          console.assert(combo.store.data.getCount() > 0);
+
+          combo.store.each(function(record) {
+            var value = record.data[combo.displayField];
+            console.assert(typeof value == 'string' && value != '');
+          }, this);
+        }));
       }
-
-      combo.store.whenLoaded(this.asyncTest(function() {
-        console.assert(combo.store.data.getCount() > 0);
-
-        combo.store.each(function(record) {
-          var value = record.data[combo.displayField];
-          console.assert(typeof value == 'string' && value != '');
-        }, this);
-      }));
     },
 
     standardFormPanelTests: function(container) {
