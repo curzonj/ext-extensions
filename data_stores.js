@@ -54,7 +54,13 @@ Ext.override(Ext.data.Store, {
     this.applySort();
   },
   isLoaded: function() {
-    return (this.lastOptions !== null);
+    // check that a load has been requested and that no
+    // load is current in progress, otherwise, it might just
+    // have be requested and not come back yet.
+    // data.length > 0 isn't a valid check because there may
+    // actually not be any data for the store (like looking for
+    // people with the last name 'zzzzz')
+    return (this.lastOptions !== null && !this.proxy.activeRequest);
   },
   whenLoaded: function(fn, scope) {
     if (this.isLoaded()) {
