@@ -58,6 +58,8 @@ Ext.reg('filter', SWorks.FilterField);
 
 SWorks.FerretFilterField = Ext.extend(Ext.form.TextField, {
   afterRender: function(container) {
+    SWorks.FerretFilterField.superclass.afterRender.call(this, container);
+
     this.on('specialkey', this.testForEnterKey, this);
   },
   testForEnterKey: function(item, e) {

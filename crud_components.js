@@ -415,13 +415,6 @@ SWorks.SearchCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
     };
 
     tbArr.push(searchField);
-    tbArr.push({
-      text: '>',
-      gridOperation: true,
-      readOnly: true,
-      handler: searchFn,
-      scope: this
-    });
   },
   buildFilterList: function(menuArr) {
     if(this.customFilters) {
