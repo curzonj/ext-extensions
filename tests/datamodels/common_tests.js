@@ -21,7 +21,7 @@ function testSaveFormValid() {
   var dm = buildDataModel();
 
   var form  = mc.createMock(Ext.form.BasicForm);
-  form.record = { newRecord: false };
+  form.record = new dm.recordType({ name: 'bob' });
 
   dm.controller = mc.createMock(SWorks.AbstractController);
 
@@ -42,7 +42,7 @@ function testSaveFormWithParent() {
   var dm = buildDataModel();
 
   var form  = mc.createMock(Ext.form.BasicForm);
-  form.record = { newRecord: false };
+  form.record = new dm.recordType({ name: 'bob' });
 
   dm.controller = mc.createMock(SWorks.AbstractController);
   dm.controller.parentForm = mc.createMock(Ext.form.BasicForm);
