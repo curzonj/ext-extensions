@@ -1,0 +1,43 @@
+<!-- Standard Code -->
+
+<html><head>
+    
+<script type="text/javascript" src="../../../ext/adapter/ext/ext-base.js"></script>
+<script type="text/javascript" src="../../../ext/ext-all-debug.js"></script>
+<script type="text/javascript" src="../../external/jsunit/app/jsUnitCore.js"></script>
+<script type="text/javascript" src="../../external/jsmock.js"></script>
+<script type="text/javascript" src="../helpers.js"></script>
+
+<!-- End Standard Code -->
+
+<script type="text/javascript" src="../../filter_field.js"></script>
+
+</head><body><script type="text/javascript">
+
+function testKeyListeners() {
+  var a = new SWorks.FilterField({ searchDelay: false });
+  var expectation = a.expectsCall('applyGridFilter');
+
+  var ct = Ext.DomHelper.append(Ext.getBody(), { tag: 'div' });
+  a.render(ct);
+
+  var fireOnThis = Ext.getDom(a.el);
+  if( window.KeyEvent ) {
+    // For FF
+    var evObj = document.createEvent('KeyEvents');
+    evObj.initKeyEvent( 'keyup', true, true, window, false, false, false, false, 13, 0 );
+  } else {
+    // For other stuff, even though we don't use it
+    var evObj = document.createEvent('UIEvents');
+    evObj.initUIEvent( 'keyup', true, true, window, 1 );
+    evObj.keyCode = 13;
+  }
+
+  var mc = expectation.withArgs( TypeOf.isA(Object),
+                                 fireOnThis,
+                                 TypeOf.isA(Object));
+  fireOnThis.dispatchEvent(evObj);
+  mc.verify();
+}
+
+</script></body></html>

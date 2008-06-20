@@ -1,0 +1,66 @@
+<!-- Standard Code -->
+
+<html><head>
+    
+<script type="text/javascript" src="../../../ext/adapter/ext/ext-base.js"></script>
+<script type="text/javascript" src="../../../ext/ext-all-debug.js"></script>
+<script type="text/javascript" src="../../external/jsunit/app/jsUnitCore.js"></script>
+<script type="text/javascript" src="../../external/jsmock.js"></script>
+<script type="text/javascript" src="../helpers.js"></script>
+
+<!-- End Standard Code -->
+
+<script type="text/javascript" src="../../data_stores.js"></script>
+<script type="text/javascript" src="../../filter_field.js"></script>
+
+</head><body><script type="text/javascript">
+
+function testKeyListeners() {
+  var a = new SWorks.FerretFilterField();
+
+  var ct = Ext.DomHelper.append(Ext.getBody(), { tag: 'div' });
+  a.render(ct);
+
+  var mc = a.expectsCall('applyGridFilter').withArgs();
+  a.fireKey(new Ext.EventObjectImpl({ keyCode: Ext.EventObject.ENTER }));
+  mc.verify();
+}
+
+function testGridFilter() {
+  var a = new SWorks.FerretFilterField();
+  var mc = new MockControl();
+  var refKey = null;
+
+  var store = mc.createMock(SWorks.SearchStore.prototype);
+  a.store = store
+  a.setValue('bob');
+
+  store.expects().addFilter(TypeOf.isA(String), TypeOf.isA(String)).andStub(
+      function(key, filter) {
+        refKey = key;
+        assertEquals("+(bob)", filter);
+      });
+  store.expects().load();
+  a.applyGridFilter();
+  mc.verify();
+
+  // Make sure it uses the same filter key each time
+  store.expects().addFilter(refKey, TypeOf.isA(String)).andStub(
+      function(key, filter) {
+        assertEquals("+(bob)", filter);
+      });
+  store.expects().load();
+  a.applyGridFilter();
+  mc.verify();
+
+  // Make sure it ignores empty white space
+  a.setValue('  ');
+
+  // Make sure it will remove the same filter it put on
+  store.expects().removeFilter(refKey);
+  store.expects().load();
+  a.applyGridFilter();
+  mc.verify();
+}
+
+</script></body></html>

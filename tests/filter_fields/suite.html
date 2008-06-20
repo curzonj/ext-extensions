@@ -1,0 +1,19 @@
+<html><head>
+
+<script type="text/javascript" src="../../external/jsunit/app/jsUnitCore.js"></script>
+
+</head><body><script type="text/javascript">
+
+function suite() {
+    var newsuite = new top.jsUnitTestSuite();
+
+    // These urls are relative to the testRunner.html file, so you need
+    // to use the testRunner.html file from the same location as the
+    // jsUnitCore.js file above.
+    newsuite.addTestPage("../../tests/data_stores/filter_field.html");
+    newsuite.addTestPage("../../tests/data_stores/ferret_filter.html");
+
+    return newsuite;
+}
+
+</script></body></html>
