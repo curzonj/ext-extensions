@@ -1,5 +1,7 @@
 /*globals Ext */
 
+Ext.namespace('Ext.ux');
+
 Ext.ux.HistoryMgr = (function() {
   var PrivateClass = function() {
     // Be aware, you may get a change event with the
