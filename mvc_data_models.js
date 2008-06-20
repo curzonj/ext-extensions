@@ -209,7 +209,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     }
 
     // This way we know what we sent to the server
-    o.dataSentRecord = this.buildRecord({});
+    o.dataSentRecord = record.copy();
     form.updateRecord(o.dataSentRecord);
 
     form.submit(Ext.apply(o ,{

@@ -29,6 +29,7 @@ SWorks.ErrorHandling = {
       result =  Ext.decode(resp.responseText);
       if (typeof result === 'object' && result.success === false) {
         this.serverError(result);
+        this.logError(resp, opts);
       }
     } catch(e) {
       console.error("Failed to parse response ("+resp.tId+"): " + e.message);
@@ -59,11 +60,33 @@ SWorks.ErrorHandling = {
         }
       } else {
         this.serverError();
-
-        if(opts.loggingRequest !== true) {
-          SWorks.Logging.error(Ext.encode({resp: resp, params: opts.params}));
+        this.logError(resp, opts);
+      }
+    }
+  },
+  saveSerializedFormData: function(conn, options) {
+    if(options.form) {
+      options.serializedForm = Ext.lib.Ajax.serializeForm(options.form);
+    }
+  },
+  logError: function(response, options) {
+    if(options.loggingRequest !== true) {
+      var data = {
+        serverResponse: response,
+        clientRequest: {
+          url: options.url,
+          parameters: options.params,
+          formData: options.serializedForm
         }
       }
+
+      if (options.scope &&
+          options.scope.options &&
+          options.scope.options.dataSentRecord) {
+        data.clientRequest.dataRecord = options.scope.options.dataSentRecord;
+      }
+
+      SWorks.Logging.error(data);
     }
   },
   addData: function(list) {
@@ -75,6 +98,7 @@ SWorks.ErrorHandling = {
   onExtReady: function() {
     this.dataList = this.dataList || [];
 
+    Ext.Ajax.on('beforerequest', this.saveSerializedFormData, this);
     Ext.Ajax.on('requestcomplete', this.onAjaxRequestComplete, this);
     Ext.Ajax.on('requestexception', this.onAjaxRequestException, this);
   }

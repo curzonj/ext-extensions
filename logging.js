@@ -7,6 +7,10 @@ SWorks.Logging = {
     this.log_url = url;
   },
   log: function(msg, type) {
+    if (typeof msg == 'object') {
+      msg = Ext.encode(msg);
+    }
+
     Ext.Ajax.jsonRequest({
       loggingRequest: true,
       url: this.log_url,
