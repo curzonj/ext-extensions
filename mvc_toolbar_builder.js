@@ -190,7 +190,7 @@ SWorks.CrudToolbarMgr.prototype = {
         filterItems.push({
           checked: (v.isDefault === true),
           text: v.text,
-          checkedHandler: this.onCustomFilterChecked.createDelegate(this, [v], true)
+          checkHandler: this.onCustomFilterChecked.createDelegate(this, [v], true)
         });
 
         if (v.isDefault === true) {
