@@ -33,6 +33,10 @@ Ext.override(Ext.TabPanel, {
   }
 });
 
+Object.prototype.deferFn = function deferFn(method, millis, args, appendargs) {
+  this[method].defer(millis, this, args, appendargs);
+}
+
 // Required by data mirroring
 Ext.override(Ext.util.Observable, {
   resetEvents: function() {

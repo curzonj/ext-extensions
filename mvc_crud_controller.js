@@ -128,6 +128,10 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
   setDefaults: Ext.emptyFn,
 
   loadRecord: function(record) {
+    this.onLoadRecord(record);
+  },
+
+  onLoadRecord: function(record) {
     this.editor.loadRecord(record);
   },
 
@@ -263,11 +267,11 @@ SWorks.SearchGridController = Ext.extend(SWorks.GridController, {
 
   loadRecord: function(record) {
     if(record.newRecord) {
-      this.editor.loadRecord(record);
+      this.onLoadRecord(record);
     } else {
       this.dataModel.fetchRecord(record.id, {
         callback: function(fullRecord) {
-          this.editor.loadRecord(fullRecord);
+          this.onLoadRecord(fullRecord);
         },
         scope: this
       });

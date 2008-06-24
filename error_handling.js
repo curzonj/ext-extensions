@@ -17,7 +17,7 @@ SWorks.ErrorHandling = {
   },
   clientError: function(message) {
     message = typeof message == 'string' ? message :
-      "There was an internal error. Please report the issue and reload the application";
+      "There was an internal error. Please report the issue and reload the application.";
 
     console.trace();
     Ext.MessageBox.alert('Application Error', message);
