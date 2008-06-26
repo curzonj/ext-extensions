@@ -144,6 +144,19 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
       this.parent = pcomp.controller;
       this.parentForm = pcomp.form;
     }
+  },
+
+  ifConfirmRecord: function(phrase, fn, scope) {
+    var r = this.getCurrentRecord();
+    var name = r.data.text || 'this item';
+    var msg = String.format(phrase, name);
+
+    Ext.MessageBox.confirm('Confirm',
+      'Do you really want to '+msg+'?', function(btn) {
+        if (btn == 'yes') {
+          fn.call(scope, r);
+        }
+      }, this);
   }
 });
 

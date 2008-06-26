@@ -134,25 +134,14 @@ SWorks.CrudToolbarMgr.prototype = {
   },
 
   onClickDeleteBtn: function() {
-    var r = this.getCurrentRecord();
-    var name = r.data.text || 'this item';
-
-    Ext.MessageBox.confirm('Confirm', 'Do you really want to delete '+name+'?', function(btn) {
-      if (btn == 'yes') {
-        this.dataModel.deleteRecord(r);
-      }
+    this.ifConfirmRecord('delete {0}', function(r) {
+      this.dataModel.deleteRecord(r);
     }, this);
   },
-  // These two need to refactor the common code
 
   onClickHideBtn: function() {
-    var r = this.getCurrentRecord();
-    var name = r.data.text || 'this item';
-
-    Ext.MessageBox.confirm('Confirm', 'Do you really want to hide '+name+'?', function(btn) {
-      if (btn == 'yes') {
-        this.dataModel.hideRecord(r);
-      }
+    this.ifConfirmRecord('hide {0}', function(r) {
+      this.dataModel.hideRecord(r);
     }, this);
   },
   // End default behaviors

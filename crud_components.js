@@ -278,7 +278,7 @@ SWorks.CrudGridPanel = Ext.extend(Ext.grid.GridPanel, {
   },
   onClickHideBtn: function() {
     this.confirmMultipleRows(
-      "Do you really want to delete <b>all {0} selected items</b>?",
+      "Do you really want to hide <b>all {0} selected items</b>?",
       this.editor.hideRecord,
       this.editor);
   },
