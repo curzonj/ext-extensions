@@ -135,11 +135,6 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
     this.editor.loadRecord(record);
   },
 
-  onGridCellDblClick: function(grid, rowIndex, cellIndex, e) {
-    var r = this.component.store.getAt(rowIndex);
-    this.loadRecord(r);
-  },
-
   findParentComponent: function() {
     var pcomp = this.component.findParentBy(function(c) {
       return (typeof c.controller != 'undefined');
@@ -213,6 +208,11 @@ SWorks.GridController = Ext.extend(SWorks.AbstractController, {
     } else {
       comp.store.load();
     }
+  },
+
+  onGridCellDblClick: function(grid, rowIndex, cellIndex, e) {
+    var r = this.component.store.getAt(rowIndex);
+    this.loadRecord(r);
   },
 
   getCurrentRecord: function() {

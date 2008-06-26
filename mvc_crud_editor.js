@@ -63,10 +63,7 @@ SWorks.DialogEditor = Ext.extend(Ext.Window, {
   },
 
   onClickSave: function(trigger, e) {
-      //Only function as a button handler on buttons, this makes
-      //sure ENTER still works on other buttons and textareas
-      var list = [ 'button', 'textarea' ];
-      if(typeof trigger == 'object' || list.indexOf(e.target.type) == -1) {
+      if(this.isFormButtonTrigger(trigger, e)) {
         this.keyMap.disable();
         this.form.on('actioncomplete', function() {
           this.hide();
@@ -77,12 +74,19 @@ SWorks.DialogEditor = Ext.extend(Ext.Window, {
         this.controller.saveForm(this.form);
       }
   },
+
   onClickClose: function(trigger, e) {
-    //Only function as a button handler on buttons, this makes
-    //sure ENTER still works on other buttons
-    if(typeof trigger == 'object' || e.target.type != 'button') {
+    if(this.isFormButtonTrigger(trigger, e)) {
       this.hide();
     }
+  },
+
+  isFormButtonTrigger: function(trigger, e) {
+    //Only function as a button handler on buttons, this makes
+    //sure ENTER still works on other buttons and textareas
+    //
+    var list = [ 'button', 'textarea' ];
+    return (typeof trigger == 'object' || list.indexOf(e.target.type) == -1);
   }
 
 });
