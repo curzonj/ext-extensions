@@ -126,7 +126,10 @@ SWorks.CrudToolbarMgr.prototype = {
 
   onClickEditBtn: function() {
     var r = this.getCurrentRecord();
-    this.loadRecord(r);
+
+    if (r) {
+      this.loadRecord(r);
+    }
   },
 
   onClickRefreshBtn: function() {
