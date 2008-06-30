@@ -110,6 +110,10 @@ SWorks.Testing = {
         }
       } else {
         combo.store.whenLoaded(this.asyncTest(function() {
+          if (combo.valueField) {
+            // valueField only works with hiddenName
+            console.assert(typeof combo.hiddenName == 'string');
+          }
           console.assert(combo.store.data.getCount() > 0);
 
           combo.store.each(function(record) {
