@@ -113,12 +113,25 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
 
   initForm: Ext.emptyFn,
 
+  saveParentForm: function(cb, scope) {
+    this.parent.saveForm(this.parentForm, {
+      callback: cb,
+      scope: scope
+    });
+  },
+
   createRecord: function() {
-    if (this.parentForm && (
-          this.parentForm.record.newRecord || this.parentForm.isDirty())) {
-      this.parent.saveForm(this.parentForm, {
-        callback: this.createRecord.createDelegate(this, arguments)
-      });
+    if (this.parentForm && this.parentForm.record.newRecord) {
+      //This doesn't load it into the dataStore because that should
+      //reflect saved objects, this only exists in the form. The
+      //record will be added into the dataStore if it is saved.
+      
+      // We can't guarantee that the form won't be dirty after it is saved
+      // so we should only test for new records here. If you need special
+      // checks before editing child records, create a beforeload
+      // listener and do your checks there returning false if you need
+      // to save the parent first.
+      this.saveParentForm(this.createRecord.createDelegate(this, arguments));
     } else {
       var r = this.dataModel.newRecord.apply(this.dataModel, arguments);
 
