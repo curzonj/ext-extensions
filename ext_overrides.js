@@ -77,7 +77,7 @@ Ext.override(Ext.form.BasicForm, {
     for(var id in values) {
       if(typeof values[id] != 'function' && (field = this.findField(id))){
         if (field instanceof Ext.form.DateField) {
-          field.originalValue = field.parseDate(values[id]);
+          field.originalValue = field.parseDate(values[id]) || '';
         } else {
           field.originalValue = values[id];
         }

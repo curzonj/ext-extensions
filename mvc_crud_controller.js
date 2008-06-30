@@ -114,7 +114,8 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
   initForm: Ext.emptyFn,
 
   createRecord: function() {
-    if (this.parentForm && this.parentForm.isDirty()) {
+    if (this.parentForm && (
+          this.parentForm.record.newRecord || this.parentForm.isDirty())) {
       this.parent.saveForm(this.parentForm, {
         callback: this.createRecord.createDelegate(this, arguments)
       });
