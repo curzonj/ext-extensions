@@ -288,7 +288,6 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
         action.newBeforeSave = true;
       }
 
-      form.isDirty();
       this.checkServerChanges(form, action);
       this.updateRecord(record, action.result);
 
@@ -597,13 +596,26 @@ Ext.extend(SWorks.URLLoadingDataModel, SWorks.StoreDataModel, {
       this.store.reload();
     }
   },
+
   onLoadFromRecord: function(record) {
+    this.store.on('beforeload', this.setLoadParameters, this);
+
+    this.store.load();
+  },
+
+  setLoadParameters: function(store, options) {
+    var record = this.loadedFromRecord;
+
     if(!record || !record.data[this.parentKey]) {
-      this.store.removeAll();
+      // Loads an empty dataset and fires the load event
+      this.store.loadRecords({
+        records: [],
+        totalRecords: 0 }, options);
+      return false;
     } else if(this.store.constructor == SWorks.SearchStore) {
-      this.loadSearchStoreFromRecord(record);
+      return this.loadSearchStoreFromRecord(record);
     } else {
-      this.loadStandardStoreFromRecord(record);
+      return this.loadStandardStoreFromRecord(record);
     }
   },
 
@@ -619,10 +631,9 @@ Ext.extend(SWorks.URLLoadingDataModel, SWorks.StoreDataModel, {
     if(url) {
       // putting this in the options doesn't make it durable enough
       s.proxy.conn.url = String.format(url, r.data[this.parentKey], r.getKlass());
-
-      s.load();
     } else {
       console.error("This store doesn't have a url");
+      return false;
     }
   },
 
@@ -631,7 +642,6 @@ Ext.extend(SWorks.URLLoadingDataModel, SWorks.StoreDataModel, {
     if (this.foreignTypeKey) {
       this.store.addFilter('data_model_polymorphic', this.foreignTypeKey+':'+record.getKlass())
     }
-    this.store.load();
   }
 });
 
