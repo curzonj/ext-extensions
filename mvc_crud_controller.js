@@ -104,7 +104,9 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
       form.fields = index.map;
 
       for (var name in index.map) {
-        index.map[name].form = form;
+        if (typeof index.map[name] != 'function') {
+          index.map[name].form = form;
+        }
       }
 
       this.initForm(form, panel);
@@ -180,7 +182,7 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
 SWorks.LegacyController = function() {
   this.addEvents( 'beforeaction', 'actionfailed', 'actioncomplete',
                   'beforeload', 'load', 'delete', 'save');
-}
+};
 Ext.extend(SWorks.LegacyController, Ext.util.Observable, {
   init: function(comp) {
     this.component = comp;

@@ -35,7 +35,7 @@ Ext.override(Ext.TabPanel, {
 
 Object.prototype.deferFn = function deferFn(method, millis, args, appendargs) {
   this[method].defer(millis, this, args, appendargs);
-}
+};
 
 // Required by data mirroring
 Ext.override(Ext.util.Observable, {
@@ -43,7 +43,9 @@ Ext.override(Ext.util.Observable, {
     var e, es = this.events;
     this.events = {};
     for(e in es) {
-      this.events.e = true;
+      if (typeof es[e] != 'function') {
+        this.events[e] = true;
+      }
     }
   }
 });
@@ -83,6 +85,29 @@ Ext.override(Ext.form.BasicForm, {
         }
       }
     }
+  },
+  displayHiddenErrors : function(errors){
+    Ext.MessageBox.alert('Save failed',
+      'Bob died');
+    return;
+
+      /*if(Ext.isArray(errors)){
+          for(var i = 0, len = errors.length; i < len; i++){
+              var fieldError = errors[i];
+              var f = this.findField(fieldError.id);
+              if(f){
+                  f.markInvalid(fieldError.msg);
+              }
+          }
+      }else{
+          var field, id;
+          for(id in errors){
+              if(typeof errors[id] != 'function' && (field = this.findField(id))){
+                  field.markInvalid(errors[id]);
+              }
+          }
+      }
+      return this; */
   }
 });
 
@@ -146,12 +171,14 @@ Ext.override(Ext.tree.TreePanel, {
   },
   findNodeBy: function(fn, scope) {
     for (var id in this.nodeHash) {
-      var node = this.nodeHash[id];
-  
-      // It's up to the user to specify unique
-      // constraints
-      if(typeof node == 'object' && fn.call((scope || this),  node)) {
-        return node;
+      if (typeof this.nodeHash[id] != 'function') {
+        var node = this.nodeHash[id];
+    
+        // It's up to the user to specify unique
+        // constraints
+        if(typeof node == 'object' && fn.call((scope || this),  node)) {
+          return node;
+        }
       }
     }
   }
@@ -232,7 +259,7 @@ Ext.util.Format.dateRenderer = function(format){
       return "Invalid";
     }
   };
-}
+};
 
 Ext.override(Ext.data.Connection, {
   handleFailure : function(response, e){
@@ -267,7 +294,7 @@ Ext.lib.Ajax.serializeForm = function(form) {
                     for (var j = 0; j < el.options.length; j++) {
                         if (el.options[j].selected) {
                             if (Ext.isIE) {
-                                data += encodeURIComponent(name) + '=' + encodeURIComponent(el.options[j].attributes['value'].specified ? el.options[j].value : el.options[j].text) + '&';
+                                data += encodeURIComponent(name) + '=' + encodeURIComponent(el.options[j].attributes.value.specified ? el.options[j].value : el.options[j].text) + '&';
                             }
                             else {
                                 data += encodeURIComponent(name) + '=' + encodeURIComponent(el.options[j].hasAttribute('value') ? el.options[j].value : el.options[j].text) + '&';
@@ -293,7 +320,7 @@ Ext.lib.Ajax.serializeForm = function(form) {
 
                     break;
                 case 'submit':
-                    if(hasSubmit == false) {
+                    if(hasSubmit === false) {
                         data += encodeURIComponent(name) + '=' + encodeURIComponent(val) + '&';
                         hasSubmit = true;
                     }

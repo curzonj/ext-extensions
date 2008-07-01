@@ -391,13 +391,15 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
       record.json = result.data;
       record.beginEdit();
       for(var a in result.data) {
-        var value = result.data[a];
+        if (typeof result.data[a] != 'function') {
+          var value = result.data[a];
 
-        if(typeof value == 'object') {
-          //record.set only takes non-objects
-          record.data[a] = value;
-        } else {
-          record.set(a, value);
+          if(typeof value == 'object') {
+            //record.set only takes non-objects
+            record.data[a] = value;
+          } else {
+            record.set(a, value);
+          }
         }
       }
       record.endEdit();

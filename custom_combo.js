@@ -195,11 +195,11 @@ SWorks.CustomCombo = Ext.extend(Ext.form.ComboBox, {
     if (this.form && this.form.record) {
 
       var field = this.dataIndex.replace(this.valueField, this.displayField);
-      var idField = this.store.reader.meta.id
+      var idField = this.store.reader.meta.id;
       var data = this.form.record.json || this.form.record.data;
 
       if (data && data[field] && this.valueField == idField) {
-        var record = {}
+        var record = {};
         record[this.valueField] = v;
         record[this.displayField] = data[field];
         record = new this.store.recordType(record, v);
@@ -220,7 +220,7 @@ SWorks.CustomCombo = Ext.extend(Ext.form.ComboBox, {
     }
 
     SWorks.CustomCombo.superclass.setValue.call(this, v);
-  },
+  }
 
 });
 Ext.reg('customcombo', SWorks.CustomCombo);
@@ -270,7 +270,7 @@ SWorks.SearchCombo = Ext.extend(SWorks.CustomCombo, {
     this.store.load({
       add: true,
       params: {
-        q: this.valueField + ':' + v,
+        q: this.valueField + ':' + v
       },
       // syncValue doesn't get triggered on this
       // because of add:true.

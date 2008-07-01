@@ -2,7 +2,7 @@
 
 Ext.namespace('Ext.ux');
 
-Ext.ux.HistoryMgr = (function() {
+Ext.ux.HistoryMgr = function() {
   var PrivateClass = function() {
     // Be aware, you may get a change event with the
     // initial location in addition to the initial event
@@ -31,7 +31,7 @@ Ext.ux.HistoryMgr = (function() {
   });
 
   return new PrivateClass();
-})();
+}();
 
 dhtmlHistory.create({
   toJSON: function(o) {

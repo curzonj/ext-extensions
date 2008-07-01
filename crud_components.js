@@ -196,19 +196,21 @@ SWorks.CrudGridPanel = Ext.extend(Ext.grid.GridPanel, {
   buildFilterList: function(menuArr) {
     if(this.customFilters) {
       var cv = this.customFilters;
+      var handler = function(item, checked) {
+        if (checked) {
+          this.store.addFilter(item.filterFn);
+        } else {
+          this.store.removeFilter(item.filterFn);
+        }
+      };
+
       for(var i=0;i<cv.length;i++){
         var v = cv[i];
         var options = {
           checked: (v.isDefault === true),
           text: v.text,
           filterFn: v.filter,
-          checkHandler: function(item, checked) {
-            if (checked) {
-              this.store.addFilter(item.filterFn);
-            } else {
-              this.store.removeFilter(item.filterFn);
-            }
-          },
+          checkHandler: handler,
           scope: this
         };
         if(v.isDefault === true) {
@@ -419,6 +421,16 @@ SWorks.SearchCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
   buildFilterList: function(menuArr) {
     if(this.customFilters) {
       var cv = this.customFilters;
+      var handler = function(item, checked) {
+        if (checked) {
+          this.store.addFilter(item.text, (item.query || item.getQuery.call(this)));
+        } else {
+          this.store.removeFilter(item.text);
+        }
+
+        this.store.load();
+      };
+
       for(var i=0;i<cv.length;i++){
         var v = cv[i];
         var options = {
@@ -426,15 +438,7 @@ SWorks.SearchCrudGrid = Ext.extend(SWorks.CrudGridPanel, {
           text: v.text,
           query: v.query,
           getQuery: v.getQuery,
-          checkHandler: function(item, checked) {
-            if (checked) {
-              this.store.addFilter(item.text, (item.query || item.getQuery.call(this)));
-            } else {
-              this.store.removeFilter(item.text);
-            }
-
-            this.store.load();
-          },
+          checkHandler: handler,
           scope: this
         };
         if (v.isDefault === true) {

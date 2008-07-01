@@ -24,4 +24,4 @@ SWorks.Logging = {
   error: function(msg) {
     this.log(msg, 'error');
   }
-}
+};

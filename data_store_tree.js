@@ -45,26 +45,20 @@ Ext.ux.tree.DataStoreBacking.prototype = {
   onDataStoreAdd: function(store, records, index) {
     for(var i=0; i<records.length; i++) {
       var record = records[i];
-      for(var id in this.tree.nodeHash) {
-        var node = this.tree.nodeHash[id],
-            parentId = this.extractRecordId(node);
+      var node = this.findNodeByRecordId(record.data[this.parentIdField]);
 
-        if(record.data[this.parentIdField] == parentId) {
-          this.createChild(node, record);
-        }
+      if (node) {
+        this.createChild(node, record);
       }
     }
   },
   onDataStoreRemove: function(store, record, index) {
     var root = this.tree.getRootNode();
-    for(var id in this.tree.nodeHash) {
-      var node = this.tree.nodeHash[id],
-          recordId = this.extractRecordId(node);
+    var node = this.findNodeByRecordId(record.data[this.idField]);
 
-      if(record.data[this.idField] == recordId) {
-        node.remove();
-        node.destroy();
-      }
+    if (node) {
+      node.remove();
+      node.destroy();
     }
   },
   onDataStoreUpdate: function(store, record, op) {
@@ -76,19 +70,23 @@ Ext.ux.tree.DataStoreBacking.prototype = {
         this.reloadChildren(root);
       } else {
         // just update the local node
-        for(var id in this.tree.nodeHash) {
-          var node = this.tree.nodeHash[id],
-              recordId = this.extractRecordId(node);
-
-          if(record.data[this.idField] == recordId) {
-            this.updateNode(node, record);
-            return; // We found what we needed
-          }
+        var node = this.findNodeByRecordId(record.data[this.idField]);
+        if (node) {
+          this.updateNode(node, record);
+        } else {
+          // It hasn't been created yet
+          this.onDataStoreAdd(store, [record], null);
         }
-        // It hasn't been created yet
-        this.onDataStoreAdd(store, [record], null);
       }
     }
+  },
+  findNodeByRecordId: function(recordId) {
+    var resultNode = this.tree.findNodeBy(function(node) {
+       var parentId = this.extractRecordId(node);
+       return (recordId == parentId);
+    }, this);
+
+    return resultNode;
   },
   reloadChildren: function(node) {
     if(node.loading === true) {
@@ -188,7 +186,7 @@ Ext.ux.tree.DataStoreBacking.prototype = {
         Ext.applyIf(attr, this.baseAttrs);
     }
     if(typeof attr.uiProvider == 'string'){
-       attr.uiProvider = this.uiProviders[attr.uiProvider] || eval(attr.uiProvider);
+       attr.uiProvider = this.uiProviders[attr.uiProvider];
     }
 
     var child = new Ext.tree.TreeNode(attr);

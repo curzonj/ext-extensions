@@ -445,7 +445,7 @@ SWorks.CustomGroupingStore = function(config, custom) {
     }) : undefined,
     reader: new Ext.data.JsonReader(config, config.fields)
   }, config));
-}
+};
 Ext.extend(SWorks.CustomGroupingStore, Ext.data.GroupingStore);
 
 SWorks.CrudStore = function(config, custom) {

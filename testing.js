@@ -118,7 +118,7 @@ SWorks.Testing = {
 
           combo.store.each(function(record) {
             var value = record.data[combo.displayField];
-            console.assert(typeof value == 'string' && value != '');
+            console.assert(typeof value == 'string' && value !== '');
           }, this);
         }));
       }
@@ -172,7 +172,7 @@ SWorks.Testing = {
           SWorks.Testing.printError(err);
         }
       };
-    },
+    }
   }
 };
 

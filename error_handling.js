@@ -78,7 +78,7 @@ SWorks.ErrorHandling = {
           parameters: options.params,
           formData: options.serializedForm
         }
-      }
+      };
 
       if (options.scope &&
           options.scope.options &&

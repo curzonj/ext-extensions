@@ -35,7 +35,9 @@ function testInitForm() {
   assertEquals('doesnt rebuild index', firstIndex, form.fields);
 
   for (var name in form.fields) {
-    assertEquals('set field.form', form, form.fields[name].form);
+    if (typeof form.fields[name] != 'function') {
+      assertEquals('set field.form', form, form.fields[name].form);
+    }
   }
 
   assertEventRelay(form, controller, 'beforeaction');
