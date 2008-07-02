@@ -1,4 +1,5 @@
-/*globals Ext */
+/*globals Ext, console */
+/*jslint glovar: true, undef: true, browser: true */
 
 /* This code fixes a bug on Radios */
 Ext.override(Ext.form.BasicForm, {

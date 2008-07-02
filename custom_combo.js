@@ -1,4 +1,4 @@
-/*globals Ext, SWorks */
+/*globals Ext, SWorks, console */
 /*jslint glovar: true, undef: true, nomen: true */
 
 Ext.override(Ext.form.ComboBox, {
@@ -303,7 +303,7 @@ SWorks.SearchCombo = Ext.extend(SWorks.CustomCombo, {
     }
   },
 
-  applyQueryToStore: function(q) {
+  applyQueryToStore: function(q, forceAll) {
     if(this.mode == 'local'){
       // I guess a search store could be used in local mode,
       // I've never tried. No point in cutting the code out

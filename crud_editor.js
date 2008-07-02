@@ -1,5 +1,5 @@
-/*globals Ext, SWorks */
-/*jslint glovar: true, undef: true, nomen: true */
+/*globals Ext, SWorks, console */
+/*jslint glovar: true, undef: true, nomen: true, browser: true */
 
 Ext.namespace('SWorks');
 
@@ -474,13 +474,13 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
     var record = this.store.getById(id);
 
     if (record) {
-      Ext.Ajax.jsonRequest(Ext.apply(o, {
+      Ext.Ajax.jsonRequest({
         url: String.format(this.restUrl, id),
         callback: function(result, options) {
           this.updateRecord(record, result);
         },
         scope: this
-      }));
+      });
     }
   },
 

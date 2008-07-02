@@ -1,4 +1,5 @@
-/*globals SWorks, Ext, URLs */
+/*globals Ext, SWorks, console */
+/*jslint glovar: true, undef: true, nomen: true, browser: true */
 
 // This is a helper for registering listeners to load content from the
 // navigation menu. 

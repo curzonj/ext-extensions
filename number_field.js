@@ -1,4 +1,5 @@
-/*globals Ext */
+/*globals Ext, SWorks, console */
+/*jslint glovar: true, undef: true, nomen: true */
 
 // This allows you to override the parseValue function to allow
 // things like '12 ft' -> 144. 'baseChars' would need to be set 
@@ -59,7 +60,7 @@ Ext.override(Ext.form.NumberField, {
     this.el.on("keypress", keyPress, this);
   },
   parseValue: function(value) {
-    var con = self.conversions || Ext.form.NumberField.conversions;
+    var con = this.conversions || Ext.form.NumberField.conversions;
     var multi = 1;
     for(var i=0;i<con.length;i++) {
       var set = con[i];

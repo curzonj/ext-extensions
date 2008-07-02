@@ -1,4 +1,4 @@
-/*globals Ext, SWorks */
+/*globals Ext, SWorks, console */
 /*jslint glovar: true, undef: true, nomen: true */
 
 // To be included into classes and used there, not to be used

@@ -1,4 +1,5 @@
-/*globals Ext, CSRFKiller, SWorks */
+/*globals Ext, CSRFKiller, SWorks, console */
+/*jslint glovar: true, undef: true, browser: true */
 
 Ext.reg('propertygrid', Ext.grid.PropertyGrid);
 

@@ -1,4 +1,5 @@
-/*globals Ext, SWorks */
+/*globals Ext, SWorks, console */
+/*jslint glovar: true, undef: true, nomen: true */
 
 // Currently only used on nav tree, to be replaced by DataStoreBacking
 SWorks.DynamicTree = Ext.extend(Ext.tree.TreePanel, {

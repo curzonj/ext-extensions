@@ -1,4 +1,5 @@
-/*globals SWorks, Ext */
+/*globals Ext, SWorks, console */
+/*jslint glovar: true, undef: true, nomen: true */
 
 SWorks.download = function(url) {
   Ext.DomHelper.append(Ext.getBody(), {

@@ -1,4 +1,5 @@
-/*globals SWorks, Ext */
+/*globals Ext, SWorks, console */
+/*jslint glovar: true, undef: true, nomen: true */
 
 Ext.namespace('SWorks');
 

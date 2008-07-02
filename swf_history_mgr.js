@@ -1,4 +1,5 @@
-/*globals Ext */
+/*globals Ext, SWorks, console, SWFAddress SWFAddressEvent */
+/*jslint glovar: true, undef: true, nomen: true, browser: true */
 
 Ext.namespace('Ext.ux');
 

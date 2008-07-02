@@ -1,4 +1,5 @@
-/*globals Ext, SWorks, runtest */
+/*globals Ext, SWorks, runtest, console */
+/*jslint glovar: true, undef: true, nomen: true, browser: true */
 
 Ext.namespace('SWorks');
 
