@@ -1,4 +1,5 @@
 /*globals Ext */
+/*jslint glovar: true, undef: true, nomen: true */
 
 Ext.namespace('Ext.ux.tree');
 

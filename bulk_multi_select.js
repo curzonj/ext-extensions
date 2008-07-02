@@ -1,4 +1,5 @@
 /*globals Ext */
+/*jslint glovar: true, undef: true, nomen: true */
 
 Ext.ux.JsonTreeNode = function(config) {
   config = config || {};

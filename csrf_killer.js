@@ -1,4 +1,5 @@
 /*globals Ext, CSRFKiller */
+/*jslint glovar: true, undef: true, nomen: true */
 
 /*
  *   var CSRFKiller = {

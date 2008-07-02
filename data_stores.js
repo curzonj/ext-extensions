@@ -1,4 +1,5 @@
-/*globals Ext, SWorks, ds */
+/*globals Ext, SWorks */
+/*jslint glovar: true, undef: true, nomen: true */
 
 Ext.namespace('Ext.ux.data', 'SWorks');
 
@@ -423,8 +424,6 @@ Ext.ux.data.PersistentFilters.overrides = {
     }
   }
 };
-
-ds = Ext.StoreMgr;
 
 SWorks.CustomGroupingStore = function(config, custom) {
   // Because we need to hack the constructor a little

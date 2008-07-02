@@ -258,7 +258,6 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
 
     form.items.each(function(f) {
       var key = (f.dataIndex || f.name);
-      form.fields[key];
 
       if (typeof r.data[key] != 'undefined' &&
             r.data[key] != d[key]) {
@@ -301,13 +300,27 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     form.submitLock = false;
   },
   formFailure: function(form, action) {
-    if (action.failureType != 'server' && action.failureType != 'client') {
-      SWorks.ErrorHandling.serverError(action.result);
-    } else if (action.failureType == 'server' && action.result.errors.base) {
-      Ext.MessageBox.alert('Save failed', action.result.errors.base);
-    } else if (action.options.waitMsg !== false) {
-      Ext.MessageBox.alert('Save failed',
-        'Please fix all the boxes highlighted in red.');
+    var res = action.result;
+
+    if (action.failureType != 'server' &&
+        action.failureType != 'client'     ) {
+      SWorks.ErrorHandling.serverError(res);
+    } else {
+      var displayed = false;
+
+      if (action.failureType == 'server') {
+        if (res.errors.base) {
+          Ext.MessageBox.alert('Save failed', res.errors.base);
+          displayed = true;
+        } else if (action.form.displayHiddenErrors(res.errors)) {
+          displayed = true;
+        }
+      }
+
+      if (!displayed && action.options.waitMsg !== false) {
+        Ext.MessageBox.alert('Save failed',
+          'Please fix all the boxes highlighted in red.');
+      }
     }
 
     // Ext will display our validation errors from JsonController.
@@ -638,9 +651,9 @@ Ext.extend(SWorks.URLLoadingDataModel, SWorks.StoreDataModel, {
   },
 
   loadSearchStoreFromRecord: function(record) {
-    this.store.addFilter('data_model_fk', this.foreignKey+':'+record.data[this.parentKey])
+    this.store.addFilter('data_model_fk', this.foreignKey+':'+record.data[this.parentKey]);
     if (this.foreignTypeKey) {
-      this.store.addFilter('data_model_polymorphic', this.foreignTypeKey+':'+record.getKlass())
+      this.store.addFilter('data_model_polymorphic', this.foreignTypeKey+':'+record.getKlass());
     }
   }
 });
@@ -650,7 +663,7 @@ SWorks.FerretSearchDataModel = function(overrides) {
 
   this.store.baseParams = this.store.baseParams || {};
   this.store.baseParams.limit = this.pageSize;
-}
+};
 Ext.extend(SWorks.FerretSearchDataModel, SWorks.StoreDataModel, {
   updateRecord: function(record, result) {
     // We don't want the normal StoreDataModel behavior, which is to add the

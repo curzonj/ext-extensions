@@ -1,4 +1,5 @@
-/*globals SWorks, Ext */
+/*globals Ext, SWorks */
+/*jslint glovar: true, undef: true, nomen: true */
 
 Ext.override(Ext.grid.GridView, {
   // By default it scrolls to the top
