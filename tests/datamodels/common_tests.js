@@ -248,3 +248,53 @@ function testPostToRecordCallback() {
   data_model.postToRecord(id, opts);
   mc.verify();
 }
+
+function testFormFailure() {
+  var data_model = buildDataModel();
+  var form = new Ext.form.BasicForm();
+  var action = new Ext.form.Action.Submit(form, {});
+  action.result = 'bob'
+
+  // test misterious errors
+  SWorks.ErrorHandling.expectsCall('serverError', mc).withArgs('bob');
+  data_model.formFailure(form, action);
+  mc.verify();
+
+  bobIsDead = 'bob is dead';
+  action.failureType = 'server';
+  action.result = {
+    success: true,
+    errors: {
+      bob: bobIsDead
+    }
+  };
+
+  // Test unreported errors
+  Ext.MessageBox.expects().alert('Save failed', TypeOf.isA(String)).andStub(
+      function(title, msg) {
+        assertNotEquals('bob included', -1, msg.indexOf(bobIsDead));
+      });
+  data_model.formFailure(form, action);
+  mc.verify();
+
+  // Test form field errors
+  form.add(new Ext.form.Field({ dataIndex: 'bob' }));
+  Ext.MessageBox.expects().alert('Save failed',
+          'Please fix all the boxes highlighted in red.');
+  data_model.formFailure(form, action);
+  mc.verify();
+
+  // Test base errors
+  action.result = {
+    success: true,
+    errors: {
+      base: bobIsDead
+    }
+  };
+  Ext.MessageBox.expects().alert('Save failed', TypeOf.isA(String)).andStub(
+      function(title, msg) {
+        assertNotEquals('base included', -1, msg.indexOf(bobIsDead));
+      });
+  data_model.formFailure(form, action);
+  mc.verify();
+}

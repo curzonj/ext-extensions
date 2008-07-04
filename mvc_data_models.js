@@ -310,10 +310,11 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       var displayed = false;
 
       if (action.failureType == 'server') {
-        if (res.errors.base) {
-          Ext.MessageBox.alert('Save failed', res.errors.base);
-          displayed = true;
-        } else if (action.form.displayHiddenErrors(res.errors)) {
+        var messages = action.form.extractUnreportedErrors(res.errors);
+
+        if (messages.length > 0) {
+          messages.push('If the issues persists, please report it.');
+          Ext.MessageBox.alert('Save failed', messages.join(', '));
           displayed = true;
         }
       }

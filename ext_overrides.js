@@ -87,28 +87,26 @@ Ext.override(Ext.form.BasicForm, {
       }
     }
   },
-  displayHiddenErrors : function(errors){
-    Ext.MessageBox.alert('Save failed',
-      'Bob died');
-    return;
+  extractUnreportedErrors: function(errors){
+    var messages = []
 
-      /*if(Ext.isArray(errors)){
-          for(var i = 0, len = errors.length; i < len; i++){
-              var fieldError = errors[i];
-              var f = this.findField(fieldError.id);
-              if(f){
-                  f.markInvalid(fieldError.msg);
-              }
-          }
-      }else{
-          var field, id;
-          for(id in errors){
-              if(typeof errors[id] != 'function' && (field = this.findField(id))){
-                  field.markInvalid(errors[id]);
-              }
-          }
+    if(Ext.isArray(errors)){
+      for(var i = 0, len = errors.length; i < len; i++){
+        var fieldError = errors[i];
+        var f = this.findField(fieldError.id);
+        if(!f){
+          messages.push(fieldError.msg);
+        }
       }
-      return this; */
+    }else{
+      for(var id in errors){
+        if(typeof errors[id] != 'function' && !this.findField(id)){
+          messages.push(errors[id]);
+        }
+      }
+    }
+
+    return messages;
   }
 });
 

@@ -25,4 +25,28 @@ function testDateRenderer() {
   assertEquals('valid date', 'Sat May 2 08', value);
 }
 
+function testExtractUnreportedErrors() {
+  var mc = new MockControl();
+  window.origMsgBox = Ext.MessageBox;
+  Ext.MessageBox = mc.createMock(Ext.MessageBox);
+  var form = new Ext.form.BasicForm();
+  form.add(new Ext.form.Field({
+    dataIndex: 'bob'
+  }));
+
+  fredSucks = 'fred sucks';
+  bobSucks = 'bob sucks';
+  var values = form.extractUnreportedErrors({
+    bob: bobSucks,
+    fred: fredSucks
+  });
+  assertNotEquals('fred included', -1, values.indexOf(fredSucks));
+  assertEquals('bob not included', -1, values.indexOf(bobSucks));
+  mc.verify();
+
+  values = form.extractUnreportedErrors({});
+  assertEquals('no errors returns empty', 0, values.length);
+  mc.verify();
+}
+
 </script></body></html>
