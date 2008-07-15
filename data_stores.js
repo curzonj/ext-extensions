@@ -532,6 +532,11 @@ Ext.extend(SWorks.SearchStore, SWorks.CustomGroupingStore, {
   groupField: false,
 
   addFilter: function(name, query) {
+    if (!query) {
+      query = name;
+      name = Ext.id();
+    }
+
     this.querySet[name] = query;
 
     // This is to make it easy to use inline

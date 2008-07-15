@@ -99,7 +99,7 @@ Ext.extend(SWorks.AbstractController, Ext.util.Observable, {
 
       var index = new Ext.ux.data.CollectionIndex(form.items, 'dataIndex',
         function(o) {
-          return o.dataIndex;
+          return o.dataIndex || o.name;
         }
       );
       form.fields = index.map;
@@ -260,7 +260,11 @@ SWorks.GridController = Ext.extend(SWorks.AbstractController, {
   }
 });
 
-
+/*
+ * You need a foreignKey set on your component for this
+ * to work. Special cases exist, but that is how it generally
+ * works.
+ */
 SWorks.URLLoadingController = Ext.extend(SWorks.GridController, {
   buildDataModel: function(comp) {
     return new SWorks.URLLoadingDataModel({

@@ -45,6 +45,8 @@ SWorks.DialogEditor = Ext.extend(Ext.Window, {
       this.render(Ext.getBody());
     }
 
+    // This can't be done in afterRender because the form won't have
+    // been rendered yet, just the window
     this.controller.initFormIdempotent(this.form, this);
 
     if(this.controller.dataModel.loadForm(this.form, record)) {

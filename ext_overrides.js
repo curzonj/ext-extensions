@@ -100,8 +100,13 @@ Ext.override(Ext.form.BasicForm, {
       }
     }else{
       for(var id in errors){
-        if(typeof errors[id] != 'function' && !this.findField(id)){
-          messages.push(errors[id]);
+        var field = null;
+        if(typeof errors[id] != 'function') {
+          field = this.findField(id);
+
+          if (!field || field.constructor == Ext.form.Hidden) {
+            messages.push(errors[id]);
+          }
         }
       }
     }
