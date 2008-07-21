@@ -31,6 +31,14 @@ Ext.form.VTypes.zipCodeText = "Zip code is invalid";
 Ext.form.VTypes.zipCodeMask = /[1234567890\-]/;
 Ext.form.VTypes.zipCode = SWorks.getVtypeRegexFn(/^\d{5}(?:-\d{4})?$/);
 
+Ext.util.Format.mysqlDateRenderer = function(fmt){  
+  var raw = Ext.util.Format.dateRenderer(fmt);
+
+  return function(value) {
+    dv = Date.parseDate(value, 'Y-m-d')
+    return raw(dv);
+  };
+};
 Ext.util.Format.yesNo = function(value){  
   return value ? "Yes" :  "No";
 };

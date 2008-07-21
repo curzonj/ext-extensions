@@ -114,7 +114,11 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     if(!o.url && o.record) {
       o = this.setUpdateOrCreate(o.record, o);
     } else {
-      o.url = o.url || String.format(this.restUrl, rid);
+      if(rid) {
+        o.url = o.url || String.format(this.restUrl, rid);
+      } else {
+        o.url = this.createUrl;
+      }
     }
 
     o.cb = {
@@ -157,7 +161,21 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
         options.cb.fn.call(options.cb.scope || this, false, record, result);
       }
 
-      SWorks.ErrorHandling.serverError(result);
+      var err = result.errors, messages = [];
+      if (err) {
+        for (var msg in err) {
+          if (typeof err[msg] == 'string') {
+            messages.push(result.errors[msg]);
+          }
+        }
+      }
+
+      if (messages.length > 0) {
+        messages.push('If the issues persists, please report it.');
+        Ext.MessageBox.alert('Save failed', messages.join(', '));
+      } else {
+        SWorks.ErrorHandling.serverError(result);
+      }
     }
   },
 
