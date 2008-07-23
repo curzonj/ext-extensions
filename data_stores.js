@@ -224,11 +224,7 @@ Ext.ux.data.ReloadingStore = function(store) {
   store.mirror_without_reloading = store.mirror;
   Ext.apply(store, Ext.ux.data.ReloadingStore.overrides);
 
-  store.on('beforeload', function() {
-    if(!this.refreshTask && !(this.mirrorSource && this.mirrorSource.refreshTask)) {
-      this.createRefreshTask(this.refreshPeriod);
-    }
-  }, store);
+  store.on('beforeload', store.checkReloadingHooks, store);
 };
 Ext.ux.data.ReloadingStore.scheduleReload = function(store) {
   // This causes the periodic reloads to not hammer the CPU so hard with UI refreshes
@@ -271,6 +267,11 @@ Ext.ux.data.ReloadingStore.overrides = {
       this.load();
     }
   },
+  checkReloadingHooks: function() {
+    if(!this.refreshTask && !(this.mirrorSource && this.mirrorSource.refreshTask)) {
+      this.createRefreshTask(this.refreshPeriod);
+    }
+  },
   mirror: function(source) {
     this.mirror_without_reloading(source);
     this.createRefreshTask = source.createRefreshTask.createDelegate(source);
@@ -294,8 +295,8 @@ Ext.ux.data.ReloadingStore.overrides = {
     this.refreshTask = new Ext.util.DelayedTask();
 
     this.on('beforeload',function() {
+      // Someone might remove it so check first
       if(this.refreshTask) {
-        // Someone might remove it
         this.refreshTask.delay(refreshRate);
       }
     }, this);

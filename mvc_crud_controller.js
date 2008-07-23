@@ -266,6 +266,10 @@ SWorks.GridController = Ext.extend(SWorks.AbstractController, {
  * works.
  */
 SWorks.URLLoadingController = Ext.extend(SWorks.GridController, {
+  init: function(comp) {
+    SWorks.URLLoadingController.superclass.init.apply(this, arguments);
+    comp.loadMask = true;
+  },
   buildDataModel: function(comp) {
     return new SWorks.URLLoadingDataModel({
       controller: this,
@@ -316,4 +320,84 @@ SWorks.SearchGridController = Ext.extend(SWorks.GridController, {
 
 });
 
+SWorks.InlineEditorController = Ext.extend(SWorks.AbstractController, {
 
+  init: function(comp) {
+    SWorks.InlineEditorController.superclass.init.apply(this, arguments);
+    comp.loadMask = true;
+  },
+
+  buildDataModel: function(comp) {
+    return new SWorks.InlineEditorDataModel({
+      controller: this,
+      store: comp.store,
+      foreignKey: comp.foreignKey
+    });
+  },
+
+  onRender: function(comp) {
+    SWorks.InlineEditorController.superclass.onRender.call(this, comp);
+
+    if(this.parent) {
+      this.parentForm.on('actioncomplete', this.onParentSave, this);
+      this.dataModel.linkToParent(this.parent, this.parentForm);
+    } else {
+      comp.store.load();
+    }
+  },
+
+  onParentSave: function(form, action) {
+    var records = this.dataModel.store.getModifiedRecords();
+    var parentKeys = this.dataModel.getParentKeys();
+    if (records.length > 0) {
+      this.component.stopEditing();
+      var barrier = new SWorks.Barrier({
+        callback: function(done, data) {
+          if (done) {
+          console.dir(data);
+          Ext.MessageBox.updateProgress(1);
+          Ext.MessageBox.hide();
+          }
+
+          /* if(!done) {
+            Ext.MessageBox.alert('Save Failed', 'The server took too long, reloading the data.');
+            this.dataModel.reload();
+          } */
+        },
+        scope: this
+      });
+      Ext.MessageBox.wait("Updating grid records...");
+
+      for (var i=0;i<records.length;i++) {
+        var record = records[i];
+        Ext.apply(record.data, parentKeys);
+
+        var cond = barrier.createCondition();
+        this.dataModel.saveRecord({
+          saveId: Math.random(),
+          waitMsg: false,
+          record: record,
+          callback: cond.complete
+        });
+      }
+    }
+  },
+
+  getCurrentRecord: function() {
+    var sm = this.component.getSelectionModel();
+    var sel = sm.selection;
+
+    if (sel) {
+      return sel.record;
+    }
+  },
+
+  loadRecord: function(r) {
+    if (!r.store) {
+      this.component.stopEditing();
+      this.dataModel.store.insert(0, r);
+      this.component.startEditing(0, 0);
+    }
+  }
+
+});

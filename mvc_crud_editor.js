@@ -38,6 +38,12 @@ SWorks.DialogEditor = Ext.extend(Ext.Window, {
     this.formPanel.border = false;
     this.formPanel.bodyStyle = "padding:10px";
     this.form = this.formPanel.form;
+
+    this.on('hide', this.onHideDialog, this);
+
+    if (this.autoClose !== false) {
+      this.form.on('actioncomplete', this.closeOnSaveHandler, this);
+    }
   },
 
   loadRecord: function(record) {
@@ -52,7 +58,7 @@ SWorks.DialogEditor = Ext.extend(Ext.Window, {
     if(this.controller.dataModel.loadForm(this.form, record)) {
       var saveBtn = this.buttons[0];
 
-      if( this.controller.isReadOnly(record) === true ) {
+      if( this.controller.isReadOnly(this.form) === true ) {
         this.formPanel.el.addClass('read-only');
         saveBtn.disable();
       } else {
@@ -65,17 +71,22 @@ SWorks.DialogEditor = Ext.extend(Ext.Window, {
     return this.form;
   },
 
+  onHideDialog: function() {
+    this.keyMap.disable();
+  },
+
   onClickSave: function(trigger, e) {
-      if(this.isFormButtonTrigger(trigger, e)) {
-        this.keyMap.disable();
-        this.form.on('actioncomplete', function() {
-          this.hide();
-        }, this, {single: true});
-        this.form.on('actionfailed', function() {
-          this.keyMap.enable();
-        }, this, {single: true});
-        this.controller.saveForm(this.form);
-      }
+    if(this.isFormButtonTrigger(trigger, e)) {
+      this.controller.saveForm(this.form, {
+        saveButton: true
+      });
+    }
+  },
+
+  closeOnSaveHandler: function(form, action) {
+    if (action.options.saveButton == true) {
+      this.hide();
+    }
   },
 
   onClickClose: function(trigger, e) {

@@ -4,17 +4,17 @@
 Ext.namespace('SWorks');
 
 SWorks.ErrorHandling = {
-  serverError: function(result) {
+  serverError: function(response, result) {
     console.trace();
-    if(typeof result !== 'object' || result.serverErrorDispatched !== true) {
+    if(typeof response !== 'object' || response.serverErrorDispatched !== true) {
       var msg = (typeof result === 'object' &&
                  typeof result.message == 'string' ? result.message : null ) || 
                   "The server had a problem. Please report the issue.";
 
       Ext.MessageBox.alert('Error', msg);
 
-      if (typeof result == 'object') {
-        result.serverErrorDispatched = true;
+      if (typeof response == 'object') {
+        response.serverErrorDispatched = true;
       }
     }
   },
@@ -31,7 +31,7 @@ SWorks.ErrorHandling = {
     try {
       result =  Ext.decode(resp.responseText);
       if (typeof result === 'object' && result.success === false) {
-        this.serverError(result);
+        this.serverError(resp, result);
         this.logError(resp, opts);
       }
     } catch(e) {
@@ -62,7 +62,7 @@ SWorks.ErrorHandling = {
               "The server was too slow. The request may or may not have completed.");
         }
       } else {
-        this.serverError();
+        this.serverError(resp);
         this.logError(resp, opts);
       }
     }
@@ -123,10 +123,10 @@ Ext.override(Ext.data.Connection, {
 
           options.jsonCallback.callback.call(
             options.jsonCallback.scope,
-            result, options);
+            result, options, response);
         }
       } else {
-        SWorks.ErrorHandling.serverError();
+        SWorks.ErrorHandling.serverError(response);
       }
     }
   },

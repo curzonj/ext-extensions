@@ -107,6 +107,11 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       console.error("rid argument to postToRecord should be numeric: "+rid);
     }
 
+    if (this.controller.isReadOnly()) {
+      SWorks.Messages.alert('readonly');
+      return;
+    }
+
     if(o.waitMsg !== false) {
       Ext.MessageBox.wait(o.waitMsg || "Updating Record...");
     }
@@ -131,7 +136,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       scope: this
     }));
   },
-  postToRecordCallback: function(result, options) {
+  postToRecordCallback: function(result, options, response) {
     if(options.waitMsg !== false) {
       Ext.MessageBox.updateProgress(1);
       Ext.MessageBox.hide();
@@ -141,7 +146,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     if (result.success) {
       if(record) {
         if(record.store) {
-          var reloaded_record = record.store.getById(record.id);
+          var reloaded_record = record.store.getById(result.objectid);
           if (reloaded_record) {
             record = reloaded_record;
           }
@@ -174,7 +179,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
         messages.push('If the issues persists, please report it.');
         Ext.MessageBox.alert('Save failed', messages.join(', '));
       } else {
-        SWorks.ErrorHandling.serverError(result);
+        SWorks.ErrorHandling.serverError(response, result);
       }
     }
   },
@@ -186,7 +191,10 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
   saveForm: function(form, o){
     o = o || {};
 
-    // TODO, add readOnly safety check
+    if (this.controller.isReadOnly(form)) {
+      SWorks.Messages.alert('readonly');
+      return;
+    }
 
     // Did they already submit?
     if (form.submitLock) {
@@ -246,21 +254,29 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       }
     }
   },
-  getParentRelation: function(form) {
+  getParentKeys: function() {
     var values = {};
 
-    if (this.controller && this.controller.parentForm) {
+    if (this.foreignKey && this.controller && this.controller.parentForm) {
       var parentRecord = this.controller.parentForm.record;
 
-      var idField = String.format(this.parameterTemplate, this.foreignKey);
-      values[idField] = parentRecord.id;
+      values[this.foreignKey] = parentRecord.id;
 
       var typeColumn = this.foreignKey.replace(/id/, "type");
       if (this.recordType.prototype.fields.keys.indexOf(typeColumn) != -1) {
-        var typeField = String.format(this.parameterTemplate, typeColumn);
-
-        values[typeField] = parentRecord.getKlass();
+        values[typeColumn] = parentRecord.getKlass();
       }
+    }
+
+    return values;
+  },
+  getParentRelation: function(form) {
+    var values = {};
+
+    var set = this.getParentKeys();
+    for(var field in set) {
+      var railsField = String.format(this.parameterTemplate, field);
+      values[railsField] = set[field];
     }
 
     return values;
@@ -323,7 +339,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
 
     if (action.failureType != 'server' &&
         action.failureType != 'client'     ) {
-      SWorks.ErrorHandling.serverError(res);
+      SWorks.ErrorHandling.serverError(action.response, res);
     } else {
       var displayed = false;
 
@@ -415,7 +431,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       SWorks.ErrorHandling.clientError();
     }
   },
-  onFetchRecordResponse: function(result, options) {
+  onFetchRecordResponse: function(result, options, response) {
     Ext.MessageBox.updateProgress(1);
     Ext.MessageBox.hide();
 
@@ -423,7 +439,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       var record = this.buildRecord(result.data, result.objectid);
       options.cb.fn.call(options.cb.scope || this, record);
     } else {
-      SWorks.ErrorHandling.serverError(result);
+      SWorks.ErrorHandling.serverError(response, result);
     }
   },
 
@@ -433,7 +449,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
    */
   newRecord: function(data, initRecord) {
     var record = this.buildRecord(data || {});
-    record.id = 'new';
+    record.id = Math.random();
     record.newRecord = true;
 
     if(initRecord !== false) {
@@ -459,6 +475,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       value: true
     });
   },
+
   deleteRecord: function(record, cb, scope){
     this.deleteRecordById(record.id, cb, scope);
   },
@@ -466,6 +483,11 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
     // TODO add a retry mechanism, use the spinner. The reason
     // the msgBox doesn't work is because this method is called
     // seperately for each record to delete
+    if (this.controller.isReadOnly()) {
+      SWorks.Messages.alert('readonly');
+      return;
+    }
+
     if(this.restUrl) {
       Ext.Ajax.jsonRequest({
         cb: {
@@ -480,7 +502,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       });
     }
   },
-  onDeleteById: function(result, options) {
+  onDeleteById: function(result, options, response) {
     var id = options.deleting_id;
 
     if (result.success) {
@@ -489,7 +511,7 @@ Ext.extend(SWorks.DataModel, Ext.util.Observable, {
       }
       this.fireEvent('delete', id);
     } else {
-      SWorks.ErrorHandling.serverError(result);
+      SWorks.ErrorHandling.serverError(response, result);
     }
   },
 
@@ -719,5 +741,30 @@ Ext.extend(SWorks.FerretSearchDataModel, SWorks.StoreDataModel, {
     }
 
     this.store.load();
+  }
+});
+
+SWorks.InlineEditorDataModel = function(overrides) {
+  SWorks.InlineEditorDataModel.superclass.constructor.apply(this, arguments);
+
+  // Disable reloading
+  this.store.refreshPeriod = 0;
+  this.store.cancelRefreshTask();
+}
+Ext.extend(SWorks.InlineEditorDataModel, SWorks.URLLoadingDataModel, {
+  updateRecord: function(record, result) {
+    SWorks.InlineEditorDataModel.superclass.updateRecord.apply(this, arguments);
+
+    // When we inline edit, we have to insert the record before
+    // it has it's permenant id. So when we save it we have to
+    // remove it and put it back it with it's correct id because
+    // the store can't deal with records whose id changes.
+    if (record.newBeforeSave) {
+      var found = this.store.getById(record.id);
+      if (!found) {
+        this.store.remove(record);
+        this.store.addSorted(record);
+      }
+    }
   }
 });

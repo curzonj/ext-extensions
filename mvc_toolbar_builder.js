@@ -139,13 +139,21 @@ SWorks.CrudToolbarMgr.prototype = {
 
   onClickDeleteBtn: function() {
     this.ifConfirmRecord('delete {0}', function(r) {
-      this.dataModel.deleteRecord(r);
+      if (r.id) {
+        this.dataModel.deleteRecord(r);
+      } else {
+        r.store.remove(r);
+      }
     }, this);
   },
 
   onClickHideBtn: function() {
     this.ifConfirmRecord('hide {0}', function(r) {
-      this.dataModel.hideRecord(r);
+      if (r.id) {
+        this.dataModel.deleteRecord(r);
+      } else {
+        r.store.remove(r);
+      }
     }, this);
   },
   // End default behaviors

@@ -189,7 +189,7 @@ SWorks.AccountMenu = Ext.extend(Ext.Panel, {
               SWorks.CurrentUser.fireEvent("loggedIn");
             },
             failure: function(form, action) {
-              SWorks.ErrorHandling.serverError(action.result);
+              SWorks.ErrorHandling.serverError(action.response, action.result);
               // TODO the field focus isn't working
               win.submitLock = false;
               win.keyMap.enable();

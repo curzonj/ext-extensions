@@ -24,13 +24,18 @@ SWorks.Barrier = function(opts) {
 
   this.addEvents('complete', 'expired');
   this.eventData = [];
-  this.expectedEvents = this.waitsFor.length;
 
-  for(var i=0;i<this.waitsFor.length;i++) {
-    var item = this.waitsFor[i];
-    item.self = this;
+  if (this.waitsFor) {
+    this.expectedEvents = this.waitsFor.length;
+    for(var i=0;i<this.waitsFor.length;i++) {
+      var item = this.waitsFor[i];
+      item.self = this;
 
-    item.sender.on(item.event, this.eventReceiver, item, {single:true});
+      item.sender.on(item.event, this.eventReceiver, item, {single:true});
+    }
+  } else {
+    // Use createCondition
+    this.expectedEvents = 0;
   }
 
   setTimeout(this.onBarrierExpired.createDelegate(this), this.timeout);
@@ -54,17 +59,23 @@ Ext.extend(SWorks.Barrier, Ext.util.Observable, {
   },
   checkBarrier: function() {
     if (this.eventData.length == this.expectedEvents) {
-      this.callback.call(this.scope || this, this, this.eventData);
+      this.complete = true;
+      this.callback.call(this.scope || this, true, this.eventData);
       this.fireEvent('complete', this, this.eventData);
     }
   },
   onBarrierExpired: function() {
-    for(var i=0;i<this.waitsFor.length;i++) {
-      var item = this.waitsFor[i];
-      item.sender.un(item.event, this.eventReceiver, item);
-    }
+    if(!this.complete) {
+      if (this.waitsFor) {
+        for(var i=0;i<this.waitsFor.length;i++) {
+          var item = this.waitsFor[i];
+          item.sender.un(item.event, this.eventReceiver, item);
+        }
+      }
 
-    this.fireEvent('expired', this);
+      this.callback.call(this.scope || this, false, this.eventData);
+      this.fireEvent('expired', this);
+    }
   },
   createCondition: function() {
     var self = this;

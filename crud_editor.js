@@ -211,7 +211,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
       scope: this
     }));
   },
-  postToRecordCallback: function(result, options) {
+  postToRecordCallback: function(result, options, response) {
     if(options.waitMsg !== false) {
       Ext.MessageBox.updateProgress(1);
       Ext.MessageBox.hide();
@@ -241,7 +241,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
         options.cb.fn.call(options.cb.scope || this, false, record, result);
       }
 
-      SWorks.ErrorHandling.serverError(result);
+      SWorks.ErrorHandling.serverError(response, result);
     }
   },
 
@@ -359,7 +359,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
   },
   formFailure: function(form, action) {
     if (action.failureType != 'server' && action.failureType != 'client') {
-      SWorks.ErrorHandling.serverError(action.result);
+      SWorks.ErrorHandling.serverError(action.response, action.result);
     } else if (action.failureType == 'server' && action.result.errors.base) {
       Ext.MessageBox.alert('Save failed', action.result.errors.base);
     } else if (action.options.waitMsg !== false) {
@@ -456,7 +456,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
       SWorks.ErrorHandling.clientError();
     }
   },
-  onFetchRecordResponse: function(result, options) {
+  onFetchRecordResponse: function(result, options, response) {
     Ext.MessageBox.updateProgress(1);
     Ext.MessageBox.hide();
 
@@ -467,7 +467,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
 
       options.cb.fn.call(options.cb.scope || this, record);
     } else {
-      SWorks.ErrorHandling.serverError(result);
+      SWorks.ErrorHandling.serverError(response, result);
     }
   },
   reloadRecord: function(id) {
@@ -555,7 +555,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
       });
     }
   },
-  onDeleteById: function(result, options) {
+  onDeleteById: function(result, options, response) {
     var id = options.deleting_id;
 
     if (result.success) {
@@ -564,7 +564,7 @@ Ext.extend(SWorks.CrudEditor, Ext.util.Observable, {
       }
       this.fireEvent('delete', id);
     } else {
-      SWorks.ErrorHandling.serverError(result);
+      SWorks.ErrorHandling.serverError(response, result);
     }
 
     return result;
